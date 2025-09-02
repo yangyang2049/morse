@@ -247,19 +247,9 @@ export struct LessonQuizPage {
   async markTestCompleted() {
     try {
       console.error(`[QUIZ] markTestCompleted: start testKey=${this.testCompletedKey} testType=${this.testType} score=${this.score}`)
-      // 使用 ViewModel 来标记测试完成
+      // 使用 ViewModel 来标记测试完成，这会自动解锁下一课
       await this.learnViewModel.markTestCompleted(this.testCompletedKey)
       
-      // 根据测试类型和得分处理解锁逻辑
-      if (this.score >= 100) {
-        if (this.testType === 'intro') {
-          // 当第一课测验得分100时，标记intro完成并解锁第二课
-          await this.learnViewModel.markLessonContentCompleted('intro_completed')
-        } else if (this.testType === 'chinese') {
-          // 当第二课测验得分100时，标记chinese完成
-          await this.learnViewModel.markLessonContentCompleted('chinese_completed')
-        }
-      }
       console.error('[QUIZ] markTestCompleted: persisted OK')
       this.progressSaved = true
     } catch (err) {

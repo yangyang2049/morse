@@ -1,4 +1,6 @@
 import { preferences } from '@kit.ArkData'
+import { LessonConfig } from '../data/LessonConfig'
+import { FORCE_UNLOCK_ALL } from '../data/FeatureFlags'
 
 export interface ProgressTarget {
   unitIdx: number
@@ -6,144 +8,235 @@ export interface ProgressTarget {
 }
 
 export class ProgressStore {
-  // Base/unit completion flags
-  introCompleted: boolean = false
-  chineseCompleted: boolean = false
-  introTestCompleted: boolean = false
-  chineseTestCompleted: boolean = false
+  // 简化的解锁系统：只存储已解锁的课程编号
+  unlockedLessons: Set<number> = new Set() // 临时解锁所有课程
 
-  // Per-lesson completion
-  alphabetLessonsCompleted: Map<string, boolean> = new Map()
-  numberLessonsCompleted: Map<string, boolean> = new Map()
-  punctuationLessonsCompleted: Map<string, boolean> = new Map()
-  wordLessonsCompleted: Map<string, boolean> = new Map()
+  // 课程完成状态
+  completedLessons: Set<number> = new Set()
 
   async load(): Promise<void> {
     console.error('[STORE] load: begin')
     const prefs = await preferences.getPreferences(getContext(), 'learn_progress')
 
-    // Base flags
-    this.introCompleted = await prefs.get('intro_completed', false) as boolean
-    this.chineseCompleted = await prefs.get('chinese_completed', false) as boolean
-    this.introTestCompleted = await prefs.get('intro_test_completed', false) as boolean
-    this.chineseTestCompleted = await prefs.get('chinese_test_completed', false) as boolean
-
-    // Lessons
-    this.alphabetLessonsCompleted.clear()
-    for (let i = 0; i < 9; i++) {
-      const id = `alphabet_lesson_${i}`
-      this.alphabetLessonsCompleted.set(id, await prefs.get(`${id}_completed`, false) as boolean)
+    if (FORCE_UNLOCK_ALL) {
+      // 临时强制解锁所有课程（由特性开关控制）
+      console.error('[STORE] load: FORCE_UNLOCK_ALL=true, unlocking all lessons')
+      for (let i = 1; i <= LessonConfig.getTotalLessons(); i++) {
+        this.unlockedLessons.add(i)
+      }
+      console.error(`[STORE] load: unlocked all lessons: ${Array.from(this.unlockedLessons).join(',')}`)
+    } else {
+      // 正常加载已解锁的课程编号
+      const unlockedArray = await prefs.get('unlocked_lessons', '[]') as string
+      console.error(`[STORE] load: unlockedArray from prefs = "${unlockedArray}"`)
+      try {
+        const unlockedNumbers = JSON.parse(unlockedArray) as number[]
+        this.unlockedLessons = new Set(unlockedNumbers)
+        console.error(`[STORE] load: loaded from prefs, unlocked lessons: ${Array.from(this.unlockedLessons).join(',')}`)
+      } catch {
+        // 若解析失败，至少解锁第一课
+        console.error('[STORE] load: failed to parse prefs, unlocking lesson 1 as fallback')
+        this.unlockedLessons = new Set([1])
+      }
     }
 
-    this.numberLessonsCompleted.clear()
-    for (let i = 0; i < 4; i++) {
-      const id = `number_lesson_${i}`
-      this.numberLessonsCompleted.set(id, await prefs.get(`${id}_completed`, false) as boolean)
+    // 加载已完成的课程编号
+    const completedArray = await prefs.get('completed_lessons', '[]') as string
+    try {
+      const completedNumbers = JSON.parse(completedArray) as number[]
+      this.completedLessons = new Set(completedNumbers)
+    } catch {
+      this.completedLessons = new Set()
     }
 
-    this.punctuationLessonsCompleted.clear()
-    for (let i = 0; i < 3; i++) {
-      const id = `punctuation_lesson_${i}`
-      this.punctuationLessonsCompleted.set(id, await prefs.get(`${id}_completed`, false) as boolean)
-    }
-
-    this.wordLessonsCompleted.clear()
-    for (let i = 0; i < 3; i++) {
-      const id = `word_lesson_${i}`
-      this.wordLessonsCompleted.set(id, await prefs.get(`${id}_completed`, false) as boolean)
-    }
-    console.error(`[STORE] load: flags introCompleted=${this.introCompleted} introTestCompleted=${this.introTestCompleted} chineseCompleted=${this.chineseCompleted} chineseTestCompleted=${this.chineseTestCompleted}`)
+    console.error(`[STORE] load: unlocked=${Array.from(this.unlockedLessons).join(',')} completed=${Array.from(this.completedLessons).join(',')}`)
   }
 
   async saveLessonCompleted(lessonId: string): Promise<void> {
     console.error(`[STORE] saveLessonCompleted: ${lessonId}`)
+    const lessonNumber = LessonConfig.getLessonNumber(lessonId)
+    if (lessonNumber === 0) return
+
+    // 标记课程为已完成
+    this.completedLessons.add(lessonNumber)
+    
+    // 解锁下一课
+    const nextLessonNumber = lessonNumber + 1
+    if (nextLessonNumber <= LessonConfig.getTotalLessons()) {
+      this.unlockedLessons.add(nextLessonNumber)
+    }
+
+    // 保存到preferences
     const prefs = await preferences.getPreferences(getContext(), 'learn_progress')
-    await prefs.put(`${lessonId}_completed`, true)
+    await prefs.put('completed_lessons', JSON.stringify(Array.from(this.completedLessons)))
+    await prefs.put('unlocked_lessons', JSON.stringify(Array.from(this.unlockedLessons)))
     await prefs.flush()
 
-    if (lessonId.startsWith('alphabet_')) this.alphabetLessonsCompleted.set(lessonId, true)
-    else if (lessonId.startsWith('number_')) this.numberLessonsCompleted.set(lessonId, true)
-    else if (lessonId.startsWith('punctuation_')) this.punctuationLessonsCompleted.set(lessonId, true)
-    else if (lessonId.startsWith('word_')) this.wordLessonsCompleted.set(lessonId, true)
+    console.error(`[STORE] lesson ${lessonNumber} completed, unlocked lessons: ${Array.from(this.unlockedLessons).join(',')}`)
   }
 
   async saveTestCompleted(testKey: string): Promise<void> {
     console.error(`[STORE] saveTestCompleted: ${testKey}`)
-    const prefs = await preferences.getPreferences(getContext(), 'learn_progress')
-    await prefs.put(testKey, true)
-    await prefs.flush()
-
-    if (testKey === 'intro_test_completed') this.introTestCompleted = true
-    else if (testKey === 'chinese_test_completed') this.chineseTestCompleted = true
+    // 测试完成等同于课程完成，解锁下一课
+    let lessonNumber = 0
+    if (testKey === 'intro_test_completed') {
+      lessonNumber = 1 // 第1课完成
+    } else if (testKey === 'chinese_test_completed') {
+      lessonNumber = 2 // 第2课完成
+    }
+    
+    if (lessonNumber > 0) {
+      // 直接调用内部逻辑，避免递归
+      this.completedLessons.add(lessonNumber)
+      const nextLessonNumber = lessonNumber + 1
+      if (nextLessonNumber <= LessonConfig.getTotalLessons()) {
+        this.unlockedLessons.add(nextLessonNumber)
+      }
+      
+      // 保存到preferences
+      const prefs = await preferences.getPreferences(getContext(), 'learn_progress')
+      await prefs.put('completed_lessons', JSON.stringify(Array.from(this.completedLessons)))
+      await prefs.put('unlocked_lessons', JSON.stringify(Array.from(this.unlockedLessons)))
+      await prefs.flush()
+      
+      console.error(`[STORE] test ${testKey} completed, lesson ${lessonNumber} completed, unlocked lessons: ${Array.from(this.unlockedLessons).join(',')}`)
+    }
   }
 
   async saveLessonContentCompleted(lessonKey: string): Promise<void> {
     console.error(`[STORE] saveLessonContentCompleted: ${lessonKey}`)
-    const prefs = await preferences.getPreferences(getContext(), 'learn_progress')
-    await prefs.put(lessonKey, true)
-    await prefs.flush()
-
-    if (lessonKey === 'intro_completed') this.introCompleted = true
-    else if (lessonKey === 'chinese_completed') this.chineseCompleted = true
+    // 课程内容完成等同于课程完成
+    let lessonNumber = 0
+    if (lessonKey === 'intro_completed') {
+      lessonNumber = 1
+    } else if (lessonKey === 'chinese_completed') {
+      lessonNumber = 2
+    }
+    
+    if (lessonNumber > 0) {
+      // 直接调用内部逻辑，避免递归
+      this.completedLessons.add(lessonNumber)
+      const nextLessonNumber = lessonNumber + 1
+      if (nextLessonNumber <= LessonConfig.getTotalLessons()) {
+        this.unlockedLessons.add(nextLessonNumber)
+      }
+      
+      // 保存到preferences
+      const prefs = await preferences.getPreferences(getContext(), 'learn_progress')
+      await prefs.put('completed_lessons', JSON.stringify(Array.from(this.completedLessons)))
+      await prefs.put('unlocked_lessons', JSON.stringify(Array.from(this.unlockedLessons)))
+      await prefs.flush()
+      
+      console.error(`[STORE] lesson content ${lessonKey} completed, lesson ${lessonNumber} completed, unlocked lessons: ${Array.from(this.unlockedLessons).join(',')}`)
+    }
   }
 
-  private allCompleted(map: Map<string, boolean>): boolean {
-    return Array.from(map.values()).every(v => v === true)
+  // 检查课程是否已解锁
+  isLessonUnlocked(lessonNumber: number): boolean {
+    if (FORCE_UNLOCK_ALL) return true
+    return this.unlockedLessons.has(lessonNumber)
   }
 
+  // 检查课程是否已完成
+  isLessonCompleted(lessonNumber: number): boolean {
+    return this.completedLessons.has(lessonNumber)
+  }
+
+  // 检查单元是否已解锁（基于单元起始课程是否解锁）
   getUnitUnlocked(): Map<string, boolean> {
-    const unitUnlocked: Map<string, boolean> = new Map([
-      ['intro', true],
-      ['alphabet', false],
-      ['numbers', false],
-      ['punctuation', false],
-      ['words', false]
-    ])
+    const units = ['intro', 'alphabet', 'numbers', 'punctuation', 'words']
+    if (FORCE_UNLOCK_ALL) {
+      const allTrue: Map<string, boolean> = new Map()
+      for (const unitId of units) { allTrue.set(unitId, true) }
+      return allTrue
+    }
 
-    const isIntroUnitCompleted = (this.introCompleted && this.chineseCompleted && this.introTestCompleted && this.chineseTestCompleted)
-    const isAlphabetUnitCompleted = this.allCompleted(this.alphabetLessonsCompleted)
-    const isNumberUnitCompleted = this.allCompleted(this.numberLessonsCompleted)
-
-    unitUnlocked.set('alphabet', isIntroUnitCompleted)
-    unitUnlocked.set('numbers', isAlphabetUnitCompleted)
-    unitUnlocked.set('punctuation', isNumberUnitCompleted)
-    unitUnlocked.set('words', isNumberUnitCompleted)
-
+    const unitUnlocked: Map<string, boolean> = new Map()
+    for (const unitId of units) {
+      const startLesson = LessonConfig.getUnitStartLesson(unitId)
+      unitUnlocked.set(unitId, this.isLessonUnlocked(startLesson))
+    }
     return unitUnlocked
   }
 
-  // Utility to compute target position (unit and next lesson index)
+  // 计算目标位置（单元和下一课索引）
   computeTarget(): ProgressTarget {
-    // Unit order: 0 intro, 1 alphabet, 2 numbers, 3 punctuation, 4 words
-    const unitUnlocked = this.getUnitUnlocked()
-
-    let unitIdx = 0
-    if (this.introCompleted && this.introTestCompleted && this.chineseCompleted && this.chineseTestCompleted) {
-      if (!unitUnlocked.get('numbers')) unitIdx = 1
-      else if (!unitUnlocked.get('punctuation') || !unitUnlocked.get('words')) unitIdx = 2
-      else {
-        // Numbers completed; prefer punctuation, then words
-        const punctDone = this.allCompleted(this.punctuationLessonsCompleted)
-        const wordDone = this.allCompleted(this.wordLessonsCompleted)
-        unitIdx = !punctDone ? 3 : (!wordDone ? 4 : 4)
+    // 找到第一个未完成的已解锁课程
+    let targetLessonNumber = 0
+    for (let i = 1; i <= LessonConfig.getTotalLessons(); i++) {
+      if (this.isLessonUnlocked(i) && !this.isLessonCompleted(i)) {
+        targetLessonNumber = i
+        break
       }
     }
 
-    let lessonIdx: number | null = null
-    if (unitIdx === 0) {
-      if (!this.introTestCompleted) lessonIdx = 0
-      else if (!this.chineseTestCompleted) lessonIdx = 1
-    } else if (unitIdx === 1) {
-      for (let i = 0; i < 9; i++) { if (!(this.alphabetLessonsCompleted.get(`alphabet_lesson_${i}`) ?? false)) { lessonIdx = i; break } }
-    } else if (unitIdx === 2) {
-      for (let i = 0; i < 4; i++) { if (!(this.numberLessonsCompleted.get(`number_lesson_${i}`) ?? false)) { lessonIdx = i; break } }
-    } else if (unitIdx === 3) {
-      for (let i = 0; i < 3; i++) { if (!(this.punctuationLessonsCompleted.get(`punctuation_lesson_${i}`) ?? false)) { lessonIdx = i; break } }
-    } else if (unitIdx === 4) {
-      for (let i = 0; i < 3; i++) { if (!(this.wordLessonsCompleted.get(`word_lesson_${i}`) ?? false)) { lessonIdx = i; break } }
+    // 如果没有找到未完成的课程，返回最后一个课程
+    if (targetLessonNumber === 0) {
+      targetLessonNumber = LessonConfig.getTotalLessons()
     }
 
-    const target: ProgressTarget = { unitIdx: unitIdx, lessonIdx: lessonIdx }
-    return target
+    // 根据课程编号确定单元索引
+    let unitIdx = 0
+    if (LessonConfig.isLessonInUnit(targetLessonNumber, 'intro')) {
+      unitIdx = 0
+    } else if (LessonConfig.isLessonInUnit(targetLessonNumber, 'alphabet')) {
+      unitIdx = 1
+    } else if (LessonConfig.isLessonInUnit(targetLessonNumber, 'numbers')) {
+      unitIdx = 2
+    } else if (LessonConfig.isLessonInUnit(targetLessonNumber, 'punctuation')) {
+      unitIdx = 3
+    } else if (LessonConfig.isLessonInUnit(targetLessonNumber, 'words')) {
+      unitIdx = 4
+    }
+
+    // 计算课程在单元内的索引
+    let lessonIdx: number | null = null
+    if (unitIdx === 0) {
+      lessonIdx = targetLessonNumber - 1 // 基础单元：课程1->索引0，课程2->索引1
+    } else if (unitIdx === 1) {
+      lessonIdx = targetLessonNumber - 3 // 字母单元：课程3->索引0
+    } else if (unitIdx === 2) {
+      lessonIdx = targetLessonNumber - 12 // 数字单元：课程12->索引0
+    } else if (unitIdx === 3) {
+      lessonIdx = targetLessonNumber - 16 // 符号单元：课程16->索引0
+    } else if (unitIdx === 4) {
+      lessonIdx = targetLessonNumber - 19 // 单词单元：课程19->索引0
+    }
+
+    return { unitIdx, lessonIdx }
+  }
+
+  // 解锁所有课程（用于测试或管理员功能）
+  async unlockAllLessons(): Promise<void> {
+    console.error('[STORE] unlockAllLessons: unlocking all lessons')
+    for (let i = 1; i <= LessonConfig.getTotalLessons(); i++) {
+      this.unlockedLessons.add(i)
+    }
+    
+    // 保存到preferences
+    const prefs = await preferences.getPreferences(getContext(), 'learn_progress')
+    await prefs.put('unlocked_lessons', JSON.stringify(Array.from(this.unlockedLessons)))
+    await prefs.flush()
+    
+    console.error(`[STORE] all lessons unlocked: ${Array.from(this.unlockedLessons).join(',')}`)
+  }
+
+  // 重置进度（用于测试）
+  async resetProgress(): Promise<void> {
+    console.error('[STORE] resetProgress: resetting all progress')
+    // 临时解锁所有课程
+    this.unlockedLessons = new Set()
+    for (let i = 1; i <= LessonConfig.getTotalLessons(); i++) {
+      this.unlockedLessons.add(i)
+    }
+    this.completedLessons = new Set()
+    
+    // 保存到preferences
+    const prefs = await preferences.getPreferences(getContext(), 'learn_progress')
+    await prefs.put('unlocked_lessons', JSON.stringify(Array.from(this.unlockedLessons)))
+    await prefs.put('completed_lessons', JSON.stringify(Array.from(this.completedLessons)))
+    await prefs.flush()
+    
+    console.error('[STORE] progress reset, all lessons unlocked')
   }
 }

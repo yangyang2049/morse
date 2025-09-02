@@ -1,5 +1,6 @@
 import { LearnViewModel } from '../../viewmodel/LearnViewModel'
 import { router } from '@kit.ArkUI'
+import { LessonConfig } from '../../data/LessonConfig'
 
 interface LessonItem {
   key: string
@@ -42,12 +43,23 @@ export struct LearnPage {
   }
 
   private introLessons(): LessonItem[] {
-    // Lesson 1 unlocked; Lesson 2 locked until Lesson 1 test is completed (100 points)
-    const firstTestCompleted: boolean = this.vm.introTestCompleted === true
-    console.error(`[LEARN] introLessons: introCompleted=${this.vm.introCompleted} introTestCompleted=${this.vm.introTestCompleted} chineseCompleted=${this.vm.chineseCompleted} chineseTestCompleted=${this.vm.chineseTestCompleted} unlockL2=${firstTestCompleted}`)
     return [
-      { key: 'intro_0', title: '第1课：摩斯密码基础', subtitle: '点划、间隔、历史与应用', unlocked: true, unitUnlocked: true, completed: this.vm.introCompleted === true },
-      { key: 'intro_1', title: '第2课：中文摩尔斯电码', subtitle: '汉字编码、标点符号、应用场景', unlocked: firstTestCompleted, unitUnlocked: true, completed: this.vm.chineseCompleted === true },
+      { 
+        key: 'intro_0', 
+        title: '第1课：摩斯密码基础', 
+        subtitle: '点划、间隔、历史与应用', 
+        unlocked: this.vm.isLessonUnlocked(1), 
+        unitUnlocked: this.vm.unitUnlocked.get('intro') ?? false, 
+        completed: this.vm.isLessonCompleted(1) 
+      },
+      { 
+        key: 'intro_1', 
+        title: '第2课：中文摩尔斯电码', 
+        subtitle: '汉字编码、标点符号、应用场景', 
+        unlocked: this.vm.isLessonUnlocked(2), 
+        unitUnlocked: this.vm.unitUnlocked.get('intro') ?? false, 
+        completed: this.vm.isLessonCompleted(2) 
+      },
       { key: 'intro_p1', title: '占位', unlocked: false, unitUnlocked: false, completed: false },
       { key: 'intro_p2', title: '占位', unlocked: false, unitUnlocked: false, completed: false }
     ]
@@ -57,26 +69,17 @@ export struct LearnPage {
     const items: LessonItem[] = []
     const subtitles: string[] = ['ABC', 'DEF', 'GHIJ', '复习：A-J', 'KLMN', 'OPQR', 'STUV', 'WXYZ', '复习：K-Z']
     
-    // Determine which lessons are unlocked based on completion status
-    let allPreviousLessonsCompleted = true
     for (let i = 0; i < 9; i++) {
-      const lessonId = `alphabet_lesson_${i}`
-      const isCompleted = this.vm.alphabetLessonsCompleted.get(lessonId) ?? false
-      const isUnlocked = i === 0 || allPreviousLessonsCompleted // First lesson always unlocked, others unlocked if all previous are completed
-      
-      // If any previous lesson is not completed, following lessons are locked
-      if (!isCompleted && i > 0) {
-        allPreviousLessonsCompleted = false
-      }
-      
+      const lessonNumber = 3 + i // 字母课程从第3课开始
       const isReview = i === 3 || i === 8
+      
       items.push({
         key: `alpha_${i}`,
         title: isReview ? `第${i + 1}课：复习` : `第${i + 1}课`,
         subtitle: subtitles[i],
-        unlocked: isUnlocked,
+        unlocked: this.vm.isLessonUnlocked(lessonNumber),
         unitUnlocked: this.vm.unitUnlocked.get('alphabet') ?? false,
-        completed: isCompleted
+        completed: this.vm.isLessonCompleted(lessonNumber)
       })
     }
     
@@ -90,26 +93,17 @@ export struct LearnPage {
     const subtitles: string[] = ['1 2 3', '4 5 6', '7 8 9 0', '复习：0-9']
     const items: LessonItem[] = []
     
-    // Determine which lessons are unlocked based on completion status
-    let allPreviousLessonsCompleted = true
     for (let i = 0; i < 4; i++) {
-      const lessonId = `number_lesson_${i}`
-      const isCompleted = this.vm.numberLessonsCompleted.get(lessonId) ?? false
-      const isUnlocked = i === 0 || allPreviousLessonsCompleted // First lesson always unlocked, others unlocked if all previous are completed
-      
-      // If any previous lesson is not completed, following lessons are locked
-      if (!isCompleted && i > 0) {
-        allPreviousLessonsCompleted = false
-      }
-      
+      const lessonNumber = 12 + i // 数字课程从第12课开始
       const isReview = i === 3
+      
       items.push({
         key: `num_${i}`,
         title: isReview ? `第${i + 1}课：复习` : `第${i + 1}课`,
         subtitle: subtitles[i],
-        unlocked: isUnlocked,
+        unlocked: this.vm.isLessonUnlocked(lessonNumber),
         unitUnlocked: this.vm.unitUnlocked.get('numbers') ?? false,
-        completed: isCompleted
+        completed: this.vm.isLessonCompleted(lessonNumber)
       })
     }
     
@@ -124,25 +118,16 @@ export struct LearnPage {
     const subtitles: string[] = ['., ? ! : ;', '= + - _ " \' , ( ) / @', '复习']
     const items: LessonItem[] = []
     
-    // Determine which lessons are unlocked based on completion status
-    let allPreviousLessonsCompleted = true
     for (let i = 0; i < 3; i++) {
-      const lessonId = `punctuation_lesson_${i}`
-      const isCompleted = this.vm.punctuationLessonsCompleted.get(lessonId) ?? false
-      const isUnlocked = i === 0 || allPreviousLessonsCompleted // First lesson always unlocked, others unlocked if all previous are completed
-      
-      // If any previous lesson is not completed, following lessons are locked
-      if (!isCompleted && i > 0) {
-        allPreviousLessonsCompleted = false
-      }
+      const lessonNumber = 16 + i // 符号课程从第16课开始
       
       items.push({
         key: `pun_${i}`,
         title: `第${i + 1}课`,
         subtitle: subtitles[i],
-        unlocked: isUnlocked,
+        unlocked: this.vm.isLessonUnlocked(lessonNumber),
         unitUnlocked: this.vm.unitUnlocked.get('punctuation') ?? false,
-        completed: isCompleted
+        completed: this.vm.isLessonCompleted(lessonNumber)
       })
     }
     
@@ -156,25 +141,16 @@ export struct LearnPage {
   private wordLessons(): LessonItem[] {
     const items: LessonItem[] = []
     
-    // Determine which lessons are unlocked based on completion status
-    let allPreviousLessonsCompleted = true
     for (let i = 0; i < 3; i++) {
-      const lessonId = `word_lesson_${i}`
-      const isCompleted = this.vm.wordLessonsCompleted.get(lessonId) ?? false
-      const isUnlocked = i === 0 || allPreviousLessonsCompleted // First lesson always unlocked, others unlocked if all previous are completed
-      
-      // If any previous lesson is not completed, following lessons are locked
-      if (!isCompleted && i > 0) {
-        allPreviousLessonsCompleted = false
-      }
+      const lessonNumber = 19 + i // 单词课程从第19课开始
       
       items.push({
         key: `word_${i}`,
         title: `第${i + 1}课`,
         subtitle: `${i + 3}字母单词`,
-        unlocked: isUnlocked,
+        unlocked: this.vm.isLessonUnlocked(lessonNumber),
         unitUnlocked: this.vm.unitUnlocked.get('words') ?? false,
-        completed: isCompleted
+        completed: this.vm.isLessonCompleted(lessonNumber)
       })
     }
     
@@ -249,6 +225,54 @@ export struct LearnPage {
               testTitle: '基础知识测试',
               testCompletedKey: 'intro_test_completed',
               lessonCompletedKey: 'intro_completed'
+            }
+          })
+        } else if (item.key.startsWith('alpha_')) {
+          // 字母课程 - 路由到FullscreenLessonPage
+          const lessonIndex = parseInt(item.key.replace('alpha_', ''))
+          const lessonId = `alphabet_lesson_${lessonIndex}`
+          console.error(`[LEARN] Navigating to alphabet lesson: ${lessonId}`)
+          router.pushUrl({
+            url: 'pages/FullscreenLessonPage',
+            params: {
+              lessonId: lessonId,
+              title: item.title
+            }
+          })
+        } else if (item.key.startsWith('num_')) {
+          // 数字课程 - 路由到FullscreenLessonPage
+          const lessonIndex = parseInt(item.key.replace('num_', ''))
+          const lessonId = `number_lesson_${lessonIndex}`
+          console.error(`[LEARN] Navigating to number lesson: ${lessonId}`)
+          router.pushUrl({
+            url: 'pages/FullscreenLessonPage',
+            params: {
+              lessonId: lessonId,
+              title: item.title
+            }
+          })
+        } else if (item.key.startsWith('pun_')) {
+          // 符号课程 - 路由到FullscreenLessonPage
+          const lessonIndex = parseInt(item.key.replace('pun_', ''))
+          const lessonId = `punctuation_lesson_${lessonIndex}`
+          console.error(`[LEARN] Navigating to punctuation lesson: ${lessonId}`)
+          router.pushUrl({
+            url: 'pages/FullscreenLessonPage',
+            params: {
+              lessonId: lessonId,
+              title: item.title
+            }
+          })
+        } else if (item.key.startsWith('word_')) {
+          // 单词课程 - 路由到FullscreenLessonPage
+          const lessonIndex = parseInt(item.key.replace('word_', ''))
+          const lessonId = `word_lesson_${lessonIndex}`
+          console.error(`[LEARN] Navigating to word lesson: ${lessonId}`)
+          router.pushUrl({
+            url: 'pages/FullscreenLessonPage',
+            params: {
+              lessonId: lessonId,
+              title: item.title
             }
           })
         } else {
