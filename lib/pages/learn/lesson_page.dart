@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
-import 'lesson_quiz_page.dart';
+import './lesson_quiz_page.dart';
 
 class LessonPage extends StatefulWidget {
   final String title;
@@ -10,7 +10,7 @@ class LessonPage extends StatefulWidget {
   final String testCompletedKey;
   final String lessonCompletedKey;
   final Map<String, Widget Function(String, List<String>)>?
-      customSectionBuilders;
+  customSectionBuilders;
 
   const LessonPage({
     super.key,
@@ -87,44 +87,49 @@ class _LessonPageState extends State<LessonPage> {
                   child: Card(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 16),
-                      child: Stack(children: [
-                        // Big faded number at bottom right
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: Text(
-                            '${index + 1}',
-                            style: TextStyle(
-                              fontSize: 80,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.grey.withValues(alpha: 0.1),
-                              height: 0.8,
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                      child: Stack(
+                        children: [
+                          // Big faded number at bottom right
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Text(
+                              '${index + 1}',
+                              style: TextStyle(
+                                fontSize: 80,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.grey.withValues(alpha: 0.1),
+                                height: 0.8,
+                              ),
                             ),
                           ),
-                        ),
-                        // Main content
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              title,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+                          // Main content
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 24),
-                            Expanded(
-                              child: SingleChildScrollView(
-                                child: widget.customSectionBuilders?[title]
-                                        ?.call(title, contents) ??
-                                    _buildDefaultSection(title, contents),
+                              const SizedBox(height: 24),
+                              Expanded(
+                                child: SingleChildScrollView(
+                                  child:
+                                      widget.customSectionBuilders?[title]
+                                          ?.call(title, contents) ??
+                                      _buildDefaultSection(title, contents),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ]),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );
@@ -144,7 +149,9 @@ class _LessonPageState extends State<LessonPage> {
         elevation: 4,
         child: Padding(
           padding: const EdgeInsets.symmetric(
-              horizontal: 16, vertical: 16), // 内容水平边距16，垂直边距16
+            horizontal: 16,
+            vertical: 16,
+          ), // 内容水平边距16，垂直边距16
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -186,33 +193,28 @@ class _LessonPageState extends State<LessonPage> {
               const SizedBox(height: 8),
               const Text(
                 '• 2道判断题（每题20分）',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Colors.black87, fontSize: 14),
               ),
               const Text(
                 '• 3道选择题（每题20分）',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Colors.black87, fontSize: 14),
               ),
               const Text(
                 '• 需要100分才能通过',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Colors.black87, fontSize: 14),
               ),
               const SizedBox(height: 32), // 开始测试按钮的底部边距
               const Spacer(),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
+                  onPressed: () {
+                    print('Quiz button pressed!');
+                    print('testType: ${widget.testType}');
+                    print('pageTitle: ${widget.testTitle}');
+                    print('testCompletedKey: ${widget.testCompletedKey}');
+
+                    Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => LessonQuizPage(
                           testType: widget.testType,
@@ -225,10 +227,7 @@ class _LessonPageState extends State<LessonPage> {
                   icon: const Icon(Icons.play_arrow_rounded),
                   label: const Text(
                     '开始测试',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange[600],

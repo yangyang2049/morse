@@ -10,11 +10,7 @@ struct Index {
 
   @Builder
   TabIcon(icon: Resource) {
-    Image(icon)
-      .width(24)
-      .height(24)
-      .fillColor(Color.White)
-      .objectFit(ImageFit.Contain)
+    Image(icon).width(24).height(24)
   }
 
   build() {

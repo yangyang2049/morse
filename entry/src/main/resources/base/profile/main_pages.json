@@ -1,3 +1,5 @@
 {
-  "src": ["pages/Index", "pages/LessonPage", "pages/FullscreenLessonPage"]
+  "src": ["pages/Index", "pages/LessonPage", "pages/FullscreenLessonPage",
+    "pages/LessonQuizPage"
+]
 }
