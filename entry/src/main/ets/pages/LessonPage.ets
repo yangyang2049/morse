@@ -1,5 +1,6 @@
 import { router } from '@kit.ArkUI'
 import window from '@ohos.window'
+import { LessonData } from '../data/LessonData'
 
 @Entry
 @Component
@@ -27,53 +28,9 @@ export struct LessonPage {
 
   initializeSections() {
     if (this.testType === 'intro') {
-      this.sections = new Map([
-        ['摩斯密码基础', [
-          '摩斯密码是以"点（·）和划（-）"为基本元素的字符编码系统。',
-          '通过不同的点划组合来表示字母、数字和符号。',
-          '每个字符都有唯一的摩斯密码表示。'
-        ]],
-        ['字符构成规律', [
-          '点（·）：短信号，通常持续1个单位时间',
-          '划（-）：长信号，通常持续3个单位时间',
-          '字符间隔：3个单位时间',
-          '单词间隔：7个单位时间'
-        ]],
-        ['时序规则', [
-          '1:3:7比例是摩斯密码的核心规则',
-          '点=1单位，划=3单位，字符间隔=3单位，单词间隔=7单位',
-          '这个精确的时序确保了信息传输的准确性'
-        ]],
-        ['应用场景', [
-          '军事通信：部队间的秘密通信',
-          '航空通信：飞行员与地面控制塔通信',
-          '航海通信：船舶间通信',
-          '紧急求救：SOS信号'
-        ]]
-      ])
+      this.sections = LessonData.introSections
     } else if (this.testType === 'chinese') {
-      this.sections = new Map([
-        ['中文摩尔斯电码基础', [
-          '中文摩尔斯电码是专门为中文汉字设计的编码系统。',
-          '通过点（·）和划（-）的组合表示中文字符。',
-          '结合了传统摩尔斯电码原理和中文语言特点。'
-        ]],
-        ['编码特点', [
-          '中文编码通常比英文更长',
-          '每个汉字都有唯一的摩尔斯电码表示',
-          '编码长度增加是为了确保字符的唯一性'
-        ]],
-        ['历史发展', [
-          '1920年代：初步制定中文摩尔斯电码标准',
-          '国际电信联盟（ITU）参与制定',
-          '经过多次优化形成现代标准'
-        ]],
-        ['应用场景', [
-          '军事通信：部队间的秘密通信',
-          '航空通信：飞行员与地面控制塔通信',
-          '航海通信：船舶间通信'
-        ]]
-      ])
+      this.sections = LessonData.chineseSections
     }
   }
 
@@ -123,11 +80,23 @@ export struct LessonPage {
   }
 
   @Builder
+  buildSingleLine(text: string) {
+    Text(text)
+      .fontColor('#FFFFFF')
+      .textAlign(TextAlign.Start)
+      .width('100%')
+  }
+
+  @Builder
   buildDefaultSection(title: string, contents: string[]) {
     Column() {
       ForEach(contents, (content: string, index: number) => {
         Column() {
-          this.buildBulletLine(content)
+          if (contents.length === 1) {
+            this.buildSingleLine(content)
+          } else {
+            this.buildBulletLine(content)
+          }
           if (index < contents.length - 1) {
             Blank().height(8)
           }
@@ -149,9 +118,10 @@ export struct LessonPage {
           .fontSize(80)
           .fontWeight(FontWeight.Bold)
           .fontColor(Color.White)
-          .opacity(0.1)
-          .align(Alignment.BottomEnd)
-          .margin({ right: 8, bottom: 8 })
+          .opacity(0.25)
+          .position({ x: '100%', y: '100%' })
+          .translate({ x: '-100%', y: '-100%' })
+          .margin({ right: 0, bottom: -10 })
 
         // Main content
         Column() {
@@ -159,7 +129,7 @@ export struct LessonPage {
             .fontSize(20)
             .fontWeight(FontWeight.Bold)
             .fontColor(Color.White)
-            .margin({ bottom: 24 })
+            .margin({ bottom: 32 })
             .alignSelf(ItemAlign.Start)
 
           Scroll() {
@@ -168,11 +138,13 @@ export struct LessonPage {
           .layoutWeight(1)
           .scrollBar(BarState.Off)
           .edgeEffect(EdgeEffect.Spring)
+          .align(Alignment.TopStart)
         }
         .alignItems(HorizontalAlign.Start)
         .justifyContent(FlexAlign.Start)
         .width('100%')
         .height('100%')
+        .padding({ top: 0 })
       }
     }
     .width(320)
@@ -187,64 +159,83 @@ export struct LessonPage {
   @Builder
   buildTestCard() {
     Column() {
-      Row() {
-        Text('📋').fontSize(24).margin({ right: 8 })
-        Text(this.testTitle)
-          .fontSize(20)
+      Stack() {
+        // Big faded number at bottom right
+        Text('测')
+          .fontSize(80)
           .fontWeight(FontWeight.Bold)
-          .fontColor('#FF8C00')
-          .alignSelf(ItemAlign.Center)
-      }
-      .margin({ bottom: 32 })
+          .fontColor(Color.White)
+          .opacity(0.25)
+          .position({ x: '100%', y: '100%' })
+          .translate({ x: '-100%', y: '-100%' })
+          .margin({ right: 0, bottom: -10 })
 
-      Text(`测试你对${this.title}的掌握程度`)
-        .fontSize(16)
-        .fontColor('#FF8C00')
-        .margin({ bottom: 32 })
+        // Main content
+        Column() {
+          Row() {
+            Text('📋').fontSize(24).margin({ right: 8 })
+            Text(this.testTitle)
+              .fontSize(20)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#FF8C00')
+              .alignSelf(ItemAlign.Center)
+          }
+          .margin({ bottom: 16 })
 
-      Text('测试内容')
-        .fontSize(16)
-        .fontWeight(FontWeight.Bold)
-        .fontColor('#FF8C00')
-        .margin({ bottom: 8 })
-        .alignSelf(ItemAlign.Start)
+          Text(`测试你对${this.title}的掌握程度`)
+            .fontSize(16)
+            .fontColor('#FF8C00')
+            .margin({ bottom: 16 })
 
-      Column() {
-        Text('• 2道判断题（每题20分）').fontSize(14).fontColor(Color.Black).margin({ bottom: 4 })
-        Text('• 3道选择题（每题20分）').fontSize(14).fontColor(Color.Black).margin({ bottom: 4 })
-        Text('• 需要100分才能通过').fontSize(14).fontColor(Color.Black)
-      }
-      .margin({ bottom: 32 })
-      .alignItems(HorizontalAlign.Start)
-
-      Blank().layoutWeight(1)
-
-      Button() {
-        Row() {
-          Text('▶').fontSize(16).fontColor(Color.White).margin({ right: 8 })
-          Text('开始测试')
+          Text('测试内容')
             .fontSize(16)
             .fontWeight(FontWeight.Bold)
-            .fontColor(Color.White)
-        }
-      }
-      .width('100%')
-      .height(48)
-      .backgroundColor('#FF8C00')
-      .borderRadius(8)
-      .onClick(() => {
-        // Navigate to quiz page
-        router.pushUrl({
-          url: 'pages/LessonQuizPage',
-          params: {
-            testType: this.testType,
-            pageTitle: this.testTitle,
-            testCompletedKey: this.testCompletedKey
-          }
-        })
-      })
+            .fontColor('#FF8C00')
+            .margin({ bottom: 8 })
+            .alignSelf(ItemAlign.Start)
 
-      Blank().height(24)
+          Column() {
+            Text('• 2道判断题（每题20分）').fontSize(14).fontColor(Color.Black).margin({ bottom: 4 })
+            Text('• 3道选择题（每题20分）').fontSize(14).fontColor(Color.Black).margin({ bottom: 4 })
+            Text('• 需要100分才能通过').fontSize(14).fontColor(Color.Black)
+          }
+          .margin({ bottom: 16 })
+          .alignItems(HorizontalAlign.Start)
+
+          Blank().layoutWeight(1)
+
+          Button() {
+            Row() {
+              Text('▶').fontSize(16).fontColor(Color.White).margin({ right: 8 })
+              Text('开始测试')
+                .fontSize(16)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(Color.White)
+            }
+          }
+          .width('100%')
+          .height(48)
+          .backgroundColor('#FF8C00')
+          .borderRadius(8)
+          .onClick(() => {
+            // Navigate to quiz page
+            router.pushUrl({
+              url: 'pages/LessonQuizPage',
+              params: {
+                testType: this.testType,
+                pageTitle: this.testTitle,
+                testCompletedKey: this.testCompletedKey
+              }
+            })
+          })
+
+          Blank().height(16)
+        }
+        .alignItems(HorizontalAlign.Start)
+        .justifyContent(FlexAlign.Start)
+        .width('100%')
+        .height('100%')
+      }
     }
     .alignItems(HorizontalAlign.Start)
     .justifyContent(FlexAlign.Start)
