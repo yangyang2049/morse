@@ -84,7 +84,6 @@ export struct CodeTablePage {
               .height(50)
               .backgroundColor('#1A1A1A')
               .borderRadius(25)
-              .border({ width: 2, color: '#FFD70055' })
               .margin({ right: 12 })
 
               // Morse text right aligned
@@ -97,7 +96,7 @@ export struct CodeTablePage {
                 .fontColor('#FFFFFF')
             }
             .width('100%')
-            .padding({ left: 12, right: 12, top: 10, bottom: 10 })
+            .padding({ left: 24, right: 24, top: 12, bottom: 12 })
           }
         }, (code: MorseCode) => code.character + ':' + code.morse)
       }

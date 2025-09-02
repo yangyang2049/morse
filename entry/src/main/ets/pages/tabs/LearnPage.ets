@@ -13,18 +13,41 @@ interface LessonItem {
 @Component
 export struct LearnPage {
   private scroller: Scroller = new Scroller()
-  private vm: LearnViewModel = new LearnViewModel()
+  @State vm: LearnViewModel = new LearnViewModel()
+  @State private refreshTick: number = 0
 
   aboutToAppear(): void {
-    this.vm.init()
+    console.error('[LEARN] aboutToAppear: init()')
+    this.vm.init().then(() => {
+      this.refreshTick++
+      console.error(`[LEARN] aboutToAppear: refreshed after init, tick=${this.refreshTick}`)
+    })
+  }
+
+  onPageShow(): void {
+    // Refresh state when returning to this page
+    console.error('[LEARN] onPageShow: loadUnlockState() immediate')
+    this.vm.loadUnlockState().then(() => {
+      this.refreshTick++
+      console.error(`[LEARN] onPageShow: refreshed immediate, tick=${this.refreshTick}`)
+    })
+    // In case of async preference flush race, refresh again shortly after
+    setTimeout(() => {
+      console.error('[LEARN] onPageShow: loadUnlockState() delayed 100ms')
+      this.vm.loadUnlockState().then(() => {
+        this.refreshTick++
+        console.error(`[LEARN] onPageShow: refreshed delayed, tick=${this.refreshTick}`)
+      })
+    }, 100)
   }
 
   private introLessons(): LessonItem[] {
-    // Lesson 1 unlocked; Lesson 2 locked until Lesson 1 is completed
-    const firstCompleted: boolean = this.vm.introCompleted === true
+    // Lesson 1 unlocked; Lesson 2 locked until Lesson 1 test is completed (100 points)
+    const firstTestCompleted: boolean = this.vm.introTestCompleted === true
+    console.error(`[LEARN] introLessons: introCompleted=${this.vm.introCompleted} introTestCompleted=${this.vm.introTestCompleted} chineseCompleted=${this.vm.chineseCompleted} chineseTestCompleted=${this.vm.chineseTestCompleted} unlockL2=${firstTestCompleted}`)
     return [
       { key: 'intro_0', title: '第1课：摩斯密码基础', subtitle: '点划、间隔、历史与应用', unlocked: true, unitUnlocked: true, completed: this.vm.introCompleted === true },
-      { key: 'intro_1', title: '第2课：中文摩尔斯电码', subtitle: '汉字编码、标点符号、应用场景', unlocked: firstCompleted, unitUnlocked: true, completed: this.vm.chineseCompleted === true },
+      { key: 'intro_1', title: '第2课：中文摩尔斯电码', subtitle: '汉字编码、标点符号、应用场景', unlocked: firstTestCompleted, unitUnlocked: true, completed: this.vm.chineseCompleted === true },
       { key: 'intro_p1', title: '占位', unlocked: false, unitUnlocked: false, completed: false },
       { key: 'intro_p2', title: '占位', unlocked: false, unitUnlocked: false, completed: false }
     ]
@@ -201,33 +224,36 @@ export struct LearnPage {
     .onClick(() => {
       // Only navigate if the lesson and unit are unlocked
       if (!unitLocked && item.unlocked) {
-        if (item.key.startsWith('intro_')) {
-          // Navigate to lesson page for intro lessons
-          router.pushUrl({ 
-            url: 'pages/LessonPage',
-            params: {
-              title: '摩斯密码基础课程',
-              testType: 'intro',
-              testTitle: '基础知识测试',
-              testCompletedKey: 'intro_test_completed',
-              lessonCompletedKey: 'intro_lesson_completed'
-            }
-          })
-        } else if (item.key.startsWith('chinese_')) {
-          // Navigate to lesson page for chinese lessons
-          router.pushUrl({ 
+        console.error(`[LEARN] LessonCard click: key=${item.key} unlocked=${item.unlocked} unitLocked=${unitLocked}`)
+        if (item.key === 'intro_1') {
+          // Navigate to lesson page for the 2nd intro lesson (Chinese)
+          console.error('[LEARN] Navigating to Chinese lesson page')
+          router.pushUrl({
             url: 'pages/LessonPage',
             params: {
               title: '中文摩尔斯电码',
               testType: 'chinese',
               testTitle: '中文电码测试',
               testCompletedKey: 'chinese_test_completed',
-              lessonCompletedKey: 'chinese_lesson_completed'
+              lessonCompletedKey: 'chinese_completed'
+            }
+          })
+        } else if (item.key.startsWith('intro_')) {
+          // Navigate to lesson page for the 1st intro lesson (Basics)
+          console.error('[LEARN] Navigating to Intro lesson page')
+          router.pushUrl({
+            url: 'pages/LessonPage',
+            params: {
+              title: '摩斯密码基础课程',
+              testType: 'intro',
+              testTitle: '基础知识测试',
+              testCompletedKey: 'intro_test_completed',
+              lessonCompletedKey: 'intro_completed'
             }
           })
         } else {
           // For other lessons, show a placeholder message
-          console.info(`Navigating to lesson: ${item.key}`)
+          console.error(`[LEARN] Navigating to other lesson: ${item.key}`)
         }
       }
     })
@@ -284,7 +310,7 @@ export struct LearnPage {
                 if (idx < lessons.length - 1) { Blank().height(12) }
               }
               .opacity(l.title === '占位' ? 0.0 : 1.0)
-            }, (l: LessonItem) => l.key)
+            }, (l: LessonItem) => `${l.key}-${l.unlocked ? 'u' : 'l'}-${l.completed ? 'c' : 'n'}`)
           }
         }
         .layoutWeight(1)
@@ -310,6 +336,11 @@ export struct LearnPage {
 
   build() {
     Column() {
+      // Invisible tick to force recomposition when refreshTick changes
+      Text('')
+        .opacity(0)
+        .fontSize(1)
+        .id(`tick-${this.refreshTick}`)
       // Title bar
       Row() {
         Text('学习')
@@ -318,6 +349,8 @@ export struct LearnPage {
           .fontColor(Color.White)
           .layoutWeight(1)
           .textAlign(TextAlign.Center)
+
+        
       }
       .height(52)
       .padding({ left: 16, right: 16 })

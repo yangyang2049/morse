@@ -4,6 +4,12 @@ import window from '@ohos.window'
 import { ExplanationTipsCard } from '../widgets/ExplanationTipsCard'
 import { LearnViewModel } from '../viewmodel/LearnViewModel'
 
+interface QuizNavParams {
+  testType?: string
+  pageTitle?: string
+  testCompletedKey?: string
+}
+
 interface QuestionItem {
   type: string
   question: string
@@ -38,6 +44,7 @@ export struct LessonQuizPage {
   @State showExplanation: boolean = false
   @State showDelayedContent: boolean = false
   @State showNextButton: boolean = false
+  @State progressSaved: boolean = false
 
   @State questions: QuestionItem[] = []
   @State explanations: ExplanationItem[] = []
@@ -51,13 +58,27 @@ export struct LessonQuizPage {
       })
     })
 
-    // Initialize ViewModel
-    this.learnViewModel.init()
+    // Load route params, if any
+    try {
+      const params = (router.getParams?.() as QuizNavParams) ?? {}
+      if (params) {
+        if (params.testType) this.testType = params.testType
+        if (params.pageTitle) this.pageTitle = params.pageTitle
+        if (params.testCompletedKey) this.testCompletedKey = params.testCompletedKey
+      }
+      console.error(`[QUIZ] aboutToAppear params: testType=${this.testType}, pageTitle=${this.pageTitle}, testCompletedKey=${this.testCompletedKey}`)
+    } catch (e) {
+      console.warn('No params or failed to read params for LessonQuizPage:', e)
+    }
 
+    // Initialize ViewModel and questions for selected test type
+    this.learnViewModel.init()
+    console.error('[QUIZ] aboutToAppear: init ViewModel called')
     this.initializeTestData()
   }
 
   initializeTestData() {
+    console.error(`[QUIZ] initializeTestData: testType=${this.testType}`)
     if (this.testType === 'intro') {
       this.questions = [
         {
@@ -75,7 +96,7 @@ export struct LessonQuizPage {
         {
           type: 'multiple_choice',
           question: '摩斯密码的时序规则中，点、划、字符间隔的单位比例是：',
-          options: ['1:2:5', '1:3:7', '1:4:8', '2:3:6'],
+          options: ['1 : 2 : 5', '1 : 3 : 7', '1 : 4 : 8', '2 : 3 : 6'],
           answer: 1, // 1:3:7
           points: 20,
         },
@@ -199,6 +220,7 @@ export struct LessonQuizPage {
     if (isCorrect) {
       this.score += this.questions[this.currentQuestionIndex].points
     }
+    console.error(`[QUIZ] selectAnswer: qIdx=${this.currentQuestionIndex} type=${this.questions[this.currentQuestionIndex].type} selected=${this.selectedAnswer} correct=${isCorrect} score=${this.score}`)
 
     // Show explanation immediately, but delay opacity animation for content
     this.showExplanation = true
@@ -215,23 +237,33 @@ export struct LessonQuizPage {
   showTestResult() {
     this.showResult = true
 
-    if (this.score >= 100) {
+    const willSave = this.score >= 100
+    console.error(`[QUIZ] showTestResult: score=${this.score} willPersist=${willSave}`)
+    if (willSave) {
       this.markTestCompleted()
     }
   }
 
   async markTestCompleted() {
     try {
+      console.error(`[QUIZ] markTestCompleted: start testKey=${this.testCompletedKey} testType=${this.testType} score=${this.score}`)
       // 使用 ViewModel 来标记测试完成
       await this.learnViewModel.markTestCompleted(this.testCompletedKey)
-      // 同时标记对应课程内容完成，以便解锁下一课/单元
-      if (this.testType === 'intro') {
-        await this.learnViewModel.markLessonContentCompleted('intro_completed')
-      } else if (this.testType === 'chinese') {
-        await this.learnViewModel.markLessonContentCompleted('chinese_completed')
+      
+      // 根据测试类型和得分处理解锁逻辑
+      if (this.score >= 100) {
+        if (this.testType === 'intro') {
+          // 当第一课测验得分100时，标记intro完成并解锁第二课
+          await this.learnViewModel.markLessonContentCompleted('intro_completed')
+        } else if (this.testType === 'chinese') {
+          // 当第二课测验得分100时，标记chinese完成
+          await this.learnViewModel.markLessonContentCompleted('chinese_completed')
+        }
       }
+      console.error('[QUIZ] markTestCompleted: persisted OK')
+      this.progressSaved = true
     } catch (err) {
-      console.error('Failed to save test completion:', err)
+      console.error('[QUIZ] markTestCompleted: FAILED', err)
     }
   }
 
@@ -246,9 +278,26 @@ export struct LessonQuizPage {
     this.showNextButton = false
   }
 
-  goToNextLesson() {
+  async goToNextLesson() {
+    console.error(`[QUIZ] goToNextLesson: score=${this.score} progressSaved=${this.progressSaved}`)
+    // Ensure progress is persisted before leaving so Learn tab sees the unlocks
+    if (this.score >= 100 && !this.progressSaved) {
+      console.error('[QUIZ] goToNextLesson: awaiting persist...')
+      await this.markTestCompleted()
+    }
     // 弹出两次返回到学习页面
+    console.error('[QUIZ] goToNextLesson: navigating back twice')
     router.back()
+    router.back()
+  }
+
+  async backAfterPersist() {
+    console.error(`[QUIZ] backAfterPersist: score=${this.score} progressSaved=${this.progressSaved}`)
+    if (this.score >= 100 && !this.progressSaved) {
+      console.error('[QUIZ] backAfterPersist: awaiting persist...')
+      await this.markTestCompleted()
+    }
+    console.error('[QUIZ] backAfterPersist: navigating back once')
     router.back()
   }
 
@@ -342,7 +391,7 @@ export struct LessonQuizPage {
         .backgroundColor(Color.White)
         .borderRadius(8)
         .onClick(() => {
-          router.back()
+          this.backAfterPersist()
         })
 
         if (this.score >= 100) {

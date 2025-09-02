@@ -2,6 +2,14 @@ import { router } from '@kit.ArkUI'
 import window from '@ohos.window'
 import { LessonData } from '../data/LessonData'
 
+interface LessonNavParams {
+  title?: string
+  testType?: string
+  testTitle?: string
+  testCompletedKey?: string
+  lessonCompletedKey?: string
+}
+
 @Entry
 @Component
 export struct LessonPage {
@@ -21,6 +29,21 @@ export struct LessonPage {
         isStatusBarLightIcon: false
       })
     })
+
+    // Read navigation params to configure this lesson page
+    try {
+      const params = (router.getParams?.() as LessonNavParams) ?? {}
+      if (params) {
+        if (params.title) this.title = params.title
+        if (params.testType) this.testType = params.testType
+        if (params.testTitle) this.testTitle = params.testTitle
+        if (params.testCompletedKey) this.testCompletedKey = params.testCompletedKey
+        if (params.lessonCompletedKey) this.lessonCompletedKey = params.lessonCompletedKey
+      }
+      console.error(`[LESSON] aboutToAppear params: title=${this.title}, testType=${this.testType}, testTitle=${this.testTitle}, testCompletedKey=${this.testCompletedKey}, lessonCompletedKey=${this.lessonCompletedKey}`)
+    } catch (e) {
+      console.warn('No params or failed to read params for LessonPage:', e)
+    }
 
     // Initialize sections based on test type
     this.initializeSections()
@@ -219,6 +242,7 @@ export struct LessonPage {
           .borderRadius(8)
           .onClick(() => {
             // Navigate to quiz page
+            console.error(`[LESSON] Start quiz: testType=${this.testType}, pageTitle=${this.testTitle}, testCompletedKey=${this.testCompletedKey}`)
             router.pushUrl({
               url: 'pages/LessonQuizPage',
               params: {

@@ -1,8 +1,9 @@
-import { preferences } from '@kit.ArkData'
 import { LessonData } from '../data/LessonData'
+import { ProgressStore } from '../store/ProgressStore'
 
 @Observed
 export class LearnViewModel {
+  private store: ProgressStore = new ProgressStore()
   // 单元解锁状态
   unitUnlocked: Map<string, boolean> = new Map([
     ['intro', true],
@@ -32,64 +33,35 @@ export class LearnViewModel {
   targetLessonIdx: number | null = null
 
   async init(): Promise<void> {
+    console.error('[VM] init() called')
     await this.loadUnlockState()
   }
 
   async loadUnlockState(): Promise<void> {
     try {
-      const dataPreferences = await preferences.getPreferences(getContext(), 'learn_progress')
-      
-      // 加载基础课程完成状态
-      this.introCompleted = await dataPreferences.get('intro_completed', false) as boolean
-      this.chineseCompleted = await dataPreferences.get('chinese_completed', false) as boolean
-      this.introTestCompleted = await dataPreferences.get('intro_test_completed', false) as boolean
-      this.chineseTestCompleted = await dataPreferences.get('chinese_test_completed', false) as boolean
+      console.error('[VM] loadUnlockState: start load from store')
+      // Load from store and sync to view model state
+      await this.store.load()
 
-      // 加载字母课程完成状态
-      for (let i = 0; i < 9; i++) {
-        const lessonId = `alphabet_lesson_${i}`
-        this.alphabetLessonsCompleted.set(lessonId, await dataPreferences.get(`${lessonId}_completed`, false) as boolean)
-      }
+      this.introCompleted = this.store.introCompleted
+      this.chineseCompleted = this.store.chineseCompleted
+      this.introTestCompleted = this.store.introTestCompleted
+      this.chineseTestCompleted = this.store.chineseTestCompleted
 
-      // 加载数字课程完成状态
-      for (let i = 0; i < 4; i++) {
-        const lessonId = `number_lesson_${i}`
-        this.numberLessonsCompleted.set(lessonId, await dataPreferences.get(`${lessonId}_completed`, false) as boolean)
-      }
+      this.alphabetLessonsCompleted = new Map(this.store.alphabetLessonsCompleted)
+      this.numberLessonsCompleted = new Map(this.store.numberLessonsCompleted)
+      this.punctuationLessonsCompleted = new Map(this.store.punctuationLessonsCompleted)
+      this.wordLessonsCompleted = new Map(this.store.wordLessonsCompleted)
 
-      // 加载符号课程完成状态
-      for (let i = 0; i < 3; i++) {
-        const lessonId = `punctuation_lesson_${i}`
-        this.punctuationLessonsCompleted.set(lessonId, await dataPreferences.get(`${lessonId}_completed`, false) as boolean)
-      }
-
-      // 加载单词课程完成状态
-      for (let i = 0; i < 3; i++) {
-        const lessonId = `word_lesson_${i}`
-        this.wordLessonsCompleted.set(lessonId, await dataPreferences.get(`${lessonId}_completed`, false) as boolean)
-      }
-
-      // 检查各单元的完成状态
-      const isIntroUnitCompleted = this.introCompleted &&
-        this.chineseCompleted &&
-        this.introTestCompleted &&
-        this.chineseTestCompleted
-
-      const isAlphabetUnitCompleted = Array.from(this.alphabetLessonsCompleted.values()).every(completed => completed)
-      const isNumberUnitCompleted = Array.from(this.numberLessonsCompleted.values()).every(completed => completed)
-
-      // 单元解锁逻辑：当前单元完成后解锁下一单元
-      this.unitUnlocked.set('alphabet', isIntroUnitCompleted)
-      this.unitUnlocked.set('numbers', isAlphabetUnitCompleted)
-      // 数字单元完成后同时解锁符号和单词单元
-      this.unitUnlocked.set('punctuation', isNumberUnitCompleted)
-      this.unitUnlocked.set('words', isNumberUnitCompleted)
+      this.unitUnlocked = this.store.getUnitUnlocked()
 
       // 计算目标单元和课次
       this.computeTargetUnitAndLesson()
+      console.error(`[VM] loadUnlockState: flags introCompleted=${this.introCompleted} introTestCompleted=${this.introTestCompleted} chineseCompleted=${this.chineseCompleted} chineseTestCompleted=${this.chineseTestCompleted}`)
+      console.error(`[VM] loadUnlockState: unitUnlocked intro=${this.unitUnlocked.get('intro')} alphabet=${this.unitUnlocked.get('alphabet')} numbers=${this.unitUnlocked.get('numbers')} punctuation=${this.unitUnlocked.get('punctuation')} words=${this.unitUnlocked.get('words')}`)
 
     } catch (error) {
-      console.error('加载学习进度失败:', error)
+      console.error('[VM] loadUnlockState FAILED:', error)
     }
   }
 
@@ -178,65 +150,31 @@ export class LearnViewModel {
 
   async markLessonCompleted(lessonId: string): Promise<void> {
     try {
-      const dataPreferences = await preferences.getPreferences(getContext(), 'learn_progress')
-      await dataPreferences.put(`${lessonId}_completed`, true)
-      await dataPreferences.flush()
-      
-      // 更新内存状态
-      if (lessonId.startsWith('alphabet_')) {
-        this.alphabetLessonsCompleted.set(lessonId, true)
-      } else if (lessonId.startsWith('number_')) {
-        this.numberLessonsCompleted.set(lessonId, true)
-      } else if (lessonId.startsWith('punctuation_')) {
-        this.punctuationLessonsCompleted.set(lessonId, true)
-      } else if (lessonId.startsWith('word_')) {
-        this.wordLessonsCompleted.set(lessonId, true)
-      }
-      
-      // 重新计算解锁状态
+      console.error(`[VM] markLessonCompleted: ${lessonId}`)
+      await this.store.saveLessonCompleted(lessonId)
       await this.loadUnlockState()
     } catch (error) {
-      console.error('保存课程完成状态失败:', error)
+      console.error('[VM] markLessonCompleted FAILED:', error)
     }
   }
 
   async markTestCompleted(testKey: string): Promise<void> {
     try {
-      const dataPreferences = await preferences.getPreferences(getContext(), 'learn_progress')
-      await dataPreferences.put(testKey, true)
-      await dataPreferences.flush()
-      
-      // 更新内存状态
-      if (testKey === 'intro_test_completed') {
-        this.introTestCompleted = true
-      } else if (testKey === 'chinese_test_completed') {
-        this.chineseTestCompleted = true
-      }
-      
-      // 重新计算解锁状态
+      console.error(`[VM] markTestCompleted: ${testKey}`)
+      await this.store.saveTestCompleted(testKey)
       await this.loadUnlockState()
     } catch (error) {
-      console.error('保存测试完成状态失败:', error)
+      console.error('[VM] markTestCompleted FAILED:', error)
     }
   }
 
   async markLessonContentCompleted(lessonKey: string): Promise<void> {
     try {
-      const dataPreferences = await preferences.getPreferences(getContext(), 'learn_progress')
-      await dataPreferences.put(lessonKey, true)
-      await dataPreferences.flush()
-      
-      // 更新内存状态
-      if (lessonKey === 'intro_completed') {
-        this.introCompleted = true
-      } else if (lessonKey === 'chinese_completed') {
-        this.chineseCompleted = true
-      }
-      
-      // 重新计算解锁状态
+      console.error(`[VM] markLessonContentCompleted: ${lessonKey}`)
+      await this.store.saveLessonContentCompleted(lessonKey)
       await this.loadUnlockState()
     } catch (error) {
-      console.error('保存课程内容完成状态失败:', error)
+      console.error('[VM] markLessonContentCompleted FAILED:', error)
     }
   }
 }

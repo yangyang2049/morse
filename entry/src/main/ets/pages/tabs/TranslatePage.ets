@@ -60,13 +60,15 @@ export struct TranslatePage {
       if (this.isTextToMorse) {
         TextArea({ placeholder: '在此输入文本，如: Hello World' })
           .height(180)
-          .fontSize(18)
+          .fontSize(24)
+          .fontColor('#FFFFFF')
           .margin(12)
           .onChange((v: string) => { this.textInput = v })
       } else {
         TextArea({ placeholder: '在此输入电码，如: ··· --- ···' })
           .height(180)
-          .fontSize(18)
+          .fontSize(24)
+          .fontColor('#FFFFFF')
           .margin(12)
           .onChange((v: string) => { this.morseInput = v })
       }
@@ -95,17 +97,19 @@ export struct TranslatePage {
   @Builder
   private OutputArea() {
     Column() {
-      Text(this.getOutput().length > 0 ? this.getOutput() : '输出将在此显示')
-        .fontSize(20)
-        .fontColor(this.getOutput().length > 0 ? '#FFFFFF' : '#B0B0B0')
+      TextArea({ text: this.getOutput().length > 0 ? this.getOutput() : '输出将在此显示' })
+        .height(180)
+        .fontSize(24)
+        .margin(12)
+        .backgroundColor(Color.Transparent)
+        .fontColor('#FFFFFF')
         .fontFamily(this.isTextToMorse ? 'monospace' : '')
-        .margin(16)
+        .enabled(false)
     }
     .backgroundColor('#1A1A1A')
     .borderRadius(12)
     .margin({ left: 12, right: 12, bottom: 12 })
     .border({ width: 1, color: '#333333' })
-    .height(180)
   }
 
   build() {
