@@ -1,5 +1,5 @@
 {
   "src": ["pages/Index", "pages/LessonPage", "pages/FullscreenLessonPage",
-    "pages/LessonQuizPage"
+    "pages/LessonQuizPage", "pages/PracticePage", "pages/PracticeDifficultyPage"
 ]
 }

@@ -1,48 +1,65 @@
 import { MorseCode, MorseCodeData } from '../models/MorseCode'
+import { promptAction } from '@kit.ArkUI'
 
 @Observed
 export class PracticeViewModel {
   // Game state
-  currentCharacter: string = ''
-  currentMorse: string = ''
-  userInput: string = ''
-  isCorrect: boolean = false
-  showResult: boolean = false
-  hintRevealed: boolean = false
-  showCorrectAnswer: boolean = false
-  showHint: boolean = false
-  isFavorite: boolean = false
-  correctCount: number = 0
-  difficulty: string = '简单'
-  hasIncorrectAttempt: boolean = false
+  @Track currentCharacter: string = ''
+  @Track currentMorse: string = ''
+  @Track userInput: string = ''
+  @Track isCorrect: boolean = false
+  @Track showResult: boolean = false
+  @Track hintRevealed: boolean = false
+  @Track showCorrectAnswer: boolean = false
+  @Track showHint: boolean = false
+  @Track isFavorite: boolean = false
+  @Track correctCount: number = 0 // Track correct attempts for current character
+  @Track difficulty: string = '简单'
+  @Track hasIncorrectAttempt: boolean = false // Track if user made incorrect attempt
+  @Track characterChangeId: number = 0 // 用于触发字符变化动画的唯一ID
   
-  // Progress tracking
-  progress: number = 0.0
-  currentCodes: MorseCode[] = []
-  currentIndex: number = 0
-  completionCount: Map<number, number> = new Map()
-  hadIncorrectOnCompletion: Map<number, boolean> = new Map()
-  
-  // Timers
   private checkTimer: number | null = null
   private hintTimer: number | null = null
-  
+  @Track currentCodes: MorseCode[] = []
+  private currentIndex: number = 0
+  @Track completionCount: Map<number, number> = new Map()
+  @Track hadIncorrectOnCompletion: Map<number, boolean> = new Map()
 
-  // Getters
-  get requiredAttempts(): number {
-    return this.hasIncorrectAttempt ? 2 : 1
+  // Derived values (methods for compatibility with existing pages)
+  getProgress(): number { 
+    return this.hasIncorrectAttempt ? (this.correctCount / 2.0) : 0.0
   }
-
-  get hadIncorrect(): Map<number, boolean> {
-    return this.hadIncorrectOnCompletion
+  getRequiredAttempts(): number { 
+    return this.hasIncorrectAttempt ? 2 : 1 
   }
-
-  init(): void {
-    this.initializePractice('简单')
+  getCurrentCodes(): MorseCode[] { 
+    return this.currentCodes 
   }
+  getCompletionCount(): Map<number, number> { 
+    return this.completionCount 
+  }
+  getHadIncorrectOnCompletion(): Map<number, boolean> { 
+    return this.hadIncorrectOnCompletion 
+  }
+  getCharacterChangeId(): number {
+    return this.characterChangeId
+  }
+  // Field accessors (compat methods expected by PracticePage.ets)
+  getCurrentCharacter(): string { return this.currentCharacter }
+  getCurrentMorse(): string { return this.currentMorse }
+  getUserInput(): string { return this.userInput }
+  getIsCorrect(): boolean { return this.isCorrect }
+  getShowResult(): boolean { return this.showResult }
+  getHintRevealed(): boolean { return this.hintRevealed }
+  getIsFavorite(): boolean { return this.isFavorite }
+  getCorrectCount(): number { return this.correctCount }
+  getDifficulty(): string { return this.difficulty }
+  getShowCorrectAnswer(): boolean { return this.showCorrectAnswer }
+  getHasIncorrectAttempt(): boolean { return this.hasIncorrectAttempt }
+  getShowHint(): boolean { return this.showHint }
 
   // Initialize practice session
-  initializePractice(difficulty: string): void {
+  init(difficulty: string = '简单'): void {
     this.difficulty = difficulty
     this.loadCodes()
   }
@@ -60,6 +77,7 @@ export class PracticeViewModel {
         ]
         break
       case '困难':
+        // Exclude Chinese characters; include only English letters, numbers, and common symbols
         this.currentCodes = [
           ...MorseCodeData.englishAlphabet,
           ...MorseCodeData.numbers,
@@ -92,33 +110,36 @@ export class PracticeViewModel {
     this.showCorrectAnswer = false
     this.hasIncorrectAttempt = false // Reset incorrect attempt flag
     this.showHint = false
+    this.characterChangeId++ // 增加字符变化ID以触发动画
   }
 
   // Add dot to user input
   addDot(): void {
+    // TODO: Add vibration feedback
     this.userInput += '.'
     this.startAutoCheck()
   }
 
   // Add dash to user input
   addDash(): void {
+    // TODO: Add vibration feedback
     this.userInput += '-'
     this.startAutoCheck()
   }
 
   // Start auto-check timer
   private startAutoCheck(): void {
-    if (this.checkTimer) {
+    if (this.checkTimer !== null) {
       clearTimeout(this.checkTimer)
     }
     this.checkTimer = setTimeout(() => {
       this.checkAnswer()
-    }, 800)
+    }, 600)
   }
 
   // Check if the answer is correct
   checkAnswer(): void {
-    if (this.userInput.trim().length === 0) return
+    if (this.userInput.trim() === '') return
 
     const isCorrect = this.userInput.trim() === this.currentMorse
     this.isCorrect = isCorrect
@@ -150,16 +171,25 @@ export class PracticeViewModel {
         }, 1500)
       }
     } else {
-      // Wrong answer, mark that user made incorrect attempt (if not already marked)
+      // Wrong answer, show system toast at bottom
+      promptAction.showToast({
+        message: '再试一次',
+        duration: 1500
+        // Remove bottom property to show at default bottom position
+      })
+      
+      // Mark that user made incorrect attempt (if not already marked)
       if (!this.hasIncorrectAttempt) {
         this.hasIncorrectAttempt = true
         this.correctCount = 0 // Only reset counter on first incorrect attempt
       }
-      // After 1 second, show correct answer
+      
+      // After 500ms, show correct answer
       setTimeout(() => {
         this.showCorrectAnswer = true
-      }, 1000)
-      // Auto-hide error note after 2 seconds total (1 second red + 1 second correct answer)
+      }, 500)
+      
+      // Auto-hide error state after 2 seconds total (500ms red + 1.5s correct answer)
       setTimeout(() => {
         this.showResult = false
         this.showCorrectAnswer = false
@@ -183,9 +213,15 @@ export class PracticeViewModel {
     this.generateNewCharacter()
   }
 
+  // Play morse code audio
+  playMorseCode(): void {
+    // TODO: Implement audio playback
+    console.log(`Playing morse code: ${this.currentMorse}`)
+  }
+
   // Show hint for 1 second
   flashHint(): void {
-    if (this.hintTimer) {
+    if (this.hintTimer !== null) {
       clearTimeout(this.hintTimer)
     }
     this.showHint = true
@@ -195,9 +231,6 @@ export class PracticeViewModel {
     }, 1000)
   }
 
-  // Play morse code audio (stubbed)
-  playMorseCode(): void {}
-
   // Change difficulty
   changeDifficulty(newDifficulty: string): void {
     if (this.difficulty !== newDifficulty) {
@@ -206,46 +239,17 @@ export class PracticeViewModel {
     }
   }
 
-  // Legacy methods for compatibility
-  next(): void {
-    this.passCharacter()
-  }
-
-  private normalizeDots(s: string): string {
-    // convert middle dot to '.' for comparison
-    return s.split('·').join('.')
-  }
-
-  private evaluate(): void {
-    const target = this.currentMorse
-    const input = this.normalizeDots(this.userInput)
-    // correctness when input equals target
-    if (input === target) {
-      this.isCorrect = true
-      this.showResult = true
-      this.progress = 1.0
-    } else {
-      this.isCorrect = false
-      // Simple progress: proportion of matched prefix
-      let matched = 0
-      const n = Math.min(input.length, target.length)
-      for (let i = 0; i < n; i++) {
-        if (input[i] === target[i]) matched++
-        else break
-      }
-      this.progress = target.length > 0 ? matched / target.length : 0
-      this.showResult = input.length >= target.length
-    }
-  }
-
-  // Cleanup timers
+  // Dispose
   destroy(): void {
-    if (this.checkTimer) {
+    if (this.checkTimer !== null) {
       clearTimeout(this.checkTimer)
     }
-    if (this.hintTimer) {
+    if (this.hintTimer !== null) {
       clearTimeout(this.hintTimer)
     }
-    // no-op
   }
+
+  // Backward-compat alias methods for older pages
+  initializePractice(difficulty: string): void { this.init(difficulty) }
+  dispose(): void { this.destroy() }
 }

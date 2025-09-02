@@ -88,7 +88,7 @@ export class MorseCodeData {
       }
       const found = codes.find(c => c.character === searchChar)
       if (found) {
-        result.push(found.morse.replaceAll('.', '·'))
+        result.push(found.morse.split('.').join('·'))
       } else {
         result.push(ch)
       }
@@ -101,7 +101,7 @@ export class MorseCodeData {
 
   static morseToText(morse: string): string {
     const codes = MorseCodeData.getAllCodes()
-    const normalized = morse.replaceAll('·', '.')
+    const normalized = morse.split('·').join('.')
     const words = normalized.split('/')
     const outWords: string[] = []
     for (const word of words) {
