@@ -1,4 +1,5 @@
 import { router } from '@kit.ArkUI'
+import window from '@ohos.window'
 
 interface DifficultyItem {
   label: string
@@ -13,6 +14,16 @@ export struct PracticeDifficultyPage {
     { label: '中等', desc: '字母 + 数字' },
     { label: '困难', desc: '全部字符' }
   ]
+
+  aboutToAppear() {
+    // Set status bar color
+    window.getLastWindow(getContext(this)).then((windowClass) => {
+      windowClass.setWindowSystemBarProperties({
+        statusBarColor: '#000000',
+        statusBarContentColor: '#FFFFFF'
+      })
+    })
+  }
 
   private openPractice(difficulty: string): void {
     console.error(`[PracticeDifficulty] opening practice page with difficulty=${difficulty}`)
@@ -94,5 +105,6 @@ export struct PracticeDifficultyPage {
     .width('100%')
     .height('100%')
     .backgroundColor(Color.Black)
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }

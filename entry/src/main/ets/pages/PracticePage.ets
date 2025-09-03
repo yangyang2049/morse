@@ -3,6 +3,7 @@ import { MorseCode } from '../models/MorseCode'
 import { router } from '@kit.ArkUI'
 import { promptAction } from '@kit.ArkUI'
 import { PracticeRecordDialog } from '../widgets/PracticeRecordDialog'
+import window from '@ohos.window'
 
 @Entry
 @Component
@@ -27,6 +28,14 @@ export struct PracticePage {
   private animationTimer: number | null = null
 
   aboutToAppear(): void {
+    // Set status bar color
+    window.getLastWindow(getContext(this)).then((windowClass) => {
+      windowClass.setWindowSystemBarProperties({
+        statusBarColor: '#000000',
+        statusBarContentColor: '#FFFFFF'
+      })
+    })
+
     // 从路由参数获取难度（容错处理，避免无参数时崩溃）
     try {
       const params = (router.getParams?.() as Record<string, Object>) ?? {}
@@ -107,7 +116,7 @@ export struct PracticePage {
         router.back()
       })
 
-      Text('练习')
+      Text(this.difficulty)
         .fontSize(18)
         .fontWeight(FontWeight.Bold)
         .fontColor(Color.White)
@@ -347,6 +356,7 @@ export struct PracticePage {
       .width('100%')
       .height('100%')
       .backgroundColor(Color.Black)
+      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
     }
   }
 }

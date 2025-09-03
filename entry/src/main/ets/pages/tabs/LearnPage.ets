@@ -1,5 +1,6 @@
 import { LearnViewModel } from '../../viewmodel/LearnViewModel'
 import { router } from '@kit.ArkUI'
+import window from '@ohos.window'
 import { LessonConfig } from '../../data/LessonConfig'
 
 interface LessonItem {
@@ -18,6 +19,14 @@ export struct LearnPage {
   @State private refreshTick: number = 0
 
   aboutToAppear(): void {
+    // Set status bar color
+    window.getLastWindow(getContext(this)).then((windowClass) => {
+      windowClass.setWindowSystemBarProperties({
+        statusBarColor: '#000000',
+        statusBarContentColor: '#FFFFFF'
+      })
+    })
+
     console.error('[LEARN] aboutToAppear: init()')
     this.vm.init().then(() => {
       this.refreshTick++
@@ -415,5 +424,6 @@ export struct LearnPage {
     .width('100%')
     .height('100%')
     .backgroundColor(Color.Black)
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }

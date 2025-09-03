@@ -2,67 +2,69 @@ import { LearnPage } from './tabs/LearnPage'
 import { PracticeDifficultyPage } from './PracticeDifficultyPage'
 import { TranslatePage } from './tabs/TranslatePage'
 import { CodeTablePage } from './tabs/CodeTablePage'
+import window from '@ohos.window'
 
 @Entry
 @Component
 struct Index {
-  @State index: number = 0;
+  @State currentIndex: number = 0
 
-  @Builder
-  TabIcon(icon: Resource, active: boolean = false) {
-    // Try different approaches for SVG rendering
-    Image(icon)
-      .width(24)
-      .height(24)
-      .renderMode(ImageRenderMode.Template) // Template mode for SVG tinting
-      .fillColor(active ? Color.White : '#CCCCCC') // Ensure visibility
-      .objectFit(ImageFit.Contain) // Ensure proper scaling
-      .onError(() => {
-        // Fallback to text icons if SVG fails
-        console.error('Failed to load SVG icon:', icon)
+  aboutToAppear() {
+    // Set status bar color
+    window.getLastWindow(getContext(this)).then((windowClass) => {
+      windowClass.setWindowSystemBarProperties({
+        statusBarColor: '#000000',
+        statusBarContentColor: '#FFFFFF'
       })
+    })
   }
 
-  @Builder
-  TextTabIcon(text: string, active: boolean = false) {
-    // Fallback text icons
-    Text(text)
-      .fontSize(20)
-      .fontColor(active ? Color.White : '#CCCCCC')
-      .fontWeight(FontWeight.Bold)
+  @Builder TabBuilder(targetIndex: number, selectedImg: Resource, normalImg: Resource) {
+    Column() {
+      Image(this.currentIndex === targetIndex ? selectedImg : normalImg)
+        .size({ width: 24, height: 24 })
+        .fillColor(this.currentIndex === targetIndex ? Color.White : '#aaaaaa')
+    }
+    .width('100%')
+    .height(50)
+    .justifyContent(FlexAlign.Center)
+    .alignItems(HorizontalAlign.Center)
   }
 
   build() {
-    Tabs({ index: this.index }) {
-      // Learn
+    Tabs({ barPosition: BarPosition.End, controller: new TabsController(), index: this.currentIndex }) {
       TabContent() {
         LearnPage()
       }
-      .tabBar((): void => { this.TextTabIcon('📚', this.index === 0) })
+      .tabBar(this.TabBuilder(0, $rawfile('ic_learn.svg'), $rawfile('ic_learn.svg')))
 
-      // Practice
       TabContent() {
         PracticeDifficultyPage()
       }
-      .tabBar((): void => { this.TextTabIcon('🎯', this.index === 1) })
+      .tabBar(this.TabBuilder(1, $rawfile('ic_train.svg'), $rawfile('ic_train.svg')))
 
-      // Translate
       TabContent() {
         TranslatePage()
       }
-      .tabBar((): void => { this.TextTabIcon('🔄', this.index === 2) })
+      .tabBar(this.TabBuilder(2, $rawfile('ic_translate.svg'), $rawfile('ic_translate.svg')))
 
-      // 码表 (code table)
       TabContent() {
         CodeTablePage()
       }
-      .tabBar((): void => { this.TextTabIcon('📋', this.index === 3) })
+      .tabBar(this.TabBuilder(3, $rawfile('ic_table.svg'), $rawfile('ic_table.svg')))
     }
+    .vertical(false)
     .barMode(BarMode.Fixed)
-    .barPosition(BarPosition.End)
+    .barWidth('100%')
+    .barHeight(56)
     .barBackgroundColor(Color.Black)
-    .height('100%')
+    .animationDuration(400)
+    .onChange((index: number) => {
+      this.currentIndex = index
+    })
     .width('100%')
-    .onChange((index: number) => this.index = index)
+    .height('100%')
+    .backgroundColor(Color.Black)
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }

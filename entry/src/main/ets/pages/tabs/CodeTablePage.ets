@@ -1,4 +1,6 @@
 import { MorseCode, MorseCodeData } from '../../models/MorseCode'
+import window from '@ohos.window'
+import { router } from '@kit.ArkUI'
 
 interface Category {
   key: string
@@ -14,6 +16,16 @@ export struct CodeTablePage {
     { key: 'numbers', name: '数字' },
     { key: 'punctuation', name: '标点' },
   ]
+
+  aboutToAppear() {
+    // Set status bar color
+    window.getLastWindow(getContext(this)).then((windowClass) => {
+      windowClass.setWindowSystemBarProperties({
+        statusBarColor: '#000000',
+        statusBarContentColor: '#FFFFFF'
+      })
+    })
+  }
 
   private getFiltered(): MorseCode[] {
     let list: MorseCode[]
@@ -41,14 +53,33 @@ export struct CodeTablePage {
     Column() {
       // Title bar
       Row() {
+        Blank().width(40) // Balance the right button
+
         Text('码表')
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
           .fontColor('#FFFFFF')
+          .layoutWeight(1)
+          .textAlign(TextAlign.Center)
+
+        Button() {
+          Text('中')
+            .fontSize(18)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#FFFFFF')
+        }
+        .width(40)
+        .height(40)
+        .backgroundColor(Color.Transparent)
+        .onClick(() => {
+          router.pushUrl({
+            url: 'pages/ChineseTelegraphCodePage'
+          })
+        })
       }
       .height(52)
       .width('100%')
-      .justifyContent(FlexAlign.Center)
+      .padding({ left: 16, right: 16 })
       .backgroundColor('#000000')
 
       // Category filter row (chips)
@@ -100,12 +131,12 @@ export struct CodeTablePage {
           }
         }, (code: MorseCode) => code.character + ':' + code.morse)
       }
-      .divider({ strokeWidth: 1, color: '#333333' })
       .width('100%')
       .layoutWeight(1)
     }
     .backgroundColor('#000000')
     .width('100%')
     .height('100%')
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }

@@ -1,5 +1,11 @@
 {
-  "src": ["pages/Index", "pages/LessonPage", "pages/FullscreenLessonPage",
-    "pages/LessonQuizPage", "pages/PracticePage", "pages/PracticeDifficultyPage"
-]
+  "src": [
+    "pages/Index",
+    "pages/LessonPage",
+    "pages/FullscreenLessonPage",
+    "pages/LessonQuizPage",
+    "pages/PracticePage",
+    "pages/PracticeDifficultyPage",
+    "pages/ChineseTelegraphCodePage"
+  ]
 }

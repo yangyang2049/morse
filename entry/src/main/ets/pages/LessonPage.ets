@@ -25,8 +25,8 @@ export struct LessonPage {
     // Set status bar color
     window.getLastWindow(getContext(this)).then((windowClass) => {
       windowClass.setWindowSystemBarProperties({
-        statusBarColor: '#1A1A1A',
-        isStatusBarLightIcon: false
+        statusBarColor: '#000000',
+        statusBarContentColor: '#FFFFFF'
       })
     })
 
@@ -85,7 +85,6 @@ export struct LessonPage {
     }
     .height(52)
     .padding({ left: 16, right: 16 })
-    .backgroundColor('#1A1A1A')
   }
 
   @Builder
@@ -182,19 +181,13 @@ export struct LessonPage {
     Column() {
       Stack() {
         // Big faded number at bottom right
-        Text('测')
-          .fontSize(80)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(Color.White)
-          .opacity(0.25)
-          .position({ x: '100%', y: '100%' })
-          .translate({ x: '-100%', y: '-100%' })
-          .margin({ right: 0, bottom: -10 })
+        
 
         // Main content
         Column() {
           Row() {
-            Image($rawfile('ic_records.svg')).width(20).height(20).fillColor('#FF8C00').margin({ right: 8 })
+                        Image($rawfile('ic_records.svg')).width(20).height(20).fillColor('#FF8C00').margin({ right: 8 })
+
             Text(this.testTitle)
               .fontSize(20)
               .fontWeight(FontWeight.Bold)
@@ -226,13 +219,10 @@ export struct LessonPage {
           Blank().layoutWeight(1)
 
           Button() {
-            Row() {
-              Image($rawfile('ic_forward.svg')).width(16).height(16).fillColor(Color.White).margin({ right: 8 })
-              Text('开始测试')
-                .fontSize(16)
-                .fontWeight(FontWeight.Bold)
-                .fontColor(Color.White)
-            }
+            Text('开始测试')
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(Color.White)
           }
           .width('100%')
           .height(48)
@@ -294,6 +284,7 @@ export struct LessonPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#1A1A1A')
+    .backgroundColor(Color.Black)
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }

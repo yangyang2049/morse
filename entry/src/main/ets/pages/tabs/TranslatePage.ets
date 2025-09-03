@@ -1,10 +1,21 @@
 import { MorseCodeData } from '../../models/MorseCode'
+import window from '@ohos.window'
 
 @Component
 export struct TranslatePage {
   @State isTextToMorse: boolean = true
   @State textInput: string = ''
   @State morseInput: string = ''
+
+  aboutToAppear() {
+    // Set status bar color
+    window.getLastWindow(getContext(this)).then((windowClass) => {
+      windowClass.setWindowSystemBarProperties({
+        statusBarColor: '#000000',
+        statusBarContentColor: '#FFFFFF'
+      })
+    })
+  }
 
   private getOutput(): string {
     if (this.isTextToMorse) {
@@ -174,5 +185,6 @@ export struct TranslatePage {
     .width('100%')
     .height('100%')
     .backgroundColor('#000000')
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }

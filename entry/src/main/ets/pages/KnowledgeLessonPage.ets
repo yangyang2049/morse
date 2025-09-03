@@ -12,8 +12,8 @@ struct KnowledgeLessonPage {
     // Set status bar color
     window.getLastWindow(getContext(this)).then((windowClass) => {
       windowClass.setWindowSystemBarProperties({
-        statusBarColor: '#1A1A1A',
-        isStatusBarLightIcon: false
+        statusBarColor: '#000000',
+        statusBarContentColor: '#FFFFFF'
       })
     })
   }
@@ -46,7 +46,6 @@ struct KnowledgeLessonPage {
     .width('100%')
     .height(56)
     .padding({ left: 16, right: 16 })
-    .backgroundColor('#1A1A1A')
   }
 
   @Builder

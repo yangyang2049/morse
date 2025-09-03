@@ -53,8 +53,8 @@ export struct LessonQuizPage {
     // Set status bar color
     window.getLastWindow(getContext(this)).then((windowClass) => {
       windowClass.setWindowSystemBarProperties({
-        statusBarColor: '#1A1A1A',
-        isStatusBarLightIcon: false
+        statusBarColor: '#000000',
+        statusBarContentColor: '#FFFFFF'
       })
     })
 
@@ -295,9 +295,10 @@ export struct LessonQuizPage {
   TitleBar() {
     Row() {
       Button() {
-        Text('返回')
-          .fontSize(16)
-          .fontColor(Color.White)
+        Image($rawfile('ic_back.svg'))
+          .width(24)
+          .height(24)
+          .fillColor(Color.White)
       }
       .width(48)
       .height(48)
@@ -321,7 +322,7 @@ export struct LessonQuizPage {
     }
     .height(52)
     .padding({ left: 16, right: 16 })
-    .backgroundColor('#1A1A1A')
+    .backgroundColor(Color.Transparent)
   }
 
   @Builder
@@ -705,6 +706,7 @@ export struct LessonQuizPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#1A1A1A')
+    .backgroundColor(Color.Black)
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }

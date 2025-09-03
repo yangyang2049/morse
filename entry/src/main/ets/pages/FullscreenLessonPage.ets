@@ -3,6 +3,7 @@ import { router } from '@kit.ArkUI'
 import { LearnViewModel } from '../viewmodel/LearnViewModel'
 import { LessonData } from '../data/LessonData'
 import { promptAction } from '@kit.ArkUI'
+import window from '@ohos.window'
 
 @Entry
 @Component
@@ -42,6 +43,14 @@ export struct FullscreenLessonPage {
   private learnViewModel: LearnViewModel = new LearnViewModel()
 
   aboutToAppear() {
+    // Set status bar color
+    window.getLastWindow(getContext(this)).then((windowClass) => {
+      windowClass.setWindowSystemBarProperties({
+        statusBarColor: '#000000',
+        statusBarContentColor: '#FFFFFF'
+      })
+    })
+
     // 从路由参数获取课程数据
     const params = router.getParams() as Record<string, Object>
     this.lessonId = params['lessonId'] as string || ''
@@ -622,5 +631,6 @@ export struct FullscreenLessonPage {
     .width('100%')
     .height('100%')
     .backgroundColor(Color.Black)
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }
