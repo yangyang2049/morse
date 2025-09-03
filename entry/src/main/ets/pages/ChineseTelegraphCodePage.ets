@@ -16,7 +16,9 @@ export struct ChineseTelegraphCodePage {
 
   aboutToAppear() {
     // Set status bar color
-    window.getLastWindow(getContext(this)).then((windowClass) => {
+    const uiContext = this.getUIContext()
+    const hostContext = uiContext.getHostContext()
+    window.getLastWindow(hostContext).then((windowClass) => {
       windowClass.setWindowSystemBarProperties({
         statusBarColor: '#000000',
         statusBarContentColor: '#FFFFFF'
@@ -29,8 +31,10 @@ export struct ChineseTelegraphCodePage {
   private loadChineseTelegraphCodes() {
     try {
       // Load from rawfile
-      const context = getContext(this)
-      context.resourceManager.getRawFileContent('chinese_telegraph_codes_full.json')
+      const uiContext = this.getUIContext()
+      const hostContext = uiContext.getHostContext()
+      if (hostContext) {
+        hostContext.resourceManager.getRawFileContent('chinese_telegraph_codes_full.json')
         .then((data: ArrayBuffer) => {
           const decoder = new util.TextDecoder('utf-8')
           const uint8Array = new Uint8Array(data)
@@ -46,6 +50,11 @@ export struct ChineseTelegraphCodePage {
           this.codes = []
           this.filteredCodes = []
         })
+      } else {
+        console.error('Host context is undefined')
+        this.codes = []
+        this.filteredCodes = []
+      }
     } catch {
       console.error('Error loading Chinese telegraph codes')
       this.codes = []

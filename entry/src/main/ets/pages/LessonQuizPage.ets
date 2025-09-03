@@ -31,7 +31,7 @@ interface ButtonStyle {
 
 @Entry
 @Component
-export struct LessonQuizPage {
+struct LessonQuizPage {
   @State testType: string = 'intro'
   @State pageTitle: string = '基础测试'
   @State testCompletedKey: string = 'intro_test_completed'
@@ -51,12 +51,16 @@ export struct LessonQuizPage {
 
   aboutToAppear() {
     // Set status bar color
-    window.getLastWindow(getContext(this)).then((windowClass) => {
-      windowClass.setWindowSystemBarProperties({
-        statusBarColor: '#000000',
-        statusBarContentColor: '#FFFFFF'
+    const uiContext = this.getUIContext()
+    const hostContext = uiContext.getHostContext()
+    if (hostContext) {
+      window.getLastWindow(hostContext).then((windowClass) => {
+        windowClass.setWindowSystemBarProperties({
+          statusBarColor: '#000000',
+          statusBarContentColor: '#FFFFFF'
+        })
       })
-    })
+    }
 
     // Load route params, if any
     try {
@@ -72,7 +76,11 @@ export struct LessonQuizPage {
     }
 
     // Initialize ViewModel and questions for selected test type
-    this.learnViewModel.init()
+    const uiContext2 = this.getUIContext()
+    const hostContext2 = uiContext2.getHostContext()
+    if (hostContext2) {
+      this.learnViewModel.init(hostContext2)
+    }
     console.error('[QUIZ] aboutToAppear: init ViewModel called')
     this.initializeTestData()
   }
@@ -248,7 +256,11 @@ export struct LessonQuizPage {
     try {
       console.error(`[QUIZ] markTestCompleted: start testKey=${this.testCompletedKey} testType=${this.testType} score=${this.score}`)
       // 使用 ViewModel 来标记测试完成，这会自动解锁下一课
-      await this.learnViewModel.markTestCompleted(this.testCompletedKey)
+      const uiContext = this.getUIContext()
+      const hostContext = uiContext.getHostContext()
+      if (hostContext) {
+        await this.learnViewModel.markTestCompleted(this.testCompletedKey, hostContext)
+      }
       
       console.error('[QUIZ] markTestCompleted: persisted OK')
       this.progressSaved = true

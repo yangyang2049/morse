@@ -17,12 +17,16 @@ export struct PracticeDifficultyPage {
 
   aboutToAppear() {
     // Set status bar color
-    window.getLastWindow(getContext(this)).then((windowClass) => {
-      windowClass.setWindowSystemBarProperties({
-        statusBarColor: '#000000',
-        statusBarContentColor: '#FFFFFF'
+    const uiContext = this.getUIContext()
+    const hostContext = uiContext.getHostContext()
+    if (hostContext) {
+      window.getLastWindow(hostContext).then((windowClass) => {
+        windowClass.setWindowSystemBarProperties({
+          statusBarColor: '#000000',
+          statusBarContentColor: '#FFFFFF'
+        })
       })
-    })
+    }
   }
 
   private openPractice(difficulty: string): void {

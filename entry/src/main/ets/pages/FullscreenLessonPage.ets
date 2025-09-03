@@ -7,7 +7,7 @@ import window from '@ohos.window'
 
 @Entry
 @Component
-export struct FullscreenLessonPage {
+struct FullscreenLessonPage {
   // 课程数据
   private codes: MorseCode[] = []
   private lessonId: string = ''
@@ -32,35 +32,48 @@ export struct FullscreenLessonPage {
   // 进度补间计时器
   private progressTimer: number | null = null
   // 自定义完成对话框控制器
-  private completionDialogController: CustomDialogController = new CustomDialogController({
-    builder: this.CompletionDialog(),
-    autoCancel: false,
-    alignment: DialogAlignment.Center,
-    customStyle: false
-  })
+  private completionDialogController: CustomDialogController | null = null
   
   // ViewModel
   private learnViewModel: LearnViewModel = new LearnViewModel()
 
   aboutToAppear() {
     // Set status bar color
-    window.getLastWindow(getContext(this)).then((windowClass) => {
-      windowClass.setWindowSystemBarProperties({
-        statusBarColor: '#000000',
-        statusBarContentColor: '#FFFFFF'
+    const uiContext = this.getUIContext()
+    const hostContext = uiContext.getHostContext()
+    if (hostContext) {
+      window.getLastWindow(hostContext).then((windowClass) => {
+        windowClass.setWindowSystemBarProperties({
+          statusBarColor: '#000000',
+          statusBarContentColor: '#FFFFFF'
+        })
       })
-    })
+    }
 
     // 从路由参数获取课程数据
     const params = router.getParams() as Record<string, Object>
     this.lessonId = params['lessonId'] as string || ''
     this.title = params['title'] as string || '练习课程'
     
+    console.log(`[FullscreenLessonPage] Received lessonId: ${this.lessonId}, title: ${this.title}`)
+    
     // 根据lessonId设置课程数据
     this.setupLessonData()
     
     // 初始化ViewModel
-    this.learnViewModel.init()
+    const uiContext2 = this.getUIContext()
+    const hostContext2 = uiContext2.getHostContext()
+    if (hostContext2) {
+      this.learnViewModel.init(hostContext2)
+    }
+
+    // 初始化完成对话框控制器
+    this.completionDialogController = new CustomDialogController({
+      builder: this.CompletionDialog(),
+      autoCancel: false,
+      alignment: DialogAlignment.Center,
+      customStyle: false
+    })
   }
 
   aboutToDisappear() {
@@ -78,6 +91,8 @@ export struct FullscreenLessonPage {
 
   private setupLessonData() {
     // 根据lessonId设置不同的课程数据，按课程顺序显示指定内容
+    console.log(`[FullscreenLessonPage] setupLessonData: lessonId=${this.lessonId}`)
+    
     if (this.lessonId.includes('alpha_')) {
       // 字母课程：根据课程编号显示特定字母组合
       const lessonIndex = parseInt(this.lessonId.split('_')[1]) || 0
@@ -132,13 +147,13 @@ export struct FullscreenLessonPage {
   }
 
   private addDot(): void {
-    this.userInput += '.'
+    this.userInput = (this.userInput + '.').trim()
     this.showResult = false
     this.startAutoCheck()
   }
 
   private addDash(): void {
-    this.userInput += '-'
+    this.userInput = (this.userInput + '-').trim()
     this.showResult = false
     this.startAutoCheck()
   }
@@ -240,14 +255,20 @@ export struct FullscreenLessonPage {
 
   private async markLessonCompleted(): Promise<void> {
     if (this.lessonId) {
-      await this.learnViewModel.markLessonCompleted(this.lessonId)
+      const uiContext = this.getUIContext()
+      const hostContext = uiContext.getHostContext()
+      if (hostContext) {
+        await this.learnViewModel.markLessonCompleted(this.lessonId, hostContext)
+      }
     }
   }
 
   private showCompletionDialog(): void {
     // 持久化完成状态并打开自定义对话框
     this.markLessonCompleted()
-    this.completionDialogController.open()
+    if (this.completionDialogController) {
+      this.completionDialogController.open()
+    }
   }
 
   @Builder
@@ -327,7 +348,9 @@ export struct FullscreenLessonPage {
         .border({ width: 2, color: Color.White })
         .borderRadius(8)
         .onClick(() => {
-          this.completionDialogController.close()
+          if (this.completionDialogController) {
+            this.completionDialogController.close()
+          }
           router.back()
         })
 
@@ -344,7 +367,9 @@ export struct FullscreenLessonPage {
         .backgroundColor(Color.Green)
         .borderRadius(8)
         .onClick(() => {
-          this.completionDialogController.close()
+          if (this.completionDialogController) {
+            this.completionDialogController.close()
+          }
           this.currentIndex = 0
           this.completionCount.clear()
           this.practiceCount.clear()
@@ -447,6 +472,8 @@ export struct FullscreenLessonPage {
         .fontWeight(FontWeight.Bold)
         // 始终使用深色字符，不随背景变为白色
         .fontColor('#1A1A1A')
+        .textAlign(TextAlign.Center)
+        .width('100%')
     }
   }
 
@@ -524,30 +551,36 @@ export struct FullscreenLessonPage {
 
   @Builder
   private InputDisplay() {
-    Stack({ alignContent: Alignment.Center }) {
+    Column() {
       // 主要输入文本
-      Text(this.userInput.replace(/\./g, '·'))
+      Text(this.userInput.replace(/\./g, '·').trim())
         .fontSize(36)
         .fontWeight(FontWeight.Bold)
         .fontColor(
           this.showResult && this.isCorrect ? Color.Green :
-          this.userInput.length === 0 ? Color.Transparent : '#FFD700'
+          this.userInput.trim().length === 0 ? Color.Transparent : '#FFD700'
         )
         .fontFamily('monospace')
         .letterSpacing(4)
+        .textAlign(TextAlign.Center)
+        .width('100%')
       
       // 错误时的红色文本
       if (this.showResult && !this.isCorrect) {
-        Text(this.userInput.replace(/\./g, '·'))
+        Text(this.userInput.replace(/\./g, '·').trim())
           .fontSize(36)
           .fontWeight(FontWeight.Bold)
           .fontColor(Color.Red)
           .fontFamily('monospace')
           .letterSpacing(4)
+          .textAlign(TextAlign.Center)
+          .width('100%')
       }
     }
     .height(60)
     .width('100%')
+    .justifyContent(FlexAlign.Center)
+    .alignItems(HorizontalAlign.Center)
   }
 
 

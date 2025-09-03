@@ -1,6 +1,7 @@
 import { LessonData } from '../data/LessonData'
 import { ProgressStore } from '../store/ProgressStore'
 import { LessonConfig } from '../data/LessonConfig'
+import Context from '@ohos.app.ability.common'
 
 @Observed
 export class LearnViewModel {
@@ -19,15 +20,15 @@ export class LearnViewModel {
   targetUnitIdx: number = 0
   targetLessonIdx: number | null = null
 
-  async init(): Promise<void> {
+  async init(context: Context): Promise<void> {
     console.error('[VM] init() called')
-    await this.loadUnlockState()
+    await this.loadUnlockState(context)
   }
 
-  async loadUnlockState(): Promise<void> {
+  async loadUnlockState(context: Context): Promise<void> {
     try {
       console.error('[VM] loadUnlockState: start load from store')
-      await this.store.load()
+      await this.store.load(context)
 
       // 获取单元解锁状态
       this.unitUnlocked = this.store.getUnitUnlocked()
@@ -49,32 +50,32 @@ export class LearnViewModel {
     this.targetLessonIdx = target.lessonIdx
   }
 
-  async markLessonCompleted(lessonId: string): Promise<void> {
+  async markLessonCompleted(lessonId: string, context: Context): Promise<void> {
     try {
       console.error(`[VM] markLessonCompleted: ${lessonId}`)
-      await this.store.saveLessonCompleted(lessonId)
-      await this.loadUnlockState()
+      await this.store.saveLessonCompleted(lessonId, context)
+      await this.loadUnlockState(context)
     } catch (error) {
       console.error('[VM] markLessonCompleted FAILED:', error)
     }
   }
 
-  async markTestCompleted(testKey: string): Promise<void> {
+  async markTestCompleted(testKey: string, context: Context): Promise<void> {
     try {
       console.error(`[VM] markTestCompleted: ${testKey}`)
-      await this.store.saveTestCompleted(testKey)
-      await this.loadUnlockState()
+      await this.store.saveTestCompleted(testKey, context)
+      await this.loadUnlockState(context)
       console.error(`[VM] markTestCompleted: after loadUnlockState, lesson 2 unlocked: ${this.isLessonUnlocked(2)}`)
     } catch (error) {
       console.error('[VM] markTestCompleted FAILED:', error)
     }
   }
 
-  async markLessonContentCompleted(lessonKey: string): Promise<void> {
+  async markLessonContentCompleted(lessonKey: string, context: Context): Promise<void> {
     try {
       console.error(`[VM] markLessonContentCompleted: ${lessonKey}`)
-      await this.store.saveLessonContentCompleted(lessonKey)
-      await this.loadUnlockState()
+      await this.store.saveLessonContentCompleted(lessonKey, context)
+      await this.loadUnlockState(context)
     } catch (error) {
       console.error('[VM] markLessonContentCompleted FAILED:', error)
     }
@@ -96,22 +97,22 @@ export class LearnViewModel {
   }
 
   // 解锁所有课程（用于测试或管理员功能）
-  async unlockAllLessons(): Promise<void> {
+  async unlockAllLessons(context: Context): Promise<void> {
     try {
       console.error('[VM] unlockAllLessons: unlocking all lessons')
-      await this.store.unlockAllLessons()
-      await this.loadUnlockState()
+      await this.store.unlockAllLessons(context)
+      await this.loadUnlockState(context)
     } catch (error) {
       console.error('[VM] unlockAllLessons FAILED:', error)
     }
   }
 
   // 重置进度（用于测试）
-  async resetProgress(): Promise<void> {
+  async resetProgress(context: Context): Promise<void> {
     try {
       console.error('[VM] resetProgress: resetting all progress')
-      await this.store.resetProgress()
-      await this.loadUnlockState()
+      await this.store.resetProgress(context)
+      await this.loadUnlockState(context)
     } catch (error) {
       console.error('[VM] resetProgress FAILED:', error)
     }

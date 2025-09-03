@@ -1,6 +1,7 @@
 import { preferences } from '@kit.ArkData'
 import { LessonConfig } from '../data/LessonConfig'
 import { FORCE_UNLOCK_ALL } from '../data/FeatureFlags'
+import Context from '@ohos.app.ability.common'
 
 export interface ProgressTarget {
   unitIdx: number
@@ -14,9 +15,9 @@ export class ProgressStore {
   // 课程完成状态
   completedLessons: Set<number> = new Set()
 
-  async load(): Promise<void> {
+  async load(context: Context): Promise<void> {
     console.error('[STORE] load: begin')
-    const prefs = await preferences.getPreferences(getContext(), 'learn_progress')
+    const prefs = await preferences.getPreferences(context, 'learn_progress')
 
     if (FORCE_UNLOCK_ALL) {
       // 临时强制解锁所有课程（由特性开关控制）
@@ -52,7 +53,7 @@ export class ProgressStore {
     console.error(`[STORE] load: unlocked=${Array.from(this.unlockedLessons).join(',')} completed=${Array.from(this.completedLessons).join(',')}`)
   }
 
-  async saveLessonCompleted(lessonId: string): Promise<void> {
+  async saveLessonCompleted(lessonId: string, context: Context): Promise<void> {
     console.error(`[STORE] saveLessonCompleted: ${lessonId}`)
     const lessonNumber = LessonConfig.getLessonNumber(lessonId)
     if (lessonNumber === 0) return
@@ -67,7 +68,7 @@ export class ProgressStore {
     }
 
     // 保存到preferences
-    const prefs = await preferences.getPreferences(getContext(), 'learn_progress')
+    const prefs = await preferences.getPreferences(context, 'learn_progress')
     await prefs.put('completed_lessons', JSON.stringify(Array.from(this.completedLessons)))
     await prefs.put('unlocked_lessons', JSON.stringify(Array.from(this.unlockedLessons)))
     await prefs.flush()
@@ -75,7 +76,7 @@ export class ProgressStore {
     console.error(`[STORE] lesson ${lessonNumber} completed, unlocked lessons: ${Array.from(this.unlockedLessons).join(',')}`)
   }
 
-  async saveTestCompleted(testKey: string): Promise<void> {
+  async saveTestCompleted(testKey: string, context: Context): Promise<void> {
     console.error(`[STORE] saveTestCompleted: ${testKey}`)
     // 测试完成等同于课程完成，解锁下一课
     let lessonNumber = 0
@@ -94,7 +95,7 @@ export class ProgressStore {
       }
       
       // 保存到preferences
-      const prefs = await preferences.getPreferences(getContext(), 'learn_progress')
+      const prefs = await preferences.getPreferences(context, 'learn_progress')
       await prefs.put('completed_lessons', JSON.stringify(Array.from(this.completedLessons)))
       await prefs.put('unlocked_lessons', JSON.stringify(Array.from(this.unlockedLessons)))
       await prefs.flush()
@@ -103,7 +104,7 @@ export class ProgressStore {
     }
   }
 
-  async saveLessonContentCompleted(lessonKey: string): Promise<void> {
+  async saveLessonContentCompleted(lessonKey: string, context: Context): Promise<void> {
     console.error(`[STORE] saveLessonContentCompleted: ${lessonKey}`)
     // 课程内容完成等同于课程完成
     let lessonNumber = 0
@@ -122,7 +123,7 @@ export class ProgressStore {
       }
       
       // 保存到preferences
-      const prefs = await preferences.getPreferences(getContext(), 'learn_progress')
+      const prefs = await preferences.getPreferences(context, 'learn_progress')
       await prefs.put('completed_lessons', JSON.stringify(Array.from(this.completedLessons)))
       await prefs.put('unlocked_lessons', JSON.stringify(Array.from(this.unlockedLessons)))
       await prefs.flush()
@@ -207,14 +208,14 @@ export class ProgressStore {
   }
 
   // 解锁所有课程（用于测试或管理员功能）
-  async unlockAllLessons(): Promise<void> {
+  async unlockAllLessons(context: Context): Promise<void> {
     console.error('[STORE] unlockAllLessons: unlocking all lessons')
     for (let i = 1; i <= LessonConfig.getTotalLessons(); i++) {
       this.unlockedLessons.add(i)
     }
     
     // 保存到preferences
-    const prefs = await preferences.getPreferences(getContext(), 'learn_progress')
+    const prefs = await preferences.getPreferences(context, 'learn_progress')
     await prefs.put('unlocked_lessons', JSON.stringify(Array.from(this.unlockedLessons)))
     await prefs.flush()
     
@@ -222,7 +223,7 @@ export class ProgressStore {
   }
 
   // 重置进度（用于测试）
-  async resetProgress(): Promise<void> {
+  async resetProgress(context: Context): Promise<void> {
     console.error('[STORE] resetProgress: resetting all progress')
     // 临时解锁所有课程
     this.unlockedLessons = new Set()
@@ -232,7 +233,7 @@ export class ProgressStore {
     this.completedLessons = new Set()
     
     // 保存到preferences
-    const prefs = await preferences.getPreferences(getContext(), 'learn_progress')
+    const prefs = await preferences.getPreferences(context, 'learn_progress')
     await prefs.put('unlocked_lessons', JSON.stringify(Array.from(this.unlockedLessons)))
     await prefs.put('completed_lessons', JSON.stringify(Array.from(this.completedLessons)))
     await prefs.flush()

@@ -20,64 +20,80 @@ export struct LearnPage {
 
   aboutToAppear(): void {
     // Set status bar color
-    window.getLastWindow(getContext(this)).then((windowClass) => {
-      windowClass.setWindowSystemBarProperties({
-        statusBarColor: '#000000',
-        statusBarContentColor: '#FFFFFF'
+    const uiContext = this.getUIContext()
+    const hostContext = uiContext.getHostContext()
+    if (hostContext) {
+      window.getLastWindow(hostContext).then((windowClass) => {
+        windowClass.setWindowSystemBarProperties({
+          statusBarColor: '#000000',
+          statusBarContentColor: '#FFFFFF'
+        })
       })
-    })
+    }
 
     console.error('[LEARN] aboutToAppear: init()')
-    this.vm.init().then(() => {
-      this.refreshTick++
-      console.error(`[LEARN] aboutToAppear: refreshed after init, tick=${this.refreshTick}`)
-    })
+    const uiContext2 = this.getUIContext()
+    const hostContext2 = uiContext2.getHostContext()
+    if (hostContext2) {
+      this.vm.init(hostContext2).then(() => {
+        this.refreshTick++
+        console.error(`[LEARN] aboutToAppear: refreshed after init, tick=${this.refreshTick}`)
+      })
+    }
   }
 
   onPageShow(): void {
     // Refresh state when returning to this page
     console.error('[LEARN] onPageShow: loadUnlockState() immediate')
-    this.vm.loadUnlockState().then(() => {
-      this.refreshTick++
-      console.error(`[LEARN] onPageShow: refreshed immediate, tick=${this.refreshTick}`)
-    })
-    // In case of async preference flush race, refresh again shortly after
-    setTimeout(() => {
-      console.error('[LEARN] onPageShow: loadUnlockState() delayed 100ms')
-      this.vm.loadUnlockState().then(() => {
+    const uiContext = this.getUIContext()
+    const hostContext = uiContext.getHostContext()
+    if (hostContext) {
+      this.vm.loadUnlockState(hostContext).then(() => {
         this.refreshTick++
-        console.error(`[LEARN] onPageShow: refreshed delayed, tick=${this.refreshTick}`)
+        console.error(`[LEARN] onPageShow: refreshed immediate, tick=${this.refreshTick}`)
       })
-    }, 100)
+      // In case of async preference flush race, refresh again shortly after
+      setTimeout(() => {
+        console.error('[LEARN] onPageShow: loadUnlockState() delayed 100ms')
+        this.vm.loadUnlockState(hostContext).then(() => {
+          this.refreshTick++
+          console.error(`[LEARN] onPageShow: refreshed delayed, tick=${this.refreshTick}`)
+        })
+      }, 100)
+    }
   }
 
   private introLessons(): LessonItem[] {
     return [
       { 
         key: 'intro_0', 
-        title: '第1课：摩斯密码基础', 
-        subtitle: '点划、间隔、历史与应用', 
+        title: '第 1 课', 
+        subtitle: '摩斯密码基础', 
         unlocked: this.vm.isLessonUnlocked(1), 
         unitUnlocked: this.vm.unitUnlocked.get('intro') ?? false, 
         completed: this.vm.isLessonCompleted(1) 
       },
       { 
         key: 'intro_1', 
-        title: '第2课：中文摩尔斯电码', 
-        subtitle: '汉字编码、标点符号、应用场景', 
+        title: '第 2 课', 
+        subtitle: '中文摩斯密码基础', 
         unlocked: this.vm.isLessonUnlocked(2), 
         unitUnlocked: this.vm.unitUnlocked.get('intro') ?? false, 
         completed: this.vm.isLessonCompleted(2) 
       },
       { key: 'intro_p1', title: '占位', unlocked: false, unitUnlocked: false, completed: false },
-      { key: 'intro_p2', title: '占位', unlocked: false, unitUnlocked: false, completed: false }
+      { key: 'intro_p2', title: '占位', unlocked: false, unitUnlocked: false, completed: false },
+      { key: 'intro_p3', title: '占位', unlocked: false, unitUnlocked: false, completed: false },
+      { key: 'intro_p4', title: '占位', unlocked: false, unitUnlocked: false, completed: false },
+      { key: 'intro_p5', title: '占位', unlocked: false, unitUnlocked: false, completed: false },
+      { key: 'intro_p6', title: '占位', unlocked: false, unitUnlocked: false, completed: false }
     ]
   }
 
   private alphabetLessons(): LessonItem[] {
     const items: LessonItem[] = []
     // 在字母分组之间加入空格，风格与数字课程一致
-    const subtitles: string[] = ['A B C', 'D E F', 'G H I J', '复习：A-J', 'K L M N', 'O P Q R', 'S T U V', 'W X Y Z', '复习：K-Z']
+    const subtitles: string[] = ['A B C', 'D E F', 'G H I J', '复习：A - J', 'K L M N', 'O P Q R', 'S T U V', 'W X Y Z', '复习：K - Z']
     
     for (let i = 0; i < 9; i++) {
       const lessonNumber = 3 + i // 字母课程从第3课开始
@@ -85,7 +101,7 @@ export struct LearnPage {
       
       items.push({
         key: `alpha_${i}`,
-        title: isReview ? `第${i + 1}课：复习` : `第${i + 1}课`,
+        title: `第 ${i + 1} 课`,
         subtitle: subtitles[i],
         unlocked: this.vm.isLessonUnlocked(lessonNumber),
         unitUnlocked: this.vm.unitUnlocked.get('alphabet') ?? false,
@@ -109,7 +125,7 @@ export struct LearnPage {
       
       items.push({
         key: `num_${i}`,
-        title: isReview ? `第${i + 1}课：复习` : `第${i + 1}课`,
+        title: `第 ${i + 1} 课`,
         subtitle: subtitles[i],
         unlocked: this.vm.isLessonUnlocked(lessonNumber),
         unitUnlocked: this.vm.unitUnlocked.get('numbers') ?? false,
@@ -134,7 +150,7 @@ export struct LearnPage {
       
       items.push({
         key: `pun_${i}`,
-        title: `第${i + 1}课`,
+        title: `第 ${i + 1} 课`,
         subtitle: subtitles[i],
         unlocked: this.vm.isLessonUnlocked(lessonNumber),
         unitUnlocked: this.vm.unitUnlocked.get('punctuation') ?? false,
@@ -157,7 +173,7 @@ export struct LearnPage {
       
       items.push({
         key: `word_${i}`,
-        title: `第${i + 1}课`,
+        title: `第 ${i + 1} 课`,
         subtitle: `${i + 3}字母单词`,
         unlocked: this.vm.isLessonUnlocked(lessonNumber),
         unitUnlocked: this.vm.unitUnlocked.get('words') ?? false,
@@ -241,7 +257,7 @@ export struct LearnPage {
         } else if (item.key.startsWith('alpha_')) {
           // 字母课程 - 路由到FullscreenLessonPage
           const lessonIndex = parseInt(item.key.replace('alpha_', ''))
-          const lessonId = `alphabet_lesson_${lessonIndex}`
+          const lessonId = `alpha_${lessonIndex}`
           console.error(`[LEARN] Navigating to alphabet lesson: ${lessonId}`)
           router.pushUrl({
             url: 'pages/FullscreenLessonPage',
@@ -253,7 +269,7 @@ export struct LearnPage {
         } else if (item.key.startsWith('num_')) {
           // 数字课程 - 路由到FullscreenLessonPage
           const lessonIndex = parseInt(item.key.replace('num_', ''))
-          const lessonId = `number_lesson_${lessonIndex}`
+          const lessonId = `num_${lessonIndex}`
           console.error(`[LEARN] Navigating to number lesson: ${lessonId}`)
           router.pushUrl({
             url: 'pages/FullscreenLessonPage',
@@ -265,7 +281,7 @@ export struct LearnPage {
         } else if (item.key.startsWith('pun_')) {
           // 符号课程 - 路由到FullscreenLessonPage
           const lessonIndex = parseInt(item.key.replace('pun_', ''))
-          const lessonId = `punctuation_lesson_${lessonIndex}`
+          const lessonId = `pun_${lessonIndex}`
           console.error(`[LEARN] Navigating to punctuation lesson: ${lessonId}`)
           router.pushUrl({
             url: 'pages/FullscreenLessonPage',
@@ -277,7 +293,7 @@ export struct LearnPage {
         } else if (item.key.startsWith('word_')) {
           // 单词课程 - 路由到FullscreenLessonPage
           const lessonIndex = parseInt(item.key.replace('word_', ''))
-          const lessonId = `word_lesson_${lessonIndex}`
+          const lessonId = `word_${lessonIndex}`
           console.error(`[LEARN] Navigating to word lesson: ${lessonId}`)
           router.pushUrl({
             url: 'pages/FullscreenLessonPage',

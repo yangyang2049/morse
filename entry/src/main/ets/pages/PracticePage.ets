@@ -29,12 +29,16 @@ export struct PracticePage {
 
   aboutToAppear(): void {
     // Set status bar color
-    window.getLastWindow(getContext(this)).then((windowClass) => {
-      windowClass.setWindowSystemBarProperties({
-        statusBarColor: '#000000',
-        statusBarContentColor: '#FFFFFF'
+    const uiContext = this.getUIContext()
+    const hostContext = uiContext.getHostContext()
+    if (hostContext) {
+      window.getLastWindow(hostContext).then((windowClass) => {
+        windowClass.setWindowSystemBarProperties({
+          statusBarColor: '#000000',
+          statusBarContentColor: '#FFFFFF'
+        })
       })
-    })
+    }
 
     // 从路由参数获取难度（容错处理，避免无参数时崩溃）
     try {
@@ -179,7 +183,6 @@ export struct PracticePage {
     }
     .width(200)
     .height(200)
-    .key(`character_${this.displayCharacter}_${this.vm.getCharacterChangeId()}`) // 唯一key确保动画触发
     .scale({ x: this.circleScale, y: this.circleScale }) // 使用状态控制的缩放
   }
 
@@ -276,6 +279,8 @@ export struct PracticePage {
         .width(48).height(48)
         .backgroundColor(Color.Transparent)
 
+      Blank().width(40)
+
       // 提示按钮（眼睛）
       Button() {
         Image($rawfile('ic_eye.svg')).width(24).height(24).fillColor(Color.White)
@@ -283,6 +288,8 @@ export struct PracticePage {
         .onClick(() => this.vm.flashHint())
         .width(48).height(48)
         .backgroundColor(Color.Transparent)
+
+      Blank().width(40)
 
       // 下一个按钮
       Button() {
@@ -292,7 +299,7 @@ export struct PracticePage {
         .width(48).height(48)
         .backgroundColor(Color.Transparent)
     }
-    .justifyContent(FlexAlign.SpaceEvenly)
+    .justifyContent(FlexAlign.Center)
     .padding({ left: 20, right: 20 })
   }
 
