@@ -94,22 +94,30 @@ export struct LearnPage {
 
   private subscribeToProgressUpdates(): void {
     try {
-      emitter.on('1001', async (data?: emitter.EventData) => {
+      console.error('[LEARN] subscribeToProgressUpdates: Starting subscription to LESSON_PROGRESS_UPDATED')
+      emitter.on('LESSON_PROGRESS_UPDATED', async (data?: emitter.EventData) => {
         console.error('[LEARN] Progress update event received, forcing refresh')
+        
         const uiContext = this.getUIContext()
         const hostContext = uiContext.getHostContext()
         if (hostContext) {
+          console.error('[LEARN] HostContext available, starting refresh process')
           // 重新加载状态
+          console.error('[LEARN] Loading unlock state...')
           await this.vm.loadUnlockState(hostContext)
+          console.error('[LEARN] Unlock state loaded, updating lesson data...')
           // 更新所有课程数据
           this.updateAllLessonData()
           // 强制刷新整个页面
           this.refreshKey++
           this.refreshTick++
           console.error(`[LEARN] Forced refresh completed, refreshKey=${this.refreshKey}, tick=${this.refreshTick}`)
+          console.error(`[LEARN] Current unit states: intro=${this.vm.unitUnlocked.get('intro')}, alphabet=${this.vm.unitUnlocked.get('alphabet')}, numbers=${this.vm.unitUnlocked.get('numbers')}`)
+        } else {
+          console.error('[LEARN] No hostContext available for refresh')
         }
       })
-      console.error('[LEARN] Subscribed to progress update events')
+      console.error('[LEARN] Successfully subscribed to progress update events')
     } catch (e) {
       console.error('[LEARN] Failed to subscribe to progress updates:', e)
     }
@@ -118,8 +126,9 @@ export struct LearnPage {
   aboutToDisappear(): void {
     // 取消订阅，避免内存泄露
     try {
-      emitter.off('1001')
-      console.error('[LEARN] Unsubscribed from progress update events')
+      console.error('[LEARN] aboutToDisappear: Unsubscribing from progress update events')
+      emitter.off('LESSON_PROGRESS_UPDATED')
+      console.error('[LEARN] Successfully unsubscribed from progress update events')
     } catch (e) {
       console.error('[LEARN] Failed to unsubscribe from progress updates:', e)
     }
@@ -129,6 +138,7 @@ export struct LearnPage {
     // Reference refreshKey to make this method reactive to state changes
     const _ = this.refreshKey
     
+    // 直接使用数字ID：第1课=1，第2课=2
     const lesson1Unlocked = this.vm.isLessonUnlocked(1)
     const lesson1Completed = this.vm.isLessonCompleted(1)
     const lesson2Unlocked = this.vm.isLessonUnlocked(2)
@@ -169,7 +179,8 @@ export struct LearnPage {
     const subtitles: string[] = ['A B C', 'D E F', 'G H I J', '复习：A - J', 'K L M N', 'O P Q R', 'S T U V', 'W X Y Z', '复习：K - Z']
     
     for (let i = 0; i < 9; i++) {
-      const lessonNumber = 3 + i // 字母课程从第3课开始
+      // 直接使用数字ID：字母课程从第3课开始 (3, 4, 5, 6, 7, 8, 9, 10, 11)
+      const lessonNumber = 3 + i
       const isReview = i === 3 || i === 8
       
       items.push({
@@ -311,7 +322,7 @@ export struct LearnPage {
               testType: 'chinese',
               testTitle: '中文电码测试',
               testCompletedKey: 'chinese_test_completed',
-              lessonCompletedKey: 'chinese_completed'
+              lessonCompletedKey: '2'
             }
           })
         } else if (item.key.startsWith('intro_')) {
@@ -324,25 +335,25 @@ export struct LearnPage {
               testType: 'intro',
               testTitle: '基础知识测试',
               testCompletedKey: 'intro_test_completed',
-              lessonCompletedKey: 'intro_completed'
+              lessonCompletedKey: '1'
             }
           })
         } else if (item.key.startsWith('alpha_')) {
           // 字母课程 - 路由到LetterLessonPage
           const lessonIndex = parseInt(item.key.replace('alpha_', ''))
-          const lessonId = `alpha_${lessonIndex}`
-          console.error(`[LEARN] Navigating to alphabet lesson: ${lessonId}`)
+          const lessonNumber = 3 + lessonIndex // 字母课程从第3课开始
+          console.error(`[LEARN] Navigating to alphabet lesson: ${lessonNumber}`)
           router.push({
             url: 'pages/learn/LetterLessonPage',
             params: {
-              lessonId: lessonId,
+              lessonId: lessonNumber.toString(),
               title: item.title
             }
           })
         } else if (item.key.startsWith('num_')) {
           // 数字课程 - 路由到LetterLessonPage
           const lessonIndex = parseInt(item.key.replace('num_', ''))
-          const lessonId = `num_${lessonIndex}`
+          const lessonId = `number_lesson_${lessonIndex}`
           console.error(`[LEARN] Navigating to number lesson: ${lessonId}`)
           router.push({
             url: 'pages/learn/LetterLessonPage',
@@ -354,7 +365,7 @@ export struct LearnPage {
         } else if (item.key.startsWith('pun_')) {
           // 符号课程 - 路由到LetterLessonPage
           const lessonIndex = parseInt(item.key.replace('pun_', ''))
-          const lessonId = `pun_${lessonIndex}`
+          const lessonId = `punctuation_lesson_${lessonIndex}`
           console.error(`[LEARN] Navigating to punctuation lesson: ${lessonId}`)
           router.push({
             url: 'pages/learn/LetterLessonPage',
@@ -366,7 +377,7 @@ export struct LearnPage {
         } else if (item.key.startsWith('word_')) {
           // 单词课程 - 路由到LetterLessonPage
           const lessonIndex = parseInt(item.key.replace('word_', ''))
-          const lessonId = `word_${lessonIndex}`
+          const lessonId = `word_lesson_${lessonIndex}`
           console.error(`[LEARN] Navigating to word lesson: ${lessonId}`)
           router.push({
             url: 'pages/learn/LetterLessonPage',

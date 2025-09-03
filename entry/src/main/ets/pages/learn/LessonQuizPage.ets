@@ -3,11 +3,13 @@ import preferences from '@ohos.data.preferences'
 import window from '@ohos.window'
 import { ExplanationTipsCard } from '../../widgets/ExplanationTipsCard'
 import { LearnViewModel } from '../../viewmodel/LearnViewModel'
+import emitter from '@ohos.events.emitter'
 
 interface QuizNavParams {
   testType?: string
   pageTitle?: string
   testCompletedKey?: string
+  lessonCompletedKey?: string
 }
 
 interface QuestionItem {
@@ -35,6 +37,7 @@ struct LessonQuizPage {
   @State testType: string = 'intro'
   @State pageTitle: string = '基础测试'
   @State testCompletedKey: string = 'intro_test_completed'
+  @State lessonCompletedKey: string = 'intro_lesson_0'
   @State learnViewModel: LearnViewModel = new LearnViewModel()
   @State currentQuestionIndex: number = 0
   @State score: number = 0
@@ -64,13 +67,14 @@ struct LessonQuizPage {
 
     // Load route params, if any
     try {
-      const params = (router.getParams?.() as QuizNavParams) ?? {}
+      const params = (router.getParams() as QuizNavParams) ?? {}
       if (params) {
         if (params.testType) this.testType = params.testType
         if (params.pageTitle) this.pageTitle = params.pageTitle
         if (params.testCompletedKey) this.testCompletedKey = params.testCompletedKey
+        if (params.lessonCompletedKey) this.lessonCompletedKey = params.lessonCompletedKey
       }
-      console.error(`[QUIZ] aboutToAppear params: testType=${this.testType}, pageTitle=${this.pageTitle}, testCompletedKey=${this.testCompletedKey}`)
+      console.error(`[QUIZ] aboutToAppear params: testType=${this.testType}, pageTitle=${this.pageTitle}, testCompletedKey=${this.testCompletedKey}, lessonCompletedKey=${this.lessonCompletedKey}`)
     } catch (e) {
       console.warn('No params or failed to read params for LessonQuizPage:', e)
     }
@@ -257,8 +261,18 @@ struct LessonQuizPage {
       // 使用 ViewModel 来标记测试完成，这会自动解锁下一课
       const uiContext = this.getUIContext()
       const hostContext = uiContext.getHostContext()
-      if (hostContext) { //change the key plz
-        await this.learnViewModel.markLessonCompleted(this.testCompletedKey, hostContext)
+      if (hostContext) {
+        const lessonNumber = parseInt(this.lessonCompletedKey) || 0
+        await this.learnViewModel.markLessonCompleted(lessonNumber, hostContext)
+        
+        // 发送进度更新事件，通知其他页面刷新
+        try {
+          console.error(`[QUIZ] markLessonCompleted: About to emit LESSON_PROGRESS_UPDATED event for lessonNumber=${lessonNumber}`)
+          emitter.emit('LESSON_PROGRESS_UPDATED')
+          console.error(`[QUIZ] markLessonCompleted: Progress update event sent successfully for lessonNumber=${lessonNumber}`)
+        } catch (e) {
+          console.error(`[QUIZ] markLessonCompleted: Failed to send progress update event:`, e)
+        }
       }
       
       this.progressSaved = true
@@ -434,6 +448,7 @@ struct LessonQuizPage {
       }
       .width('100%')
     }
+    .constraintSize({ maxWidth: 480 })
     .width('100%')
     .height('100%')
     .justifyContent(FlexAlign.Center)
@@ -711,11 +726,15 @@ struct LessonQuizPage {
           this.QuestionScreen()
         }
         .layoutWeight(1)
+        .constraintSize({ maxWidth: 480 })
+        .width('100%')
       }
     }
     .width('100%')
     .height('100%')
     .backgroundColor(Color.Black)
     .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+    .justifyContent(FlexAlign.Center)
+    .alignItems(HorizontalAlign.Center)
   }
 }

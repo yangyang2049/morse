@@ -46,8 +46,12 @@ struct LetterLessonPage {
   private setupLessonData(lessonId: string): MorseCode[] {
     console.log(`[LetterLessonPage] setupLessonData: lessonId=${lessonId}`)
     
-    if (lessonId.includes('alpha_')) {
-      const lessonIndex = parseInt(lessonId.split('_')[1]) || 0
+    const lessonNumber = parseInt(lessonId) || 0
+    
+    // 根据课程编号确定课程类型和内容
+    if (lessonNumber >= 3 && lessonNumber <= 11) {
+      // 字母课程 (3-11)
+      const lessonIndex = lessonNumber - 3
       const alphabetGroups = LessonData.getAlphabetGroups()
       if (lessonIndex < alphabetGroups.length) {
         const targetLetters = alphabetGroups[lessonIndex]
@@ -57,8 +61,9 @@ struct LetterLessonPage {
       } else {
         return MorseCodeData.englishAlphabet.slice(0, 3)
       }
-    } else if (lessonId.includes('num_')) {
-      const lessonIndex = parseInt(lessonId.split('_')[1]) || 0
+    } else if (lessonNumber >= 12 && lessonNumber <= 15) {
+      // 数字课程 (12-15)
+      const lessonIndex = lessonNumber - 12
       const numberGroups = LessonData.getNumberGroups()
       if (lessonIndex < numberGroups.length) {
         const targetNumbers = numberGroups[lessonIndex]
@@ -68,8 +73,9 @@ struct LetterLessonPage {
       } else {
         return MorseCodeData.numbers.slice(0, 3)
       }
-    } else if (lessonId.includes('pun_')) {
-      const lessonIndex = parseInt(lessonId.split('_')[1]) || 0
+    } else if (lessonNumber >= 16 && lessonNumber <= 18) {
+      // 符号课程 (16-18)
+      const lessonIndex = lessonNumber - 16
       const punctuationGroups = LessonData.getPunctuationGroups()
       if (lessonIndex < punctuationGroups.length) {
         const targetPunctuation = punctuationGroups[lessonIndex]
@@ -79,8 +85,9 @@ struct LetterLessonPage {
       } else {
         return MorseCodeData.punctuation.slice(0, 3)
       }
-    } else if (lessonId.includes('word_')) {
-      const lessonIndex = parseInt(lessonId.split('_')[1]) || 0
+    } else if (lessonNumber >= 19 && lessonNumber <= 21) {
+      // 单词课程 (19-21)
+      const lessonIndex = lessonNumber - 19
       const wordGroups = LessonData.getWordGroups()
       if (lessonIndex < wordGroups.length) {
         const targetWords = wordGroups[lessonIndex]
@@ -89,6 +96,7 @@ struct LetterLessonPage {
         return [new MorseCode('THE', '', ''), new MorseCode('AND', '', ''), new MorseCode('FOR', '', '')]
       }
     } else {
+      // 默认返回字母课程
       return MorseCodeData.englishAlphabet.slice(0, 3)
     }
   }

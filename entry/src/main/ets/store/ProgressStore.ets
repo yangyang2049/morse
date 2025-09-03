@@ -70,15 +70,14 @@ export class ProgressStore {
   }
 
   // ───────────────────────────────── mutations ───────────────────────────────
-  async saveLessonCompleted(lessonId: string, context: Context): Promise<void> {
-    const n = LessonConfig.getLessonNumber(lessonId)
-    console.error(`[STORE] saveLessonCompleted: ${lessonId} -> #${n}`)
-    if (n <= 0) {
-      console.error(`[STORE] saveLessonCompleted: invalid lesson number ${n} for lessonId ${lessonId}`)
+  async saveLessonCompleted(lessonNumber: number, context: Context): Promise<void> {
+    console.error(`[STORE] saveLessonCompleted: lessonNumber=${lessonNumber}`)
+    if (lessonNumber <= 0) {
+      console.error(`[STORE] saveLessonCompleted: invalid lesson number ${lessonNumber}`)
       return
     }
     console.error(`[STORE] saveLessonCompleted: before markLessonCompleted, completedLessons=[${Array.from(this.completedLessons).join(',')}]`)
-    this.markLessonCompleted(n)
+    this.markLessonCompleted(lessonNumber)
     console.error(`[STORE] saveLessonCompleted: after markLessonCompleted, completedLessons=[${Array.from(this.completedLessons).join(',')}]`)
     await this.persist(context)
     console.error(`[STORE] saveLessonCompleted: after persist, completedLessons=[${Array.from(this.completedLessons).join(',')}]`)

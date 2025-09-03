@@ -50,13 +50,17 @@ export class LearnViewModel {
     this.targetLessonIdx = target.lessonIdx
   }
 
-  async markLessonCompleted(lessonId: string, context: Context): Promise<void> {
+  async markLessonCompleted(lessonNumber: number, context: Context): Promise<void> {
     try {
-      console.error(`[VM] markLessonCompleted: ${lessonId}`)
-      await this.store.saveLessonCompleted(lessonId, context)
-      console.error(`[VM] markLessonCompleted: after saveLessonCompleted, reloading unlock state`)
+      console.error(`[VM] markLessonCompleted: Starting for lessonNumber=${lessonNumber}`)
+      console.error(`[VM] markLessonCompleted: Before save - unitUnlocked intro=${this.unitUnlocked.get('intro')} alphabet=${this.unitUnlocked.get('alphabet')} numbers=${this.unitUnlocked.get('numbers')}`)
+      
+      await this.store.saveLessonCompleted(lessonNumber, context)
+      console.error(`[VM] markLessonCompleted: After saveLessonCompleted, reloading unlock state`)
+      
       await this.loadUnlockState(context)
-      console.error(`[VM] markLessonCompleted: after loadUnlockState, unitUnlocked intro=${this.unitUnlocked.get('intro')} alphabet=${this.unitUnlocked.get('alphabet')} numbers=${this.unitUnlocked.get('numbers')} punctuation=${this.unitUnlocked.get('punctuation')} words=${this.unitUnlocked.get('words')}`)
+      console.error(`[VM] markLessonCompleted: After loadUnlockState, unitUnlocked intro=${this.unitUnlocked.get('intro')} alphabet=${this.unitUnlocked.get('alphabet')} numbers=${this.unitUnlocked.get('numbers')} punctuation=${this.unitUnlocked.get('punctuation')} words=${this.unitUnlocked.get('words')}`)
+      console.error(`[VM] markLessonCompleted: Target unit=${this.targetUnitIdx}, target lesson=${this.targetLessonIdx}`)
     } catch (error) {
       console.error('[VM] markLessonCompleted FAILED:', error)
     }

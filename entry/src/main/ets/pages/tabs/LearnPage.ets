@@ -94,34 +94,43 @@ export struct LearnPage {
 
   private subscribeToProgressUpdates(): void {
     try {
-      emitter.on('1001', async (data?: emitter.EventData) => {
-        console.error('[LEARN] Progress update event received, forcing refresh')
+      console.error('[LEARN-TABS] subscribeToProgressUpdates: Starting subscription to LESSON_PROGRESS_UPDATED')
+      emitter.on('LESSON_PROGRESS_UPDATED', async (data?: emitter.EventData) => {
+        console.error('[LEARN-TABS] Progress update event received, forcing refresh')
+        
         const uiContext = this.getUIContext()
         const hostContext = uiContext.getHostContext()
         if (hostContext) {
+          console.error('[LEARN-TABS] HostContext available, starting refresh process')
           // 重新加载状态
+          console.error('[LEARN-TABS] Loading unlock state...')
           await this.vm.loadUnlockState(hostContext)
+          console.error('[LEARN-TABS] Unlock state loaded, updating lesson data...')
           // 更新所有课程数据
           this.updateAllLessonData()
           // 强制刷新整个页面
           this.refreshKey++
           this.refreshTick++
-          console.error(`[LEARN] Forced refresh completed, refreshKey=${this.refreshKey}, tick=${this.refreshTick}`)
+          console.error(`[LEARN-TABS] Forced refresh completed, refreshKey=${this.refreshKey}, tick=${this.refreshTick}`)
+          console.error(`[LEARN-TABS] Current unit states: intro=${this.vm.unitUnlocked.get('intro')}, alphabet=${this.vm.unitUnlocked.get('alphabet')}, numbers=${this.vm.unitUnlocked.get('numbers')}`)
+        } else {
+          console.error('[LEARN-TABS] No hostContext available for refresh')
         }
       })
-      console.error('[LEARN] Subscribed to progress update events')
+      console.error('[LEARN-TABS] Successfully subscribed to progress update events')
     } catch (e) {
-      console.error('[LEARN] Failed to subscribe to progress updates:', e)
+      console.error('[LEARN-TABS] Failed to subscribe to progress updates:', e)
     }
   }
 
   aboutToDisappear(): void {
     // 取消订阅，避免内存泄露
     try {
-      emitter.off('1001')
-      console.error('[LEARN] Unsubscribed from progress update events')
+      console.error('[LEARN-TABS] aboutToDisappear: Unsubscribing from progress update events')
+      emitter.off('LESSON_PROGRESS_UPDATED')
+      console.error('[LEARN-TABS] Successfully unsubscribed from progress update events')
     } catch (e) {
-      console.error('[LEARN] Failed to unsubscribe from progress updates:', e)
+      console.error('[LEARN-TABS] Failed to unsubscribe from progress updates:', e)
     }
   }
 

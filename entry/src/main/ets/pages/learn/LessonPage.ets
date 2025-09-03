@@ -1,25 +1,11 @@
 import { router } from '@kit.ArkUI'
 import window from '@ohos.window'
-import { LessonData } from '../../data/LessonData'
-
-interface LessonNavParams {
-  title?: string
-  testType?: string
-  testTitle?: string
-  testCompletedKey?: string
-  lessonCompletedKey?: string
-}
+import { LessonViewModel, LessonNavParams } from '../../viewmodel/LessonViewModel'
 
 @Entry
 @Component
 export struct LessonPage {
-  @State title: string = '摩斯密码基础'
-  @State sections: Map<string, string[]> = new Map()
-  @State testType: string = 'intro'
-  @State testTitle: string = '基础知识测试'
-  @State testCompletedKey: string = 'intro_test_completed'
-  @State lessonCompletedKey: string = 'intro_lesson_completed'
-  @State currentPageIndex: number = 0
+  @State viewModel: LessonViewModel = new LessonViewModel()
 
   aboutToAppear() {
     // Set status bar color
@@ -34,32 +20,17 @@ export struct LessonPage {
       })
     }
 
-    // Read navigation params to configure this lesson page
+    // Read navigation params and initialize ViewModel
     try {
-      const params = (router.getParams?.() as LessonNavParams) ?? {}
-      if (params) {
-        if (params.title) this.title = params.title
-        if (params.testType) this.testType = params.testType
-        if (params.testTitle) this.testTitle = params.testTitle
-        if (params.testCompletedKey) this.testCompletedKey = params.testCompletedKey
-        if (params.lessonCompletedKey) this.lessonCompletedKey = params.lessonCompletedKey
-      }
-      console.error(`[LESSON] aboutToAppear params: title=${this.title}, testType=${this.testType}, testTitle=${this.testTitle}, testCompletedKey=${this.testCompletedKey}, lessonCompletedKey=${this.lessonCompletedKey}`)
+      const params = (router.getParams() as LessonNavParams) ?? {}
+      console.error(`[LESSON] aboutToAppear: Raw params=`, JSON.stringify(params))
+      this.viewModel.init(params)
     } catch (e) {
       console.warn('No params or failed to read params for LessonPage:', e)
     }
-
-    // Initialize sections based on test type
-    this.initializeSections()
   }
 
-  initializeSections() {
-    if (this.testType === 'intro') {
-      this.sections = LessonData.introSections
-    } else if (this.testType === 'chinese') {
-      this.sections = LessonData.chineseSections
-    }
-  }
+
 
   @Builder
   TitleBar() {
@@ -74,12 +45,12 @@ export struct LessonPage {
         router.back()
       })
 
-      Text(this.title)
-        .fontSize(18)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(Color.White)
-        .layoutWeight(1)
-        .textAlign(TextAlign.Center)
+              Text(this.viewModel.title)
+          .fontSize(18)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(Color.White)
+          .layoutWeight(1)
+          .textAlign(TextAlign.Center)
 
       Button()
         .width(48)
@@ -192,7 +163,7 @@ export struct LessonPage {
           Row() {
                         Image($rawfile('ic_records.svg')).width(20).height(20).fillColor('#FF8C00').margin({ right: 8 })
 
-            Text(this.testTitle)
+            Text(this.viewModel.testTitle)
               .fontSize(20)
               .fontWeight(FontWeight.Bold)
               .fontColor('#FF8C00')
@@ -200,7 +171,7 @@ export struct LessonPage {
           }
           .margin({ bottom: 16 })
 
-          Text(`测试你对${this.title}的掌握程度`)
+          Text(`测试你对${this.viewModel.title}的掌握程度`)
             .fontSize(16)
             .fontColor('#FF8C00')
             .margin({ bottom: 16 })
@@ -234,13 +205,14 @@ export struct LessonPage {
           .borderRadius(8)
           .onClick(() => {
             // Navigate to quiz page
-            console.error(`[LESSON] Start quiz: testType=${this.testType}, pageTitle=${this.testTitle}, testCompletedKey=${this.testCompletedKey}`)
+            console.error(`[LESSON] Start quiz: testType=${this.viewModel.testType}, pageTitle=${this.viewModel.testTitle}, testCompletedKey=${this.viewModel.testCompletedKey}`)
             router.push({
-              url: 'pages/LessonQuizPage',
+              url: 'pages/learn/LessonQuizPage',
               params: {
-                testType: this.testType,
-                pageTitle: this.testTitle,
-                testCompletedKey: this.testCompletedKey
+                testType: this.viewModel.testType,
+                pageTitle: this.viewModel.testTitle,
+                testCompletedKey: this.viewModel.testCompletedKey,
+                lessonCompletedKey: this.viewModel.lessonCompletedKey
               }
             })
           })
@@ -271,8 +243,8 @@ export struct LessonPage {
       Scroll() {
         Row() {
           // Section cards
-          ForEach(Array.from(this.sections.keys()), (title: string, index: number) => {
-            this.buildSectionCard(title, this.sections.get(title) || [], index)
+          ForEach(this.viewModel.getSectionTitles(), (title: string, index: number) => {
+            this.buildSectionCard(title, this.viewModel.getSectionContent(title), index)
           })
 
           // Test card

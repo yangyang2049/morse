@@ -357,6 +357,7 @@ struct LetterLessonPage {
       }
       .width('100%')
     }
+    .constraintSize({ maxWidth: 400 })
     .width('82%')
     .padding(20)
     .backgroundColor('#000000')

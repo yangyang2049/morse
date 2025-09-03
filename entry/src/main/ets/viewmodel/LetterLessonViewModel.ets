@@ -1,6 +1,7 @@
 import { MorseCode } from '../models/MorseCode'
 import { LearnViewModel } from './LearnViewModel'
 import Context from '@ohos.app.ability.common'
+import emitter from '@ohos.events.emitter'
 
 @Observed
 export class LetterLessonViewModel {
@@ -128,8 +129,18 @@ export class LetterLessonViewModel {
   async markLessonCompleted(context: Context): Promise<void> {
     if (this.lessonId && !this.isLessonCompleted) {
       try {
-        await this.learnViewModel.markLessonCompleted(this.lessonId, context)
+        const lessonNumber = parseInt(this.lessonId) || 0
+        await this.learnViewModel.markLessonCompleted(lessonNumber, context)
         this.isLessonCompleted = true
+        
+        // 发送进度更新事件，通知其他页面刷新
+        try {
+          console.error(`[LetterLessonViewModel] markLessonCompleted: About to emit LESSON_PROGRESS_UPDATED event for lessonNumber=${lessonNumber}`)
+          emitter.emit('LESSON_PROGRESS_UPDATED')
+          console.error(`[LetterLessonViewModel] markLessonCompleted: Progress update event sent successfully for lessonNumber=${lessonNumber}`)
+        } catch (e) {
+          console.error(`[LetterLessonViewModel] markLessonCompleted: Failed to send progress update event:`, e)
+        }
       } catch (error) {
         console.error(`[LetterLessonViewModel] markLessonCompleted: Error: ${error}`)
       }
