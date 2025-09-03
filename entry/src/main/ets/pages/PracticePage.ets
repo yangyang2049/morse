@@ -10,6 +10,10 @@ export struct PracticePage {
   @State vm: PracticeViewModel = new PracticeViewModel()
   @State circleScale: number = 1.0 // 控制圆圈和字符的缩放动画
   @State displayCharacter: string = '' // 用于显示的字符，控制动画时序
+  // 可视化进度（0~1），用于平滑填充进度弧
+  @State progressVisual: number = 0
+  private progressTimer: number | null = null
+  private targetProgress: number = 0
   private dialogController: CustomDialogController = new CustomDialogController({
     builder: PracticeRecordDialog({
       vm: $vm
@@ -43,6 +47,10 @@ export struct PracticePage {
     if (this.animationTimer) {
       clearInterval(this.animationTimer)
     }
+    if (this.progressTimer) {
+      clearInterval(this.progressTimer)
+      this.progressTimer = null
+    }
   }
 
   // 开始检查字符变化的定时器
@@ -54,7 +62,7 @@ export struct PracticePage {
         
         // 先隐藏当前字母（保持旧字符内容）
         animateTo({
-          duration: 150,
+          duration: 100,
           curve: Curve.EaseIn
         }, () => {
           this.circleScale = 0.0
@@ -63,17 +71,25 @@ export struct PracticePage {
         // 等待隐藏动画完成后更新字符内容并显示新字母
         setTimeout(() => {
           this.displayCharacter = this.vm.getCurrentCharacter() // 更新显示字符
+          // 重置可视化进度
+          this.setProgressInstant(0)
           
           // 再等50ms后开始显示新字母的动画
           setTimeout(() => {
             animateTo({
-              duration: 300,
+              duration: 200,
               curve: Curve.EaseInOut
             }, () => {
               this.circleScale = 1.0
             })
           }, 50)
         }, 150) // 等待隐藏动画完成
+      }
+      // 检查进度变化，平滑推进可视化进度
+      const p = Math.max(0, Math.min(this.vm.getProgress(), 1))
+      if (Math.abs(p - this.targetProgress) > 1e-6) {
+        this.targetProgress = p
+        this.animateProgressTo(this.targetProgress, 320)
       }
     }, 100) // 每100ms检查一次
   }
@@ -84,9 +100,7 @@ export struct PracticePage {
   private TitleBar() {
     Row() {
       Button() {
-        Text('←')
-          .fontSize(24)
-          .fontColor(Color.White)
+        Image($rawfile('ic_back.svg')).width(24).height(24).fillColor(Color.White)
       }
       .backgroundColor(Color.Transparent)
       .onClick(() => {
@@ -101,9 +115,7 @@ export struct PracticePage {
         .textAlign(TextAlign.Center)
 
       Button() {
-        Text('📋')
-          .fontSize(18)
-          .fontColor(Color.White)
+        Image($rawfile('ic_records.svg')).width(22).height(22).fillColor(Color.White)
       }
       .backgroundColor(Color.Transparent)
       .onClick(() => {
@@ -120,7 +132,7 @@ export struct PracticePage {
     Stack({ alignContent: Alignment.Center }) {
       // 进度圆环：只有在用户出现错误后才显示
       if (this.vm.getHasIncorrectAttempt()) {
-        // 背景圈（暗色）
+        // 背景圈（暗色）- 错误后立即显示
         Circle({ width: 200, height: 200 })
           .fill(Color.Transparent)
           .strokeWidth(8)
@@ -131,13 +143,12 @@ export struct PracticePage {
           .fill(Color.Transparent)
           .strokeWidth(8)
           .stroke(this.vm.getProgress() >= 1.0 ? Color.Green : '#FFD700')
-          .strokeDashArray([this.getRingLength(), this.getCircumference()])
-          .strokeDashOffset(this.getCircumference() * 0.75) // 从顶部12点方向开始
+          // 采用 [填充长度, 剩余长度]，绑定可视化进度，避免偏移截断
+          .strokeDashArray([this.getProgressVisualLength(), this.getCircumference() - this.getProgressVisualLength()])
+          // 起点设为周长的1/4，确保从12点方向开始
+          .strokeDashOffset(this.getCircumference() / 4)
           .strokeLineCap(LineCapStyle.Round)
-          .animation({
-            duration: 800, // 更长的动画时间
-            curve: Curve.EaseOut // 更平滑的曲线
-          })
+          .opacity(this.progressVisual > 0 ? 1 : 0) // 进度为0时完全透明
       }
 
       // 内层圆圈（始终显示）- 添加颜色过渡动画
@@ -168,9 +179,47 @@ export struct PracticePage {
     return 2 * Math.PI * 100
   }
 
-  private getRingLength(): number {
-    const progress = Math.max(0, Math.min(this.vm.getProgress(), 1))
-    return this.getCircumference() * progress
+  // 使用可视化进度计算当前弧长
+  private getProgressVisualLength(): number {
+    return this.getCircumference() * Math.max(0, Math.min(this.progressVisual, 1))
+  }
+
+  // 立即设置可视化进度（不动画）
+  private setProgressInstant(value: number) {
+    if (this.progressTimer) {
+      clearInterval(this.progressTimer)
+      this.progressTimer = null
+    }
+    this.progressVisual = Math.max(0, Math.min(value, 1))
+    this.targetProgress = this.progressVisual
+  }
+
+  // 自定义补间动画至目标进度
+  private animateProgressTo(target: number, duration: number = 500) {
+    if (this.progressTimer) {
+      clearInterval(this.progressTimer)
+      this.progressTimer = null
+    }
+    const start = this.progressVisual
+    const end = Math.max(0, Math.min(target, 1))
+    const delta = end - start
+    if (Math.abs(delta) < 1e-4 || duration <= 0) {
+      this.setProgressInstant(end)
+      return
+    }
+    const startTs = Date.now()
+    const easeInOutCubic = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+    this.progressTimer = setInterval(() => {
+      const t = Math.min(1, (Date.now() - startTs) / duration)
+      this.progressVisual = start + delta * easeInOutCubic(t)
+      if (t >= 1) {
+        if (this.progressTimer) {
+          clearInterval(this.progressTimer)
+          this.progressTimer = null
+        }
+        this.progressVisual = end
+      }
+    }, 16)
   }
 
   @Builder
@@ -210,23 +259,27 @@ export struct PracticePage {
   private ToolButtons() {
     Row() {
       // 收藏按钮
-      Button(this.vm.getIsFavorite() ? '❤' : '♡')
+      Button() {
+        Image($rawfile('ic_star.svg')).width(24).height(24)
+          .fillColor(this.vm.getIsFavorite() ? Color.Red : Color.White)
+      }
         .onClick(() => this.vm.toggleFavorite())
-        .fontColor(this.vm.getIsFavorite() ? Color.Red : Color.White)
         .width(48).height(48)
         .backgroundColor(Color.Transparent)
 
       // 提示按钮（眼睛）
-      Button('👁')
+      Button() {
+        Image($rawfile('ic_eye.svg')).width(24).height(24).fillColor(Color.White)
+      }
         .onClick(() => this.vm.flashHint())
-        .fontColor(Color.White)
         .width(48).height(48)
         .backgroundColor(Color.Transparent)
 
       // 下一个按钮
-      Button('⏭')
+      Button() {
+        Image($rawfile('ic_skip.svg')).width(24).height(24).fillColor(Color.White)
+      }
         .onClick(() => this.vm.passCharacter())
-        .fontColor(Color.White)
         .width(48).height(48)
         .backgroundColor(Color.Transparent)
     }

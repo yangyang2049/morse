@@ -369,7 +369,7 @@ export struct LessonQuizPage {
       Row() {
         Button() {
           Row() {
-            Text('←').fontSize(16).fontColor('#1A1A1A').margin({ right: 8 })
+            Image($rawfile('ic_back.svg')).width(16).height(16).fillColor('#1A1A1A').margin({ right: 8 })
             Text('返回')
               .fontSize(16)
               .fontWeight(FontWeight.Bold)
@@ -391,7 +391,7 @@ export struct LessonQuizPage {
                 .fontSize(16)
                 .fontWeight(FontWeight.Bold)
                 .fontColor('#1A1A1A')
-              Text('→').fontSize(16).fontColor('#1A1A1A').margin({ left: 8 })
+              Image($rawfile('ic_forward.svg')).width(16).height(16).fillColor('#1A1A1A').margin({ left: 8 })
             }
           }
           .layoutWeight(1)
@@ -409,7 +409,7 @@ export struct LessonQuizPage {
                 .fontSize(16)
                 .fontWeight(FontWeight.Bold)
                 .fontColor(Color.White)
-              Text('🔄').fontSize(16).fontColor(Color.White).margin({ left: 8 })
+              Image($rawfile('ic_forward.svg')).width(16).height(16).fillColor(Color.White).margin({ left: 8 })
             }
           }
           .layoutWeight(1)

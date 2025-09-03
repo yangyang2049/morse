@@ -22,7 +22,7 @@ struct KnowledgeLessonPage {
   TitleBar() {
     Row() {
       Button() {
-        Image($r('sys.media.ohos_ic_public_arrow_left'))
+        Image($rawfile('ic_back.svg'))
           .width(24)
           .height(24)
           .fillColor(Color.White)

@@ -116,58 +116,100 @@ class _PracticePageState extends State<PracticePage> {
                                       child: Stack(
                                         alignment: Alignment.center,
                                         children: [
-                                          // 进度圆环 (始终占位，只在有错误尝试时可见)
+                                          // 进度圆环 + 内圆使用同一补间值，确保在满圈后再变绿
                                           TweenAnimationBuilder<double>(
-                                            tween: Tween(
-                                              begin: 0.0,
+                                            key: ValueKey<int>(
+                                                practiceProvider.correctCount),
+                                            tween: Tween<double>(
+                                              begin: practiceProvider
+                                                          .hasIncorrectAttempt &&
+                                                      practiceProvider
+                                                              .correctCount >
+                                                          0
+                                                  ? (practiceProvider
+                                                              .correctCount -
+                                                          1) /
+                                                      2.0
+                                                  : 0.0,
                                               end: practiceProvider.progress,
                                             ),
                                             duration: const Duration(
-                                                milliseconds: 300),
+                                                milliseconds: 320),
+                                            curve: Curves.easeInOutCubic,
                                             builder: (context, value, child) {
-                                              return SizedBox(
-                                                width: 200,
-                                                height: 200,
-                                                child: CustomPaint(
-                                                  painter:
-                                                      RoundedProgressPainter(
-                                                    progress: practiceProvider
-                                                            .hasIncorrectAttempt
-                                                        ? value
-                                                        : 0.0,
-                                                    strokeWidth: 8,
-                                                    backgroundColor:
-                                                        practiceProvider
-                                                                .hasIncorrectAttempt
-                                                            ? Colors
-                                                                .grey
-                                                                .withValues(
-                                                                    alpha: 0.3)
-                                                            : Colors
-                                                                .transparent,
-                                                    progressColor: value >= 1.0
-                                                        ? Colors.green
-                                                        : AppTheme.accentColor,
+                                              // 仅当需要两次时，在满圈完成后才变绿
+                                              final bool shouldTurnGreen =
+                                                  practiceProvider
+                                                          .hasIncorrectAttempt &&
+                                                      practiceProvider
+                                                              .correctCount >=
+                                                          2 &&
+                                                      value >= 1.0;
+
+                                              final Color ringColor =
+                                                  shouldTurnGreen
+                                                      ? Colors.green
+                                                      : AppTheme.accentColor;
+
+                                              final Color innerColor =
+                                                  (practiceProvider
+                                                              .showResult &&
+                                                          !practiceProvider
+                                                              .isCorrect)
+                                                      ? Colors.red
+                                                      : practiceProvider
+                                                              .hasIncorrectAttempt
+                                                          ? (shouldTurnGreen
+                                                              ? Colors.green
+                                                              : AppTheme
+                                                                  .accentColor)
+                                                          : (practiceProvider
+                                                                  .isCorrect
+                                                              ? Colors.green
+                                                              : AppTheme
+                                                                  .accentColor);
+
+                                              return Stack(
+                                                alignment: Alignment.center,
+                                                children: [
+                                                  SizedBox(
+                                                    width: 200,
+                                                    height: 200,
+                                                    child: CustomPaint(
+                                                      painter:
+                                                          RoundedProgressPainter(
+                                                        progress:
+                                                            practiceProvider
+                                                                    .hasIncorrectAttempt
+                                                                ? value
+                                                                : 0.0,
+                                                        strokeWidth: 8,
+                                                        backgroundColor:
+                                                            practiceProvider
+                                                                    .hasIncorrectAttempt
+                                                                ? Colors.grey
+                                                                    .withValues(
+                                                                        alpha:
+                                                                            0.3)
+                                                                : Colors
+                                                                    .transparent,
+                                                        progressColor:
+                                                            ringColor,
+                                                      ),
+                                                    ),
                                                   ),
-                                                ),
+                                                  // 内层背景圆圈 (始终显示)
+                                                  Container(
+                                                    width: 180,
+                                                    height: 180,
+                                                    decoration: BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      color: innerColor,
+                                                    ),
+                                                  ),
+                                                ],
                                               );
                                             },
-                                          ),
-                                          // 内层背景圆圈 (始终显示)
-                                          Container(
-                                            width: 180,
-                                            height: 180,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: practiceProvider
-                                                          .showResult &&
-                                                      !practiceProvider
-                                                          .isCorrect
-                                                  ? Colors.red
-                                                  : practiceProvider.isCorrect
-                                                      ? Colors.green
-                                                      : AppTheme.accentColor,
-                                            ),
                                           ),
                                           // 主字符
                                           Text(

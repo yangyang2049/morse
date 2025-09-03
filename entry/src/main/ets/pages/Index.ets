@@ -9,8 +9,27 @@ struct Index {
   @State index: number = 0;
 
   @Builder
-  TabIcon(icon: Resource) {
-    Image(icon).width(24).height(24)
+  TabIcon(icon: Resource, active: boolean = false) {
+    // Try different approaches for SVG rendering
+    Image(icon)
+      .width(24)
+      .height(24)
+      .renderMode(ImageRenderMode.Template) // Template mode for SVG tinting
+      .fillColor(active ? Color.White : '#CCCCCC') // Ensure visibility
+      .objectFit(ImageFit.Contain) // Ensure proper scaling
+      .onError(() => {
+        // Fallback to text icons if SVG fails
+        console.error('Failed to load SVG icon:', icon)
+      })
+  }
+
+  @Builder
+  TextTabIcon(text: string, active: boolean = false) {
+    // Fallback text icons
+    Text(text)
+      .fontSize(20)
+      .fontColor(active ? Color.White : '#CCCCCC')
+      .fontWeight(FontWeight.Bold)
   }
 
   build() {
@@ -19,25 +38,25 @@ struct Index {
       TabContent() {
         LearnPage()
       }
-      .tabBar((): void => { this.TabIcon($r('app.media.tab_learn')) })
+      .tabBar((): void => { this.TextTabIcon('📚', this.index === 0) })
 
       // Practice
       TabContent() {
         PracticeDifficultyPage()
       }
-      .tabBar((): void => { this.TabIcon($r('app.media.tab_practice')) })
+      .tabBar((): void => { this.TextTabIcon('🎯', this.index === 1) })
 
       // Translate
       TabContent() {
         TranslatePage()
       }
-      .tabBar((): void => { this.TabIcon($r('app.media.tab_translate')) })
+      .tabBar((): void => { this.TextTabIcon('🔄', this.index === 2) })
 
       // 码表 (code table)
       TabContent() {
         CodeTablePage()
       }
-      .tabBar((): void => { this.TabIcon($r('app.media.tab_codetable')) })
+      .tabBar((): void => { this.TextTabIcon('📋', this.index === 3) })
     }
     .barMode(BarMode.Fixed)
     .barPosition(BarPosition.End)

@@ -26,61 +26,73 @@ export struct PracticeDifficultyPage {
 
   @Builder
   private DifficultyCard(item: DifficultyItem) {
+    // 居中文本的卡片项
     Column() {
-      Row() {
-        Column() {
-          Text(item.label)
-            .fontSize(18)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(Color.White)
-            .textAlign(TextAlign.Start)
-          
-          Text(item.desc)
-            .fontSize(14)
-            .fontColor('#CCCCCC')
-            .textAlign(TextAlign.Start)
-            .margin({ top: 4 })
-        }
-        .layoutWeight(1)
-        .alignItems(HorizontalAlign.Start)
+      // 内容垂直居中对齐
+      Column() {
+        Text(item.label)
+          .fontSize(18)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(Color.White)
+          .textAlign(TextAlign.Center)
 
-        Text('>')
-          .fontSize(20)
+        Text(item.desc)
+          .fontSize(12)
           .fontColor('#CCCCCC')
+          .textAlign(TextAlign.Center)
+          .margin({ top: 6 })
       }
+      .alignItems(HorizontalAlign.Center)
+      .justifyContent(FlexAlign.Center)
       .width('100%')
-      .padding({ left: 16, right: 16, top: 16, bottom: 16 })
+      .padding({ left: 16, right: 16, top: 18, bottom: 18 })
     }
     .width('100%')
     .backgroundColor('#1A1A1A')
-    .borderRadius(12)
+    .borderRadius(14)
     .border({ width: 1, color: '#333333' })
-    .onClick(() => {
-      this.openPractice(item.label)
-    })
+    .onClick(() => this.openPractice(item.label))
+  }
+
+  @Builder
+  private TitleBar() {
+    // 顶部标题栏
+    Row() {
+      Text('练习')
+        .fontSize(20)
+        .fontWeight(FontWeight.Bold)
+        .fontColor('#FFFFFF')
+    }
+    .height(52)
+    .width('100%')
+    .justifyContent(FlexAlign.Center)
+    .backgroundColor('#000000')
   }
 
   build() {
     Column() {
-      // 标题
-      Text('选择练习难度')
-        .fontSize(24)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(Color.White)
-        .margin({ top: 40, bottom: 40 })
+      this.TitleBar()
 
-      // 难度选项
+      // 内容区域
       Column() {
+        // 条目列表，条目之间留出合理的间距
         ForEach(this.difficulties, (item: DifficultyItem, index: number) => {
-          this.DifficultyCard(item)
+          Column() {
+            this.DifficultyCard(item)
+            if (index < this.difficulties.length - 1) {
+              Blank().height(16)
+            }
+          }
+          .width('100%')
         })
       }
       .width('100%')
-      .padding({ left: 20, right: 20 })
+      .padding({ left: 20, right: 20, top: 20 })
+      .layoutWeight(1)
+      .justifyContent(FlexAlign.Center)
     }
     .width('100%')
     .height('100%')
     .backgroundColor(Color.Black)
-    .justifyContent(FlexAlign.Center)
   }
 }

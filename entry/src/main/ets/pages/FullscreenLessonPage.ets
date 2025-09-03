@@ -22,8 +22,21 @@ export struct FullscreenLessonPage {
   @State practiceCount: Map<number, number> = new Map() // 每个字母的练习次数
   private readonly REQUIRED_PRACTICE_COUNT: number = 5 // 每个字母需要练习5次
   @State hintRevealed: Map<number, boolean> = new Map()
+  // 显示用的可动画进度（0~1），用于平滑填充圆环
+  @State progressVisual: number = 0
+  // 完成后才切换为绿色（外环与内圆）
+  @State showCompletedColor: boolean = false
   // 自动校验的防抖计时器
   private autoCheckTimer: number | null = null
+  // 进度补间计时器
+  private progressTimer: number | null = null
+  // 自定义完成对话框控制器
+  private completionDialogController: CustomDialogController = new CustomDialogController({
+    builder: this.CompletionDialog(),
+    autoCancel: false,
+    alignment: DialogAlignment.Center,
+    customStyle: false
+  })
   
   // ViewModel
   private learnViewModel: LearnViewModel = new LearnViewModel()
@@ -46,6 +59,11 @@ export struct FullscreenLessonPage {
     if (this.autoCheckTimer !== null) {
       clearTimeout(this.autoCheckTimer)
       this.autoCheckTimer = null
+    }
+    // 清理进度动画计时器
+    if (this.progressTimer !== null) {
+      clearInterval(this.progressTimer)
+      this.progressTimer = null
     }
   }
 
@@ -158,7 +176,19 @@ export struct FullscreenLessonPage {
     if (isCorrect) {
       // 增加练习次数
       const currentPracticeCount = this.practiceCount.get(this.currentIndex) || 0
-      this.practiceCount.set(this.currentIndex, currentPracticeCount + 1)
+      const newCount = currentPracticeCount + 1
+      this.practiceCount.set(this.currentIndex, newCount)
+      // 动画过渡到新的进度（每次 +1/5）
+      const targetProgress = Math.min(newCount / this.REQUIRED_PRACTICE_COUNT, 1)
+      // 未完成前，保持黄色；完成后在动画结束时切换为绿色
+      if (newCount >= this.REQUIRED_PRACTICE_COUNT) {
+        this.animateProgressTo(targetProgress, 320, () => {
+          this.showCompletedColor = true
+        })
+      } else {
+        this.showCompletedColor = false
+        this.animateProgressTo(targetProgress, 320)
+      }
 
       // 检查是否完成5次练习
       if (this.practiceCount.get(this.currentIndex)! >= this.REQUIRED_PRACTICE_COUNT) {
@@ -188,6 +218,10 @@ export struct FullscreenLessonPage {
   private moveToNext(): void {
     if (this.currentIndex < this.codes.length - 1) {
       this.currentIndex++
+      // 切换到下一个字母时，重置可视进度到该字母的当前累计进度（通常为0）
+      const nextCount = this.practiceCount.get(this.currentIndex) || 0
+      this.progressVisual = Math.min(nextCount / this.REQUIRED_PRACTICE_COUNT, 1)
+      this.showCompletedColor = false
       this.clearInput()
     } else {
       // 所有字母都完成了
@@ -202,28 +236,122 @@ export struct FullscreenLessonPage {
   }
 
   private showCompletionDialog(): void {
-    // 标记课程为已完成
+    // 持久化完成状态并打开自定义对话框
     this.markLessonCompleted()
-    
-    // 显示完成对话框
-    AlertDialog.show({
-      title: '恭喜完成！',
-      message: `完成了 ${this.codes.length} 个字母的练习`,
-      primaryButton: {
-        value: '返回',
-        action: () => {
-          router.back()
+    this.completionDialogController.open()
+  }
+
+  @Builder
+  private CompletionDialog() {
+    Column() {
+      // 顶部成功图标
+      Column()
+        .width(80)
+        .height(80)
+        .backgroundColor(Color.Green)
+        .borderRadius(40)
+        .alignItems(HorizontalAlign.Center)
+        .justifyContent(FlexAlign.Center)
+        .shadow({ radius: 20, color: 'rgba(0, 255, 0, 0.3)', offsetX: 0, offsetY: 8 })
+      {
+        Text('✓')
+          .fontSize(40)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(Color.White)
+      }
+
+      Blank().height(16)
+
+      Text('恭喜完成！')
+        .fontSize(24)
+        .fontWeight(FontWeight.Bold)
+        .fontColor('#FFFFFF')
+        .textAlign(TextAlign.Center)
+
+      Blank().height(20)
+
+      // 统计信息
+      Row() {
+        Column() {
+          Text(`${this.codes.length}`)
+            .fontSize(24)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(Color.White)
+          Text('字母')
+            .fontSize(10)
+            .fontColor('#B0B0B0')
         }
-      },
-      secondaryButton: {
-        value: '再次练习',
-        action: () => {
+        .alignItems(HorizontalAlign.Center)
+
+        Blank().width(1).height(40).backgroundColor('#333333')
+
+        Column() {
+          Text(`${this.codes.length * this.REQUIRED_PRACTICE_COUNT}`)
+            .fontSize(24)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(Color.White)
+          Text('练习次数')
+            .fontSize(10)
+            .fontColor('#B0B0B0')
+        }
+        .alignItems(HorizontalAlign.Center)
+      }
+      .width('100%')
+      .padding(16)
+      .backgroundColor('#1A1A1A')
+      .border({ width: 1, color: '#333333' })
+      .borderRadius(12)
+
+      Blank().height(20)
+
+      // 操作按钮
+      Row() {
+        Button() {
+          Text('返回')
+            .fontSize(16)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(Color.White)
+        }
+        .layoutWeight(1)
+        .height(44)
+        .backgroundColor(Color.Transparent)
+        .border({ width: 2, color: Color.White })
+        .borderRadius(8)
+        .onClick(() => {
+          this.completionDialogController.close()
+          router.back()
+        })
+
+        Blank().width(12)
+
+        Button() {
+          Text('再次练习')
+            .fontSize(16)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(Color.White)
+        }
+        .layoutWeight(1)
+        .height(44)
+        .backgroundColor(Color.Green)
+        .borderRadius(8)
+        .onClick(() => {
+          this.completionDialogController.close()
           this.currentIndex = 0
           this.completionCount.clear()
+          this.practiceCount.clear()
+          this.progressVisual = 0
+          this.showCompletedColor = false
           this.clearInput()
-        }
+        })
       }
-    })
+      .width('100%')
+    }
+    .width('82%')
+    .padding(20)
+    .backgroundColor('#000000')
+    .border({ width: 2, color: Color.Green })
+    .borderRadius(16)
+    .shadow({ radius: 24, color: 'rgba(0,0,0,0.4)', offsetX: 0, offsetY: 12 })
   }
 
   @Builder
@@ -232,9 +360,7 @@ export struct FullscreenLessonPage {
       // 顶部导航栏
       Row() {
         Button() {
-          Text('←')
-            .fontSize(24)
-            .fontColor(Color.White)
+          Image($rawfile('ic_back.svg')).width(24).height(24).fillColor(Color.White)
         }
         .backgroundColor(Color.Transparent)
         .onClick(() => {
@@ -256,9 +382,8 @@ export struct FullscreenLessonPage {
         // 提示按钮（仅在非复习课时显示）
         if (this.codes.length <= 10) {
           Button() {
-            Text(this.showMorseCode ? '👁️' : '👁️‍🗨️')
-              .fontSize(20)
-              .fontColor(Color.White)
+            Image(this.showMorseCode ? $rawfile('ic_eye.svg') : $rawfile('ic_eye_closed.svg'))
+              .width(22).height(22).fillColor(Color.White)
           }
           .backgroundColor(Color.Transparent)
           .onClick(() => {
@@ -292,20 +417,18 @@ export struct FullscreenLessonPage {
         .fill(Color.Transparent)
         .strokeWidth(8)
         .stroke(this.getProgressColor())
-        .strokeDashArray([this.getProgressLength(), this.getCircumference()])
+        // 使用 [已填充, 剩余] 的 dash pattern，绑定到可动画进度progressVisual
+        .strokeDashArray([this.getProgressVisualLength(), this.getCircumference() - this.getProgressVisualLength()])
         .strokeDashOffset(this.getCircumference() / 4)
         .strokeLineCap(LineCapStyle.Round)
-        .opacity(this.getProgressLength() > 0 ? 1 : 0) // 进度为0时不显示
-        .animation({
-          duration: 500,
-          curve: Curve.EaseInOut
-        })
+        .opacity(this.progressVisual > 0 ? 1 : 0) // 进度为0时不显示
       
       // 内部圆圈
       Circle({ width: 200, height: 200 })
         .fill(this.getProgressColor())
         .animation({
-          duration: 500,
+          // 与外层进度条一致的较短动画
+          duration: 300,
           curve: Curve.EaseInOut
         })
       
@@ -313,13 +436,14 @@ export struct FullscreenLessonPage {
       Text(this.codes[this.currentIndex]?.character || '')
         .fontSize(80)
         .fontWeight(FontWeight.Bold)
-        .fontColor(this.isCompleted() ? Color.White : '#1A1A1A')
+        // 始终使用深色字符，不随背景变为白色
+        .fontColor('#1A1A1A')
     }
   }
 
   private getProgressColor(): ResourceColor {
-    const isCompleted = this.isCompleted()
-    return isCompleted ? Color.Green : '#FFD700'
+    // 只有在最后一步填充动画完成后，才切换为绿色
+    return this.showCompletedColor ? Color.Green : '#FFD700'
   }
 
   private getCircumference(): number {
@@ -332,10 +456,43 @@ export struct FullscreenLessonPage {
     return currentPracticeCount >= this.REQUIRED_PRACTICE_COUNT
   }
 
-  private getProgressLength(): number {
-    const currentPracticeCount = this.practiceCount.get(this.currentIndex) || 0
-    const progress = Math.min(currentPracticeCount / this.REQUIRED_PRACTICE_COUNT, 1)
-    return 2 * Math.PI * 110 * progress
+  // 基于可动画的progressVisual计算当前圆环长度
+  private getProgressVisualLength(): number {
+    return this.getCircumference() * Math.max(0, Math.min(this.progressVisual, 1))
+  }
+
+  // 使用自定义补间（可替换为 keyframeAnimateTo）将 progressVisual 平滑推进到目标值
+  private animateProgressTo(target: number, duration: number = 320, onComplete?: () => void) {
+    // 终止已有动画
+    if (this.progressTimer !== null) {
+      clearInterval(this.progressTimer)
+      this.progressTimer = null
+    }
+
+    const start = this.progressVisual
+    const delta = target - start
+    if (Math.abs(delta) < 1e-4 || duration <= 0) {
+      this.progressVisual = target
+      return
+    }
+
+    const startTs = Date.now()
+    const easeInOutCubic = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+
+    this.progressTimer = setInterval(() => {
+      const t = Math.min(1, (Date.now() - startTs) / duration)
+      this.progressVisual = start + delta * easeInOutCubic(t)
+      if (t >= 1) {
+        if (this.progressTimer !== null) {
+          clearInterval(this.progressTimer)
+          this.progressTimer = null
+        }
+        this.progressVisual = target
+        if (onComplete) {
+          onComplete()
+        }
+      }
+    }, 16)
   }
 
   @Builder

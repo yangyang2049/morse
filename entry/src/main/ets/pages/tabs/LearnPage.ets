@@ -67,7 +67,8 @@ export struct LearnPage {
 
   private alphabetLessons(): LessonItem[] {
     const items: LessonItem[] = []
-    const subtitles: string[] = ['ABC', 'DEF', 'GHIJ', '复习：A-J', 'KLMN', 'OPQR', 'STUV', 'WXYZ', '复习：K-Z']
+    // 在字母分组之间加入空格，风格与数字课程一致
+    const subtitles: string[] = ['A B C', 'D E F', 'G H I J', '复习：A-J', 'K L M N', 'O P Q R', 'S T U V', 'W X Y Z', '复习：K-Z']
     
     for (let i = 0; i < 9; i++) {
       const lessonNumber = 3 + i // 字母课程从第3课开始
@@ -115,7 +116,8 @@ export struct LearnPage {
   }
 
   private punctuationLessons(): LessonItem[] {
-    const subtitles: string[] = ['., ? ! : ;', '= + - _ " \' , ( ) / @', '复习']
+    // 在符号之间加入空格，确保每个符号独立展示
+    const subtitles: string[] = ['. , ? ! : ;', '= + - _ " \' , ( ) / @', '复习']
     const items: LessonItem[] = []
     
     for (let i = 0; i < 3; i++) {

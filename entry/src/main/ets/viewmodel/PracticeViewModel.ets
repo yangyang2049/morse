@@ -27,7 +27,21 @@ export class PracticeViewModel {
 
   // Derived values (methods for compatibility with existing pages)
   getProgress(): number { 
-    return this.hasIncorrectAttempt ? (this.correctCount / 2.0) : 0.0
+    // 只有在用户出现错误后才显示进度环
+    // 第一次正确：进度 = 0.5 (半圆)
+    // 第二次正确：进度 = 1.0 (完整圆)
+    if (!this.hasIncorrectAttempt) {
+      return 0.0
+    }
+    
+    // 当有错误尝试时，根据正确次数计算进度
+    if (this.correctCount === 1) {
+      return 0.5 // 第一次正确：填充半圆
+    } else if (this.correctCount >= 2) {
+      return 1.0 // 第二次正确：填充完整圆
+    }
+    
+    return 0.0
   }
   getRequiredAttempts(): number { 
     return this.hasIncorrectAttempt ? 2 : 1 

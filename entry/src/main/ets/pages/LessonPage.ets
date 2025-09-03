@@ -61,9 +61,7 @@ export struct LessonPage {
   TitleBar() {
     Row() {
       Button() {
-        Text('返回')
-          .fontSize(16)
-          .fontColor(Color.White)
+        Image($rawfile('ic_back.svg')).width(20).height(20).fillColor(Color.White)
       }
       .width(48)
       .height(48)
@@ -196,7 +194,7 @@ export struct LessonPage {
         // Main content
         Column() {
           Row() {
-            Text('📋').fontSize(24).margin({ right: 8 })
+            Image($rawfile('ic_records.svg')).width(20).height(20).fillColor('#FF8C00').margin({ right: 8 })
             Text(this.testTitle)
               .fontSize(20)
               .fontWeight(FontWeight.Bold)
@@ -229,7 +227,7 @@ export struct LessonPage {
 
           Button() {
             Row() {
-              Text('▶').fontSize(16).fontColor(Color.White).margin({ right: 8 })
+              Image($rawfile('ic_forward.svg')).width(16).height(16).fillColor(Color.White).margin({ right: 8 })
               Text('开始测试')
                 .fontSize(16)
                 .fontWeight(FontWeight.Bold)
