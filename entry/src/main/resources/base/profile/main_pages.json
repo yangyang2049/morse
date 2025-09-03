@@ -1,11 +1,11 @@
 {
   "src": [
     "pages/Index",
-    "pages/LessonPage",
-    "pages/FullscreenLessonPage",
-    "pages/LessonQuizPage",
-    "pages/PracticePage",
-    "pages/PracticeDifficultyPage",
-    "pages/ChineseTelegraphCodePage"
+    "pages/learn/LessonPage",
+    "pages/learn/LetterLessonPage",
+    "pages/learn/LessonQuizPage",
+    "pages/learn/KnowledgeLessonPage",
+    "pages/practice/PracticePage",
+    "pages/translate/ChineseTelegraphCodePage"
   ]
 }

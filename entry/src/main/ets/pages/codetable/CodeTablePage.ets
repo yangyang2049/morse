@@ -76,8 +76,8 @@ export struct CodeTablePage {
         .height(40)
         .backgroundColor(Color.Transparent)
         .onClick(() => {
-          router.pushUrl({
-            url: 'pages/ChineseTelegraphCodePage'
+          router.push({
+            url: 'pages/translate/ChineseTelegraphCodePage'
           })
         })
       }
@@ -86,24 +86,26 @@ export struct CodeTablePage {
       .padding({ left: 16, right: 16 })
       .backgroundColor('#000000')
 
-      // Category filter row (chips)
-      Scroll() {
-        Row() {
-          ForEach(this.categories, (cat: Category) => {
-            Button(cat.name)
-              .onClick(() => { this.selected = cat.key })
-              .backgroundColor(this.selected === cat.key ? '#FFD700' : '#1A1A1A')
-              .fontColor(this.selected === cat.key ? '#000000' : '#B0B0B0')
-              .borderRadius(18)
-              .padding({ left: 14, right: 14 })
-              .margin({ right: 8 })
-              .border({ width: 1, color: '#333333' })
-          }, (cat: Category) => cat.key)
-        }.padding(12)
-      }.scrollable(ScrollDirection.Horizontal)
+      // 内容区域 - 限制宽度为480vp
+      Column() {
+        // Category filter row (chips)
+        Scroll() {
+          Row() {
+            ForEach(this.categories, (cat: Category) => {
+              Button(cat.name)
+                .onClick(() => { this.selected = cat.key })
+                .backgroundColor(this.selected === cat.key ? '#FFD700' : '#1A1A1A')
+                .fontColor(this.selected === cat.key ? '#000000' : '#B0B0B0')
+                .borderRadius(18)
+                .padding({ left: 14, right: 14 })
+                .margin({ right: 8 })
+                .border({ width: 1, color: '#333333' })
+            }, (cat: Category) => cat.key)
+          }.padding(12)
+        }.scrollable(ScrollDirection.Horizontal)
 
-      // List of codes
-      List() {
+        // List of codes
+        List() {
         ForEach(this.getFiltered(), (code: MorseCode) => {
           ListItem() {
             Row() {
@@ -134,9 +136,14 @@ export struct CodeTablePage {
             .padding({ left: 24, right: 24, top: 12, bottom: 12 })
           }
         }, (code: MorseCode) => code.character + ':' + code.morse)
+        }
+        .width('100%')
+        .layoutWeight(1)
       }
-      .width('100%')
+      .width(480)
       .layoutWeight(1)
+      .justifyContent(FlexAlign.Center)
+      .alignItems(HorizontalAlign.Center)
     }
     .backgroundColor('#000000')
     .width('100%')

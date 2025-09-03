@@ -1,8 +1,8 @@
-import { PracticeViewModel } from '../viewmodel/PracticeViewModel'
-import { MorseCode } from '../models/MorseCode'
+import { PracticeViewModel } from '../../viewmodel/PracticeViewModel'
+import { MorseCode } from '../../models/MorseCode'
 import { router } from '@kit.ArkUI'
 import { promptAction } from '@kit.ArkUI'
-import { PracticeRecordDialog } from '../widgets/PracticeRecordDialog'
+import { PracticeRecordDialog } from '../../widgets/PracticeRecordDialog'
 import window from '@ohos.window'
 
 @Entry
@@ -344,7 +344,7 @@ export struct PracticePage {
 
         Blank().height(20)
 
-        // 主要内容
+        // 主要内容 - 限制宽度为480vp
         Column() {
           // 字符与进度圆圈
           this.ProgressCircle()
@@ -353,8 +353,10 @@ export struct PracticePage {
 
           this.InputDisplay()
         }
+        .width(480)
         .layoutWeight(1)
         .justifyContent(FlexAlign.Center)
+        .alignItems(HorizontalAlign.Center)
 
         this.ToolButtons()
         Blank().height(26)

@@ -1,8 +1,8 @@
 import { router } from '@kit.ArkUI'
 import preferences from '@ohos.data.preferences'
 import window from '@ohos.window'
-import { ExplanationTipsCard } from '../widgets/ExplanationTipsCard'
-import { LearnViewModel } from '../viewmodel/LearnViewModel'
+import { ExplanationTipsCard } from '../../widgets/ExplanationTipsCard'
+import { LearnViewModel } from '../../viewmodel/LearnViewModel'
 
 interface QuizNavParams {
   testType?: string
@@ -111,7 +111,7 @@ struct LessonQuizPage {
         {
           type: 'multiple_choice',
           question: '摩斯密码是在哪个年代开发的？',
-          options: ['1820 年代', '1830-1840 年代', '1850 年代', '1860 年代'],
+          options: ['1820年代', '1830-1840年代', '1850年代', '1860年代'],
           answer: 1, // 1830-1840年代
           points: 20,
         },

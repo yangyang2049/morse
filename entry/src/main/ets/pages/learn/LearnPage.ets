@@ -304,8 +304,8 @@ export struct LearnPage {
         if (item.key === 'intro_1') {
           // Navigate to lesson page for the 2nd intro lesson (Chinese)
           console.error('[LEARN] Navigating to Chinese lesson page')
-          router.pushUrl({
-            url: 'pages/LessonPage',
+          router.push({
+            url: 'pages/learn/LessonPage',
             params: {
               title: '中文摩尔斯电码',
               testType: 'chinese',
@@ -317,8 +317,8 @@ export struct LearnPage {
         } else if (item.key.startsWith('intro_')) {
           // Navigate to lesson page for the 1st intro lesson (Basics)
           console.error('[LEARN] Navigating to Intro lesson page')
-          router.pushUrl({
-            url: 'pages/LessonPage',
+          router.push({
+            url: 'pages/learn/LessonPage',
             params: {
               title: '摩斯密码基础课程',
               testType: 'intro',
@@ -332,8 +332,8 @@ export struct LearnPage {
           const lessonIndex = parseInt(item.key.replace('alpha_', ''))
           const lessonId = `alpha_${lessonIndex}`
           console.error(`[LEARN] Navigating to alphabet lesson: ${lessonId}`)
-          router.pushUrl({
-            url: 'pages/LetterLessonPage',
+          router.push({
+            url: 'pages/learn/LetterLessonPage',
             params: {
               lessonId: lessonId,
               title: item.title
@@ -344,8 +344,8 @@ export struct LearnPage {
           const lessonIndex = parseInt(item.key.replace('num_', ''))
           const lessonId = `num_${lessonIndex}`
           console.error(`[LEARN] Navigating to number lesson: ${lessonId}`)
-          router.pushUrl({
-            url: 'pages/LetterLessonPage',
+          router.push({
+            url: 'pages/learn/LetterLessonPage',
             params: {
               lessonId: lessonId,
               title: item.title
@@ -356,8 +356,8 @@ export struct LearnPage {
           const lessonIndex = parseInt(item.key.replace('pun_', ''))
           const lessonId = `pun_${lessonIndex}`
           console.error(`[LEARN] Navigating to punctuation lesson: ${lessonId}`)
-          router.pushUrl({
-            url: 'pages/LetterLessonPage',
+          router.push({
+            url: 'pages/learn/LetterLessonPage',
             params: {
               lessonId: lessonId,
               title: item.title
@@ -368,8 +368,8 @@ export struct LearnPage {
           const lessonIndex = parseInt(item.key.replace('word_', ''))
           const lessonId = `word_${lessonIndex}`
           console.error(`[LEARN] Navigating to word lesson: ${lessonId}`)
-          router.pushUrl({
-            url: 'pages/LetterLessonPage',
+          router.push({
+            url: 'pages/learn/LetterLessonPage',
             params: {
               lessonId: lessonId,
               title: item.title

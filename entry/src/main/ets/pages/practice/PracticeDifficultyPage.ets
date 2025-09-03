@@ -31,8 +31,8 @@ export struct PracticeDifficultyPage {
 
   private openPractice(difficulty: string): void {
     console.error(`[PracticeDifficulty] opening practice page with difficulty=${difficulty}`)
-    router.pushUrl({
-      url: 'pages/PracticePage',
+    router.push({
+      url: 'pages/practice/PracticePage',
       params: {
         difficulty: difficulty
       }
@@ -88,7 +88,7 @@ export struct PracticeDifficultyPage {
     Column() {
       this.TitleBar()
 
-      // 内容区域
+      // 内容区域 - 限制宽度为480vp
       Column() {
         // 条目列表，条目之间留出合理的间距
         ForEach(this.difficulties, (item: DifficultyItem, index: number) => {
@@ -101,10 +101,11 @@ export struct PracticeDifficultyPage {
           .width('100%')
         })
       }
-      .width('100%')
+      .width(480)
       .padding({ left: 20, right: 20, top: 20 })
       .layoutWeight(1)
       .justifyContent(FlexAlign.Center)
+      .alignItems(HorizontalAlign.Center)
     }
     .width('100%')
     .height('100%')

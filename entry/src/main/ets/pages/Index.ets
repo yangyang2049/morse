@@ -1,7 +1,7 @@
-import { LearnPage } from './tabs/LearnPage'
-import { PracticeDifficultyPage } from './PracticeDifficultyPage'
-import { TranslatePage } from './tabs/TranslatePage'
-import { CodeTablePage } from './tabs/CodeTablePage'
+import { LearnPage } from './learn/LearnPage'
+import { PracticeDifficultyPage } from './practice/PracticeDifficultyPage'
+import { TranslatePage } from './translate/TranslatePage'
+import { CodeTablePage } from './codetable/CodeTablePage'
 import window from '@ohos.window'
 
 @Entry

@@ -54,24 +54,13 @@ export class LearnViewModel {
     try {
       console.error(`[VM] markLessonCompleted: ${lessonId}`)
       await this.store.saveLessonCompleted(lessonId, context)
+      console.error(`[VM] markLessonCompleted: after saveLessonCompleted, reloading unlock state`)
       await this.loadUnlockState(context)
+      console.error(`[VM] markLessonCompleted: after loadUnlockState, unitUnlocked intro=${this.unitUnlocked.get('intro')} alphabet=${this.unitUnlocked.get('alphabet')} numbers=${this.unitUnlocked.get('numbers')} punctuation=${this.unitUnlocked.get('punctuation')} words=${this.unitUnlocked.get('words')}`)
     } catch (error) {
       console.error('[VM] markLessonCompleted FAILED:', error)
     }
   }
-
-
-
-  async markLessonContentCompleted(lessonKey: string, context: Context): Promise<void> {
-    try {
-      console.error(`[VM] markLessonContentCompleted: ${lessonKey}`)
-      await this.store.saveLessonCompleted(lessonKey, context)
-      await this.loadUnlockState(context)
-    } catch (error) {
-      console.error('[VM] markLessonContentCompleted FAILED:', error)
-    }
-  }
-
 
 
   // 检查课程是否已解锁
@@ -88,7 +77,4 @@ export class LearnViewModel {
   getLessonNumber(lessonId: string): number {
     return LessonConfig.getLessonNumber(lessonId)
   }
-
-
-
 }

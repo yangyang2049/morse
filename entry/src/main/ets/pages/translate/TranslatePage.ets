@@ -181,10 +181,18 @@ export struct TranslatePage {
   build() {
     Column() {
       this.TitleBar()
-      this.ModeToggle()
-      this.InputArea()
-      Blank().height(16)
-      this.OutputArea()
+      
+      // 内容区域 - 限制宽度为480vp
+      Column() {
+        this.ModeToggle()
+        this.InputArea()
+        Blank().height(16)
+        this.OutputArea()
+      }
+      .width(480)
+      .layoutWeight(1)
+      .justifyContent(FlexAlign.Center)
+      .alignItems(HorizontalAlign.Center)
     }
     .width('100%')
     .height('100%')

@@ -28,15 +28,25 @@ export class ProgressStore {
   private async persist(context: Context) {
     const prefs = await this.getPrefs(context)
     const completedArray: number[] = Array.from(this.completedLessons)
-    await prefs.put(KEY_COMPLETED, JSON.stringify(completedArray))
+    const jsonString = JSON.stringify(completedArray)
+    console.error(`[STORE] persist: saving completedArray=[${completedArray.join(',')}] as json="${jsonString}"`)
+    await prefs.put(KEY_COMPLETED, jsonString)
     await prefs.flush()
+    console.error(`[STORE] persist: save completed`)
   }
 
   private parseSet(raw: string): Set<number> {
     try {
+      console.error(`[STORE] parseSet: input="${raw}"`)
       const arr = JSON.parse(raw) as number[]
-      return new Set(arr.filter(n => Number.isInteger(n) && n > 0))
-    } catch {
+      console.error(`[STORE] parseSet: parsed array=[${arr.join(',')}]`)
+      const filtered = arr.filter(n => Number.isInteger(n) && n > 0)
+      console.error(`[STORE] parseSet: filtered=[${filtered.join(',')}]`)
+      const result = new Set(filtered)
+      console.error(`[STORE] parseSet: result set=[${Array.from(result).join(',')}]`)
+      return result
+    } catch (error) {
+      console.error(`[STORE] parseSet: error parsing "${raw}":`, error)
       return new Set()
     }
   }
@@ -52,6 +62,7 @@ export class ProgressStore {
     const prefs = await this.getPrefs(context)
 
     const completedRaw = await prefs.get(KEY_COMPLETED, '[]')
+    console.error(`[STORE] load: raw data=${completedRaw}`)
     this.completedLessons = this.parseSet(completedRaw as string)
 
     const completedArray = Array.from(this.completedLessons)
@@ -62,17 +73,15 @@ export class ProgressStore {
   async saveLessonCompleted(lessonId: string, context: Context): Promise<void> {
     const n = LessonConfig.getLessonNumber(lessonId)
     console.error(`[STORE] saveLessonCompleted: ${lessonId} -> #${n}`)
-    if (n <= 0) return
+    if (n <= 0) {
+      console.error(`[STORE] saveLessonCompleted: invalid lesson number ${n} for lessonId ${lessonId}`)
+      return
+    }
+    console.error(`[STORE] saveLessonCompleted: before markLessonCompleted, completedLessons=[${Array.from(this.completedLessons).join(',')}]`)
     this.markLessonCompleted(n)
+    console.error(`[STORE] saveLessonCompleted: after markLessonCompleted, completedLessons=[${Array.from(this.completedLessons).join(',')}]`)
     await this.persist(context)
-  }
-
-
-
-  async resetProgress(context: Context): Promise<void> {
-    console.error('[STORE] resetProgress')
-    this.completedLessons = new Set()
-    await this.persist(context)
+    console.error(`[STORE] saveLessonCompleted: after persist, completedLessons=[${Array.from(this.completedLessons).join(',')}]`)
   }
 
   // ───────────────────────────────── queries ────────────────────────────────
@@ -81,7 +90,9 @@ export class ProgressStore {
     if (n === 1) return true
     
     // A lesson is unlocked if the previous lesson is completed
-    return this.completedLessons.has(n - 1)
+    const prevLessonCompleted = this.completedLessons.has(n - 1)
+    console.error(`[STORE] isLessonUnlocked: lesson=${n}, prevLesson=${n-1}, prevCompleted=${prevLessonCompleted}, completedSet=${Array.from(this.completedLessons).join(',')}`)
+    return prevLessonCompleted
   }
 
   isLessonCompleted(n: number): boolean {

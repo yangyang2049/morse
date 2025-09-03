@@ -1,6 +1,6 @@
 import { router } from '@kit.ArkUI'
 import window from '@ohos.window'
-import { LessonData } from '../data/LessonData'
+import { LessonData } from '../../data/LessonData'
 
 interface LessonNavParams {
   title?: string
@@ -235,7 +235,7 @@ export struct LessonPage {
           .onClick(() => {
             // Navigate to quiz page
             console.error(`[LESSON] Start quiz: testType=${this.testType}, pageTitle=${this.testTitle}, testCompletedKey=${this.testCompletedKey}`)
-            router.pushUrl({
+            router.push({
               url: 'pages/LessonQuizPage',
               params: {
                 testType: this.testType,

@@ -174,19 +174,27 @@ export struct ChineseTelegraphCodePage {
   build() {
     Column() {
       this.TitleBar()
-      this.SearchBar()
-      this.TableHeader()
+      
+      // 内容区域 - 限制宽度为480vp
+      Column() {
+        this.SearchBar()
+        this.TableHeader()
 
-      List() {
-        ForEach(this.filteredCodes, (code: ChineseTelegraphCode, index: number) => {
-          ListItem() {
-            this.TableRow(code, index)
-          }
-        }, (code: ChineseTelegraphCode) => code.character + code.code)
+        List() {
+          ForEach(this.filteredCodes, (code: ChineseTelegraphCode, index: number) => {
+            ListItem() {
+              this.TableRow(code, index)
+            }
+          }, (code: ChineseTelegraphCode) => code.character + code.code)
+        }
+        .layoutWeight(1)
+        .divider({ strokeWidth: 0 })
+        .scrollBar(BarState.Auto)
       }
+      .width(480)
       .layoutWeight(1)
-      .divider({ strokeWidth: 0 })
-      .scrollBar(BarState.Auto)
+      .justifyContent(FlexAlign.Center)
+      .alignItems(HorizontalAlign.Center)
     }
     .width('100%')
     .height('100%')
