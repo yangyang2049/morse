@@ -13,7 +13,7 @@ interface LessonNavParams {
 @Entry
 @Component
 export struct LessonPage {
-  @State title: string = '摩斯密码基础课程'
+  @State title: string = '摩斯密码基础'
   @State sections: Map<string, string[]> = new Map()
   @State testType: string = 'intro'
   @State testTitle: string = '基础知识测试'

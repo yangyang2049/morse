@@ -9,11 +9,11 @@ export class LearnViewModel {
   
   // 简化的状态管理
   unitUnlocked: Map<string, boolean> = new Map([
-    ['intro', true], // 临时解锁所有单元
-    ['alphabet', true],
-    ['numbers', true],
-    ['punctuation', true],
-    ['words', true]
+    ['intro', false], // 初始状态：只有intro单元解锁（基于第一课）
+    ['alphabet', false],
+    ['numbers', false],
+    ['punctuation', false],
+    ['words', false]
   ])
 
   // 目标单元和课程索引
@@ -60,26 +60,19 @@ export class LearnViewModel {
     }
   }
 
-  async markTestCompleted(testKey: string, context: Context): Promise<void> {
-    try {
-      console.error(`[VM] markTestCompleted: ${testKey}`)
-      await this.store.saveTestCompleted(testKey, context)
-      await this.loadUnlockState(context)
-      console.error(`[VM] markTestCompleted: after loadUnlockState, lesson 2 unlocked: ${this.isLessonUnlocked(2)}`)
-    } catch (error) {
-      console.error('[VM] markTestCompleted FAILED:', error)
-    }
-  }
+
 
   async markLessonContentCompleted(lessonKey: string, context: Context): Promise<void> {
     try {
       console.error(`[VM] markLessonContentCompleted: ${lessonKey}`)
-      await this.store.saveLessonContentCompleted(lessonKey, context)
+      await this.store.saveLessonCompleted(lessonKey, context)
       await this.loadUnlockState(context)
     } catch (error) {
       console.error('[VM] markLessonContentCompleted FAILED:', error)
     }
   }
+
+
 
   // 检查课程是否已解锁
   isLessonUnlocked(lessonNumber: number): boolean {
@@ -96,25 +89,6 @@ export class LearnViewModel {
     return LessonConfig.getLessonNumber(lessonId)
   }
 
-  // 解锁所有课程（用于测试或管理员功能）
-  async unlockAllLessons(context: Context): Promise<void> {
-    try {
-      console.error('[VM] unlockAllLessons: unlocking all lessons')
-      await this.store.unlockAllLessons(context)
-      await this.loadUnlockState(context)
-    } catch (error) {
-      console.error('[VM] unlockAllLessons FAILED:', error)
-    }
-  }
 
-  // 重置进度（用于测试）
-  async resetProgress(context: Context): Promise<void> {
-    try {
-      console.error('[VM] resetProgress: resetting all progress')
-      await this.store.resetProgress(context)
-      await this.loadUnlockState(context)
-    } catch (error) {
-      console.error('[VM] resetProgress FAILED:', error)
-    }
-  }
+
 }

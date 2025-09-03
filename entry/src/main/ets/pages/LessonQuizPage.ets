@@ -111,7 +111,7 @@ struct LessonQuizPage {
         {
           type: 'multiple_choice',
           question: '摩斯密码是在哪个年代开发的？',
-          options: ['1820年代', '1830-1840年代', '1850年代', '1860年代'],
+          options: ['1820 年代', '1830-1840 年代', '1850 年代', '1860 年代'],
           answer: 1, // 1830-1840年代
           points: 20,
         },
@@ -248,24 +248,21 @@ struct LessonQuizPage {
     const willSave = this.score >= 100
     console.error(`[QUIZ] showTestResult: score=${this.score} willPersist=${willSave}`)
     if (willSave) {
-      this.markTestCompleted()
+      this.markLessonCompleted()
     }
   }
 
-  async markTestCompleted() {
+  async markLessonCompleted() {
     try {
-      console.error(`[QUIZ] markTestCompleted: start testKey=${this.testCompletedKey} testType=${this.testType} score=${this.score}`)
       // 使用 ViewModel 来标记测试完成，这会自动解锁下一课
       const uiContext = this.getUIContext()
       const hostContext = uiContext.getHostContext()
-      if (hostContext) {
-        await this.learnViewModel.markTestCompleted(this.testCompletedKey, hostContext)
+      if (hostContext) { //change the key plz
+        await this.learnViewModel.markLessonCompleted(this.testCompletedKey, hostContext)
       }
       
-      console.error('[QUIZ] markTestCompleted: persisted OK')
       this.progressSaved = true
     } catch (err) {
-      console.error('[QUIZ] markTestCompleted: FAILED', err)
     }
   }
 
@@ -285,7 +282,7 @@ struct LessonQuizPage {
     // Ensure progress is persisted before leaving so Learn tab sees the unlocks
     if (this.score >= 100 && !this.progressSaved) {
       console.error('[QUIZ] goToNextLesson: awaiting persist...')
-      await this.markTestCompleted()
+      await this.markLessonCompleted()
     }
     // 弹出两次返回到学习页面
     console.error('[QUIZ] goToNextLesson: navigating back twice')
@@ -297,7 +294,7 @@ struct LessonQuizPage {
     console.error(`[QUIZ] backAfterPersist: score=${this.score} progressSaved=${this.progressSaved}`)
     if (this.score >= 100 && !this.progressSaved) {
       console.error('[QUIZ] backAfterPersist: awaiting persist...')
-      await this.markTestCompleted()
+      await this.markLessonCompleted()
     }
     console.error('[QUIZ] backAfterPersist: navigating back once')
     router.back()
