@@ -176,7 +176,7 @@ struct KnowledgeLessonPage {
               .fontColor('#FF8C00')
               .alignSelf(ItemAlign.Center)
           }
-          .margin({ bottom: 16 })
+          .margin({ bottom: 32 })
 
           Text(`测试你对${this.viewModel.title}的掌握程度`)
             .fontSize(16)
