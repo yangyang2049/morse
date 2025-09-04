@@ -2,7 +2,6 @@ import { MorseCode, MorseCodeData } from '../../models/MorseCode'
 import { router } from '@kit.ArkUI'
 import { LetterLessonViewModel } from '../../viewmodel/LetterLessonViewModel'
 import { LessonData } from '../../data/LessonData'
-import { promptAction } from '@kit.ArkUI'
 import window from '@ohos.window'
 
 @Entry
@@ -204,23 +203,13 @@ struct LetterLessonPage {
         .fontWeight(FontWeight.Bold)
         .fontColor(
           this.viewModel.showResult && this.viewModel.isCorrect ? Color.Green :
+          this.viewModel.showResult && !this.viewModel.isCorrect ? Color.Red :
           this.viewModel.userInput.trim().length === 0 ? Color.Transparent : '#FFD700'
         )
         .fontFamily('monospace')
         .letterSpacing(4)
         .textAlign(TextAlign.Center)
         .width('100%')
-      
-      if (this.viewModel.showResult && !this.viewModel.isCorrect) {
-        Text(this.viewModel.userInput.replace(/\./g, '·').trim())
-          .fontSize(36)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(Color.Red)
-          .fontFamily('monospace')
-          .letterSpacing(4)
-          .textAlign(TextAlign.Center)
-          .width('100%')
-      }
     }
     .height(60)
     .width('100%')

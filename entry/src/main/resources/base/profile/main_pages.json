@@ -1,7 +1,6 @@
 {
   "src": [
     "pages/Index",
-    "pages/learn/LessonPage",
     "pages/learn/LetterLessonPage",
     "pages/learn/LessonQuizPage",
     "pages/learn/KnowledgeLessonPage",

@@ -2,12 +2,14 @@ import { LearnPage } from './learn/LearnPage'
 import { PracticeDifficultyPage } from './practice/PracticeDifficultyPage'
 import { TranslatePage } from './translate/TranslatePage'
 import { CodeTablePage } from './codetable/CodeTablePage'
+import { globalProgressState, GlobalProgressState } from '../store/GlobalProgressState'
 import window from '@ohos.window'
 
 @Entry
 @Component
 struct Index {
   @State currentIndex: number = 0
+  @State globalState: GlobalProgressState = globalProgressState
 
   aboutToAppear() {
     // Set status bar color
@@ -19,6 +21,12 @@ struct Index {
           statusBarColor: '#000000',
           statusBarContentColor: '#FFFFFF'
         })
+      })
+      
+      // 初始化全局状态
+      globalProgressState.init(hostContext).then(() => {
+        // 触发 UI 更新
+        this.globalState = globalProgressState
       })
     }
   }

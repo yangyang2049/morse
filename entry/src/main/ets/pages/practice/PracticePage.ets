@@ -1,7 +1,6 @@
 import { PracticeViewModel } from '../../viewmodel/PracticeViewModel'
 import { MorseCode } from '../../models/MorseCode'
 import { router } from '@kit.ArkUI'
-import { promptAction } from '@kit.ArkUI'
 import { PracticeRecordDialog } from '../../widgets/PracticeRecordDialog'
 import window from '@ohos.window'
 

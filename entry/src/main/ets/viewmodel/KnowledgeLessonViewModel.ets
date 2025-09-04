@@ -1,21 +1,12 @@
 import { LessonData } from '../data/LessonData'
+import { LessonNavParams } from '../types/LessonTypes'
 import Context from '@ohos.app.ability.common'
 
-export interface LessonNavParams {
-  title?: string
-  testType?: string
-  testTitle?: string
-  testCompletedKey?: string
-  lessonCompletedKey?: string
-}
-
 @Observed
-export class LessonViewModel {
+export class KnowledgeLessonViewModel {
   // 课程基本信息
   title: string = '摩斯密码基础'
-  testType: string = 'intro'
   testTitle: string = '基础知识测试'
-  testCompletedKey: string = 'intro_test_completed'
   lessonCompletedKey: string = 'intro_lesson_0'
   
   // 课程内容数据
@@ -24,38 +15,33 @@ export class LessonViewModel {
   
   // 初始化课程数据
   init(params: LessonNavParams): void {
-    console.error(`[LessonViewModel] init: params=`, JSON.stringify(params))
+    console.error(`[KnowledgeLessonViewModel] init: params=`, JSON.stringify(params))
     
     // 设置课程基本信息
     if (params.title) this.title = params.title
-    if (params.testType) this.testType = params.testType
     if (params.testTitle) this.testTitle = params.testTitle
-    if (params.testCompletedKey) this.testCompletedKey = params.testCompletedKey
     if (params.lessonCompletedKey) this.lessonCompletedKey = params.lessonCompletedKey
     
     // 根据课程类型加载对应的数据
     this.loadLessonData()
     
-    console.error(`[LessonViewModel] init completed: title=${this.title}, testType=${this.testType}`)
+    console.error(`[KnowledgeLessonViewModel] init completed: title=${this.title}`)
   }
   
   // 加载课程数据
   private loadLessonData(): void {
-    console.error(`[LessonViewModel] loadLessonData: testType=${this.testType}`)
+    console.error(`[KnowledgeLessonViewModel] loadLessonData: title=${this.title}`)
     
-    switch (this.testType) {
-      case 'intro':
-        this.sections = LessonData.introSections
-        console.error(`[LessonViewModel] loadLessonData: Loaded intro sections`)
-        break
-      case 'chinese':
-        this.sections = LessonData.chineseSections
-        console.error(`[LessonViewModel] loadLessonData: Loaded chinese sections`)
-        break
-      default:
-        console.error(`[LessonViewModel] loadLessonData: Unknown testType=${this.testType}, using default intro sections`)
-        this.sections = LessonData.introSections
-        break
+    // 根据课程标题判断课程类型
+    if (this.title.includes('中文') || this.title.includes('Chinese')) {
+      this.sections = LessonData.chineseSections
+      console.error(`[KnowledgeLessonViewModel] loadLessonData: Loaded chinese sections`)
+    } else if (this.title.includes('基础') || this.title.includes('intro') || this.title.includes('Intro')) {
+      this.sections = LessonData.introSections
+      console.error(`[KnowledgeLessonViewModel] loadLessonData: Loaded intro sections`)
+    } else {
+      console.error(`[KnowledgeLessonViewModel] loadLessonData: Unknown title=${this.title}, using default intro sections`)
+      this.sections = LessonData.introSections
     }
   }
   
