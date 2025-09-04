@@ -363,7 +363,7 @@ export struct PracticePage {
       .onClick(() => this.vm.addDash())
       .layoutWeight(1)
     }
-    .padding({ left: 20, right: 20, bottom: 60 })
+    .padding({ left: 20, right: 20, bottom: 20 })
   }
 
 

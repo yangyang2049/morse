@@ -8,7 +8,9 @@ export struct TranslatePage {
   @State isTextToMorse: boolean = true
   @State textInput: string = ''
   @State morseInput: string = ''
-  private readonly boxFontSize: number = 20
+  private readonly boxFontSize: number = 16
+  private readonly pillRadius: number = 20
+  private screenHeight: number = 0
 
   aboutToAppear() {
     // System bar colors are set globally in EntryAbility
@@ -33,6 +35,43 @@ export struct TranslatePage {
     } else {
       return MorseCodeData.morseToText(this.morseInput)
     }
+  }
+
+  // 添加点
+  private addDot() {
+    this.morseInput += '.'
+  }
+
+  // 添加划
+  private addDash() {
+    this.morseInput += '-'
+  }
+
+  // 添加斜杠（单词/句子分隔符）
+  private addSlash() {
+    this.morseInput += '/'
+  }
+
+  // 添加空格
+  private addSpace() {
+    this.morseInput += ' '
+  }
+
+  // 删除最后一个字符
+  private deleteLast() {
+    if (this.morseInput.length > 0) {
+      this.morseInput = this.morseInput.slice(0, -1)
+    }
+  }
+
+  // 清除所有输入
+  private clearAll() {
+    this.morseInput = ''
+  }
+
+  // 获取输入/输出框的高度
+  private getBoxHeight(): number | string {
+    return '30%'
   }
 
   @Builder
@@ -130,7 +169,7 @@ export struct TranslatePage {
         .zIndex(1)
       }
     }
-    .height(200)
+    .height(this.getBoxHeight())
     .backgroundColor('#1A1A1A')
     .borderRadius(12)
     .margin({ left: 12, right: 12 })
@@ -141,7 +180,8 @@ export struct TranslatePage {
   private OutputArea() {
     RelativeContainer() {
       // 输出框
-      TextArea({ text: this.getOutput().length > 0 ? this.getOutput() : '输出将在此显示' })
+      TextArea({ text: this.getOutput().length > 0 ? this.getOutput() : 
+        (this.isTextToMorse ? '电码将在此显示' : '文本将在此显示，中文电码基于拼音转换') })
         .layoutWeight(1)
         .fontSize(this.boxFontSize)
         .margin(12)
@@ -179,11 +219,96 @@ export struct TranslatePage {
         .zIndex(1)
       }
     }
-    .height(200)
+    .height(this.getBoxHeight())
     .backgroundColor('#1A1A1A')
     .borderRadius(12)
     .margin({ left: 12, right: 12, bottom: 12 })
     .border({ width: 1, color: '#333333' })
+  }
+
+  @Builder
+  private BottomKeys() {
+    Column() {
+      // 小按钮行
+      Row() {
+        // 斜杠按钮 (第一个) - 单词/句子分隔符
+        Button() {
+          Text('/')
+            .fontSize(18)
+            .fontColor('#FFD700')
+            .fontWeight(FontWeight.Bold)
+        }
+        .height(40)
+        .backgroundColor('#1A1A1A')
+        .borderRadius(8)
+        .border({ width: 1, color: '#333333' })
+        .onClick(() => this.addSlash())
+        .layoutWeight(1)
+
+        Blank().width(8)
+
+        // 空格按钮 (第二个)
+        Button() {
+          Text('⎵')
+            .fontSize(16)
+            .fontColor('#FFD700')
+            .fontWeight(FontWeight.Bold)
+        }
+        .height(40)
+        .backgroundColor('#1A1A1A')
+        .borderRadius(8)
+        .border({ width: 1, color: '#333333' })
+        .onClick(() => this.addSpace())
+        .layoutWeight(1)
+
+        Blank().width(8)
+
+        // 删除按钮 (第三个)
+        Button() {
+          Text('⌫')
+            .fontSize(16)
+            .fontColor('#FFD700')
+            .fontWeight(FontWeight.Bold)
+        }
+        .height(40)
+        .backgroundColor('#1A1A1A')
+        .borderRadius(8)
+        .border({ width: 1, color: '#333333' })
+        .onClick(() => this.deleteLast())
+        .layoutWeight(1)
+      }
+      .padding({ left: 20, right: 20 })
+
+      Blank().height(12)
+
+      // 主要的点和划按钮
+      Row() {
+        Button() {
+          Circle({ width: 20, height: 20 })
+            .fill('#FFD700')
+        }
+        .height(80)
+        .backgroundColor('#1A1A1A')
+        .borderRadius(this.pillRadius)
+        .border({ width: 1, color: '#333333' })
+        .onClick(() => this.addDot())
+        .layoutWeight(1)
+
+        Blank().width(20)
+
+        Button() {
+          Rect({ width: 40, height: 12 })
+            .fill('#FFD700')
+        }
+        .height(80)
+        .backgroundColor('#1A1A1A')
+        .borderRadius(this.pillRadius)
+        .border({ width: 1, color: '#333333' })
+        .onClick(() => this.addDash())
+        .layoutWeight(1)
+      }
+      .padding({ left: 20, right: 20, bottom: 60 })
+    }
   }
 
   build() {
@@ -196,6 +321,12 @@ export struct TranslatePage {
         this.InputArea()
         Blank().height(12)
         this.OutputArea()
+        
+        // 在电码→文本模式下显示底部按钮
+        if (!this.isTextToMorse) {
+          Blank().layoutWeight(1)
+          this.BottomKeys()
+        }
       }
       .width('100%')
       .constraintSize({ maxWidth: 480 })

@@ -1,4 +1,4 @@
-import { router } from '@kit.ArkUI'
+import { router, promptAction } from '@kit.ArkUI'
 // System bar colors are set globally in EntryAbility
 import util from '@ohos.util'
 
@@ -14,41 +14,36 @@ export struct ChineseTelegraphCodePage {
   @State searchText: string = ''
   @State filteredCodes: ChineseTelegraphCode[] = []
   @State isLoading: boolean = true
-  private infoDialog: CustomDialogController = new CustomDialogController({
-    builder: this.InfoDialog(),
-    autoCancel: true,
-    alignment: DialogAlignment.Center,
-    customStyle: false
-  })
 
   aboutToAppear() {
     // System bar colors are set globally in EntryAbility
-
+    console.log('ChineseTelegraphCodePage aboutToAppear called')
+    
     // 延迟加载数据，让页面先显示
     setTimeout(() => {
+      console.log('Starting to load Chinese telegraph codes...')
       this.loadChineseTelegraphCodes()
     }, 100)
   }
 
   private loadChineseTelegraphCodes() {
     try {
-      // Load from rawfile
-      const uiContext = this.getUIContext()
-      const hostContext = uiContext.getHostContext()
-      if (hostContext) {
-        hostContext.resourceManager.getRawFileContent('chinese_telegraph_codes_full.json')
+      // Load from rawfile using the correct context access method
+      const context = this.getUIContext().getHostContext()
+      if (context) {
+        context.resourceManager.getRawFileContent('chinese_telegraph_codes_full.json')
         .then((data: ArrayBuffer) => {
           const decoder = new util.TextDecoder('utf-8')
           const uint8Array = new Uint8Array(data)
-          const jsonString = decoder.decodeWithStream(uint8Array)
+          const jsonString = decoder.decode(uint8Array)
           const parsedData = JSON.parse(jsonString) as ChineseTelegraphCode[]
           this.codes = parsedData
           this.filteredCodes = parsedData
           this.isLoading = false
           console.log(`Loaded ${this.codes.length} Chinese telegraph codes`)
         })
-        .catch(() => {
-          console.error('Failed to load Chinese telegraph codes')
+        .catch((error: Error) => {
+          console.error('Failed to load Chinese telegraph codes:', error.message ?? '')
           // Fallback to empty array
           this.codes = []
           this.filteredCodes = []
@@ -116,7 +111,14 @@ export struct ChineseTelegraphCodePage {
       .height(40)
       .backgroundColor(Color.Transparent)
       .onClick(() => {
-        this.infoDialog.open()
+        // Use system dialog via promptAction
+        promptAction.showDialog({
+          title: '标准中文电码表说明',
+          message: '• 标准中文电码（Chinese Telegraph Code, CTC）是一套用四位数字表示常用汉字的编码体系，最早用于电报传输。\n\n• 每个汉字对应一个唯一的四位数字（0001–9999），便于在通信中准确传递。\n\n• 本页面可按“汉字”或“电码”搜索，方便快速定位目标。',
+          buttons: [
+            { text: '知道了', color: '#0A59F7' }
+          ]
+        })
       })
     }
     .width('100%')
@@ -124,71 +126,7 @@ export struct ChineseTelegraphCodePage {
     .padding({ left: 16, right: 16 })
   }
 
-  @Builder
-  private InfoDialog() {
-    // 简要说明标准中文电码表
-    Column() {
-      Text('标准中文电码表说明')
-        .fontSize(20)
-        .fontWeight(FontWeight.Bold)
-        .fontColor('#FFFFFF')
-        .textAlign(TextAlign.Center)
-
-      Blank().height(12)
-
-      Scroll() {
-        Column() {
-          Text('• 标准中文电码（Chinese Telegraph Code, CTC）是一套用四位数字表示常用汉字的编码体系，最早用于电报传输。')
-            .fontSize(14)
-            .fontColor('#CCCCCC')
-            .textAlign(TextAlign.Start)
-            .width('100%')
-
-          Blank().height(8)
-
-          Text('• 每个汉字对应一个唯一的四位数字（0001–9999），便于在通信中准确传递。')
-            .fontSize(14)
-            .fontColor('#CCCCCC')
-            .textAlign(TextAlign.Start)
-            .width('100%')
-
-          Blank().height(8)
-
-          Text('• 本页面可按“汉字”或“电码”搜索，方便快速定位目标。')
-            .fontSize(14)
-            .fontColor('#CCCCCC')
-            .textAlign(TextAlign.Start)
-            .width('100%')
-        }
-        .width('100%')
-      }
-      .height(140)
-
-      Blank().height(16)
-
-      Row() {
-        Button() {
-          Text('知道了')
-            .fontSize(16)
-            .fontWeight(FontWeight.Bold)
-            .fontColor('#1A1A1A')
-            .textAlign(TextAlign.Center)
-            .width('100%')
-        }
-        .height(44)
-        .layoutWeight(1)
-        .backgroundColor('#FFD700')
-        .borderRadius(10)
-        .onClick(() => this.infoDialog.close())
-      }
-      .width('100%')
-    }
-    .width(420)
-    .padding(20)
-    .backgroundColor('#000000')
-    .border({ width: 1, color: '#333333' })
-    .borderRadius(16)
-  }
+  // System dialog used instead of custom dialog
 
   @Builder
   SearchBar() {
@@ -288,14 +226,14 @@ export struct ChineseTelegraphCodePage {
       
       // 内容区域 - 响应式宽度，最大480vp
       Column() {
-        // 搜索与表头始终可见
-        this.SearchBar()
-        this.TableHeader()
-
-        // 列表或加载中
+        // 加载中：只显示加载指示器，不显示搜索与表头
         if (this.isLoading) {
           this.LoadingIndicator()
         } else {
+          // 加载完成后再显示搜索与表头
+          this.SearchBar()
+          this.TableHeader()
+
           if (this.filteredCodes.length === 0) {
             // 空数据提示
             Column() {
