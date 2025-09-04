@@ -1,3 +1,5 @@
+import { PinyinService } from '../services/PinyinService'
+
 export class MorseCode {
   character: string
   morse: string
@@ -103,10 +105,19 @@ export class MorseCodeData {
 
   // 将中文字符转换为拼音
   private static chineseToPinyinString(char: string): string | null {
-    return MorseCodeData.chineseToPinyin.get(char) || null
+    // 1) priority: built-in overrides
+    const overrideVal: string | undefined = MorseCodeData.chineseToPinyin.get(char)
+    if (overrideVal) return overrideVal
+    // 2) fallback: loaded dictionary from pinyin.txt
+    const fromDict: string | null = PinyinService.getCharPinyin(char)
+    return fromDict ?? null
   }
 
   static textToMorse(text: string, onChineseNotFound?: (char: string) => void): string {
+    if (!text || text.trim().length === 0) {
+      return ''
+    }
+    
     const codes = MorseCodeData.getAllCodes()
     const result: string[] = []
     
@@ -163,6 +174,10 @@ export class MorseCodeData {
   }
 
   static morseToText(morse: string): string {
+    if (!morse || morse.trim().length === 0) {
+      return ''
+    }
+    
     const codes = MorseCodeData.getAllCodes()
     const normalized = morse.split('·').join('.')
     const words = normalized.split('/')

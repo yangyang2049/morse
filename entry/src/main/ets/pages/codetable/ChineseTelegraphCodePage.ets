@@ -14,6 +14,12 @@ export struct ChineseTelegraphCodePage {
   @State searchText: string = ''
   @State filteredCodes: ChineseTelegraphCode[] = []
   @State isLoading: boolean = true
+  private infoDialog: CustomDialogController = new CustomDialogController({
+    builder: this.InfoDialog(),
+    autoCancel: true,
+    alignment: DialogAlignment.Center,
+    customStyle: false
+  })
 
   aboutToAppear() {
     // System bar colors are set globally in EntryAbility
@@ -98,11 +104,90 @@ export struct ChineseTelegraphCodePage {
         .layoutWeight(1)
         .textAlign(TextAlign.Center)
 
-      Blank().width(40) // Balance the back button
+      // Info entrance at top-right (emoji memo)
+      Button() {
+        Text('📝')
+          .fontSize(20)
+          .fontColor(Color.White)
+          .textAlign(TextAlign.Center)
+          .width('100%')
+      }
+      .width(40)
+      .height(40)
+      .backgroundColor(Color.Transparent)
+      .onClick(() => {
+        this.infoDialog.open()
+      })
     }
     .width('100%')
     .height(56)
     .padding({ left: 16, right: 16 })
+  }
+
+  @Builder
+  private InfoDialog() {
+    // 简要说明标准中文电码表
+    Column() {
+      Text('标准中文电码表说明')
+        .fontSize(20)
+        .fontWeight(FontWeight.Bold)
+        .fontColor('#FFFFFF')
+        .textAlign(TextAlign.Center)
+
+      Blank().height(12)
+
+      Scroll() {
+        Column() {
+          Text('• 标准中文电码（Chinese Telegraph Code, CTC）是一套用四位数字表示常用汉字的编码体系，最早用于电报传输。')
+            .fontSize(14)
+            .fontColor('#CCCCCC')
+            .textAlign(TextAlign.Start)
+            .width('100%')
+
+          Blank().height(8)
+
+          Text('• 每个汉字对应一个唯一的四位数字（0001–9999），便于在通信中准确传递。')
+            .fontSize(14)
+            .fontColor('#CCCCCC')
+            .textAlign(TextAlign.Start)
+            .width('100%')
+
+          Blank().height(8)
+
+          Text('• 本页面可按“汉字”或“电码”搜索，方便快速定位目标。')
+            .fontSize(14)
+            .fontColor('#CCCCCC')
+            .textAlign(TextAlign.Start)
+            .width('100%')
+        }
+        .width('100%')
+      }
+      .height(140)
+
+      Blank().height(16)
+
+      Row() {
+        Button() {
+          Text('知道了')
+            .fontSize(16)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#1A1A1A')
+            .textAlign(TextAlign.Center)
+            .width('100%')
+        }
+        .height(44)
+        .layoutWeight(1)
+        .backgroundColor('#FFD700')
+        .borderRadius(10)
+        .onClick(() => this.infoDialog.close())
+      }
+      .width('100%')
+    }
+    .width(420)
+    .padding(20)
+    .backgroundColor('#000000')
+    .border({ width: 1, color: '#333333' })
+    .borderRadius(16)
   }
 
   @Builder
@@ -116,8 +201,8 @@ export struct ChineseTelegraphCodePage {
     .backgroundColor('#1A1A1A')
     .borderRadius(20)
     .height(40)
-      .searchIcon({ color: Color.White })
-      .onChange((value: string) => {
+    .searchIcon({ color: Color.White })
+    .onChange((value: string) => {
       this.onSearchTextChange(value)
     })
     .onSubmit((value: string) => {
@@ -203,24 +288,38 @@ export struct ChineseTelegraphCodePage {
       
       // 内容区域 - 响应式宽度，最大480vp
       Column() {
+        // 搜索与表头始终可见
+        this.SearchBar()
+        this.TableHeader()
+
+        // 列表或加载中
         if (this.isLoading) {
-          // 加载状态
           this.LoadingIndicator()
         } else {
-          // 正常内容
-          this.SearchBar()
-          this.TableHeader()
-
-          List() {
-            ForEach(this.filteredCodes, (code: ChineseTelegraphCode, index: number) => {
-              ListItem() {
-                this.TableRow(code, index)
-              }
-            }, (code: ChineseTelegraphCode) => code.character + code.code)
+          if (this.filteredCodes.length === 0) {
+            // 空数据提示
+            Column() {
+              Text('暂无数据')
+                .fontSize(14)
+                .fontColor('#888888')
+                .textAlign(TextAlign.Center)
+            }
+            .layoutWeight(1)
+            .width('100%')
+            .justifyContent(FlexAlign.Center)
+            .alignItems(HorizontalAlign.Center)
+          } else {
+            List() {
+              ForEach(this.filteredCodes, (code: ChineseTelegraphCode, index: number) => {
+                ListItem() {
+                  this.TableRow(code, index)
+                }
+              }, (code: ChineseTelegraphCode) => code.character + code.code)
+            }
+            .layoutWeight(1)
+            .divider({ strokeWidth: 0 })
+            .scrollBar(BarState.Auto)
           }
-          .layoutWeight(1)
-          .divider({ strokeWidth: 0 })
-          .scrollBar(BarState.Auto)
         }
       }
       .width('100%')

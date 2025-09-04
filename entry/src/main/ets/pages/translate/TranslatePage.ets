@@ -1,4 +1,5 @@
 import { MorseCodeData } from '../../models/MorseCode'
+import { PinyinService } from '../../services/PinyinService'
 // System bar colors are set globally in EntryAbility
 import { promptAction } from '@kit.ArkUI'
 
@@ -7,9 +8,16 @@ export struct TranslatePage {
   @State isTextToMorse: boolean = true
   @State textInput: string = ''
   @State morseInput: string = ''
+  private readonly boxFontSize: number = 20
 
   aboutToAppear() {
     // System bar colors are set globally in EntryAbility
+    // Preload pinyin dictionary for Chinese → pinyin conversion
+    const uiContext = this.getUIContext()
+    const hostContext = uiContext.getHostContext()
+    if (hostContext) {
+      PinyinService.load(hostContext)
+    }
   }
 
   private getOutput(): string {
@@ -72,9 +80,9 @@ export struct TranslatePage {
     RelativeContainer() {
       // 输入框
       if (this.isTextToMorse) {
-        TextArea({ placeholder: '在此输入文本，如: Hello World' })
+        TextArea({ text: this.textInput, placeholder: '在此输入文本，如: Hello World' })
           .layoutWeight(1)
-          .fontSize(24)
+          .fontSize(this.boxFontSize)
           .fontColor(Color.White)
           .placeholderColor(Color.White)
           .caretColor(Color.White)
@@ -83,9 +91,9 @@ export struct TranslatePage {
           .onChange((v: string) => { this.textInput = v })
           .id('text_input_area')
       } else {
-        TextArea({ placeholder: '在此输入电码，如: ··· --- ···' })
+        TextArea({ text: this.morseInput, placeholder: '在此输入电码，如: ··· --- ···' })
           .layoutWeight(1)
-          .fontSize(24)
+          .fontSize(this.boxFontSize)
           .fontColor(Color.White)
           .placeholderColor(Color.White)
           .caretColor(Color.White)
@@ -110,13 +118,14 @@ export struct TranslatePage {
           bottom: { anchor: this.isTextToMorse ? 'text_input_area' : 'morse_input_area', align: VerticalAlign.Bottom },
           right: { anchor: this.isTextToMorse ? 'text_input_area' : 'morse_input_area', align: HorizontalAlign.End }
         })
-        .margin({ right: 8, bottom: 8 })
+        .margin({ right: -4, bottom: 8 })
         .onClick(() => {
           if (this.isTextToMorse) {
             this.textInput = ''
           } else {
             this.morseInput = ''
           }
+          // 清除输入后，输出也会自动更新为空
         })
         .zIndex(1)
       }
@@ -134,7 +143,7 @@ export struct TranslatePage {
       // 输出框
       TextArea({ text: this.getOutput().length > 0 ? this.getOutput() : '输出将在此显示' })
         .layoutWeight(1)
-        .fontSize(24)
+        .fontSize(this.boxFontSize)
         .margin(12)
         .backgroundColor(Color.Transparent)
         .fontColor('#FFFFFF')
@@ -158,7 +167,7 @@ export struct TranslatePage {
           bottom: { anchor: 'output_area', align: VerticalAlign.Bottom },
           right: { anchor: 'output_area', align: HorizontalAlign.End }
         })
-        .margin({ right: 8, bottom: 8 })
+        .margin({ right: -4, bottom: 8 })
         .onClick(() => {
           // 复制到剪贴板
           promptAction.showToast({
@@ -185,14 +194,14 @@ export struct TranslatePage {
       Column() {
         this.ModeToggle()
         this.InputArea()
-        Blank().height(16)
+        Blank().height(12)
         this.OutputArea()
       }
       .width('100%')
       .constraintSize({ maxWidth: 480 })
       .padding({ left: 20, right: 20 })
       .layoutWeight(1)
-      .justifyContent(FlexAlign.SpaceEvenly)
+      .justifyContent(FlexAlign.Start)
       .alignItems(HorizontalAlign.Center)
     }
     .width('100%')

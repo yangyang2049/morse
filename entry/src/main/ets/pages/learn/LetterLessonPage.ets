@@ -8,6 +8,7 @@ import { LessonData } from '../../data/LessonData'
 @Component
 struct LetterLessonPage {
   @State viewModel: LetterLessonViewModel = new LetterLessonViewModel()
+  private readonly pillRadius: number = 20
 
   aboutToAppear() {
     const uiContext = this.getUIContext()
@@ -31,6 +32,18 @@ struct LetterLessonPage {
 
   aboutToDisappear() {
     this.viewModel.destroy()
+  }
+
+  // 判断是否为单词课程
+  private isWordLesson(): boolean {
+    const lessonNumber = parseInt(this.viewModel.lessonId) || 0
+    return lessonNumber >= 19 && lessonNumber <= 21
+  }
+
+  // 判断是否为数字或符号课程
+  private isNumberOrSymbolLesson(): boolean {
+    const lessonNumber = parseInt(this.viewModel.lessonId) || 0
+    return (lessonNumber >= 12 && lessonNumber <= 15) || (lessonNumber >= 16 && lessonNumber <= 18)
   }
 
   // Removed onPageShow system bar re-application to avoid flicker
@@ -108,7 +121,7 @@ struct LetterLessonPage {
         Row() {
           ForEach(this.viewModel.codes, (code: MorseCode, index: number) => {
             Text(code.character)
-              .fontSize(18)
+              .fontSize(this.isWordLesson() ? 14 : 18)
               .fontWeight(FontWeight.Bold)
               .fontColor(this.viewModel.getLetterStatusColor(index))
               .margin({ right: 8 })
@@ -162,7 +175,7 @@ struct LetterLessonPage {
         })
       
       Text(this.viewModel.codes[this.viewModel.currentIndex]?.character || '')
-        .fontSize(80)
+        .fontSize(this.isWordLesson() ? 48 : 80)
         .fontWeight(FontWeight.Bold)
         .fontColor('#1A1A1A')
         .textAlign(TextAlign.Center)
@@ -175,16 +188,16 @@ struct LetterLessonPage {
     Column() {
       Text(this.viewModel.shouldShowHint(this.viewModel.currentIndex) ? 
         (this.viewModel.codes[this.viewModel.currentIndex]?.morse || '').replace(/\./g, '·') : '?')
-        .fontSize(36)
+        .fontSize(this.isWordLesson() ? 24 : 36)
         .fontWeight(FontWeight.Bold)
         .fontColor(this.viewModel.shouldShowHint(this.viewModel.currentIndex) ? Color.White : '#FFFFFF80')
         .fontFamily('monospace')
         .letterSpacing(2)
     }
     .height(80)
-    .width(150)
+    .width(this.isNumberOrSymbolLesson() ? 225 : 150) // 数字和符号课程增加50%宽度
     .backgroundColor('#1A1A1A')
-    .borderRadius(20)
+    .borderRadius(this.pillRadius)
     .justifyContent(FlexAlign.Center)
   }
 
@@ -192,7 +205,7 @@ struct LetterLessonPage {
   private InputDisplay() {
     Column() {
       Text(this.viewModel.userInput.replace(/\./g, '·').trim())
-        .fontSize(36)
+        .fontSize(this.isWordLesson() ? 24 : 36)
         .fontWeight(FontWeight.Bold)
         .fontColor(
           this.viewModel.showResult && this.viewModel.isCorrect ? Color.Green :
@@ -219,7 +232,7 @@ struct LetterLessonPage {
       }
       .height(80)
       .backgroundColor('#1A1A1A')
-      .borderRadius(20)
+      .borderRadius(this.pillRadius)
       .border({ width: 1, color: '#333333' })
       .onClick(() => this.viewModel.addDot())
       .layoutWeight(1)
@@ -232,7 +245,7 @@ struct LetterLessonPage {
       }
       .height(80)
       .backgroundColor('#1A1A1A')
-      .borderRadius(20)
+      .borderRadius(this.pillRadius)
       .border({ width: 1, color: '#333333' })
       .onClick(() => this.viewModel.addDash())
       .layoutWeight(1)
@@ -354,6 +367,7 @@ struct LetterLessonPage {
       .border({ width: 2, color: Color.Green })
       .borderRadius(16)
       .shadow({ radius: 24, color: 'rgba(0,0,0,0.4)', offsetX: 0, offsetY: 12 })
+      .margin({ left: 20, right: 20 })
       
       Blank().layoutWeight(1)
     }

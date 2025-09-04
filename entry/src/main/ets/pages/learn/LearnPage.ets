@@ -115,39 +115,39 @@ export struct LearnPage {
               title: item.title
             }
           })
-        } else if (item.key.startsWith('num_')) {
+        } else if (item.key.startsWith('number_')) {
           // 数字课程 - 路由到LetterLessonPage
-          const lessonIndex = parseInt(item.key.replace('num_', ''))
-          const lessonId = `number_lesson_${lessonIndex}`
-          console.error(`[LEARN] Navigating to number lesson: ${lessonId}`)
+          const lessonIndex = parseInt(item.key.replace('number_', ''))
+          const lessonNumber = 12 + lessonIndex // 数字课程从第12课开始
+          console.error(`[LEARN] Navigating to number lesson: ${lessonNumber}`)
           router.push({
             url: 'pages/learn/LetterLessonPage',
             params: {
-              lessonId: lessonId,
+              lessonId: lessonNumber.toString(),
               title: item.title
             }
           })
-        } else if (item.key.startsWith('pun_')) {
+        } else if (item.key.startsWith('punctuation_')) {
           // 符号课程 - 路由到LetterLessonPage
-          const lessonIndex = parseInt(item.key.replace('pun_', ''))
-          const lessonId = `punctuation_lesson_${lessonIndex}`
-          console.error(`[LEARN] Navigating to punctuation lesson: ${lessonId}`)
+          const lessonIndex = parseInt(item.key.replace('punctuation_', ''))
+          const lessonNumber = 16 + lessonIndex // 符号课程从第16课开始
+          console.error(`[LEARN] Navigating to punctuation lesson: ${lessonNumber}`)
           router.push({
             url: 'pages/learn/LetterLessonPage',
             params: {
-              lessonId: lessonId,
+              lessonId: lessonNumber.toString(),
               title: item.title
             }
           })
         } else if (item.key.startsWith('word_')) {
           // 单词课程 - 路由到LetterLessonPage
           const lessonIndex = parseInt(item.key.replace('word_', ''))
-          const lessonId = `word_lesson_${lessonIndex}`
-          console.error(`[LEARN] Navigating to word lesson: ${lessonId}`)
+          const lessonNumber = 19 + lessonIndex // 单词课程从第19课开始
+          console.error(`[LEARN] Navigating to word lesson: ${lessonNumber}`)
           router.push({
             url: 'pages/learn/LetterLessonPage',
             params: {
-              lessonId: lessonId,
+              lessonId: lessonNumber.toString(),
               title: item.title
             }
           })

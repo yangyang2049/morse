@@ -27,6 +27,7 @@ export struct PracticePage {
   private difficulty: string = '简单'
   private lastCharacterChangeId: number = -1
   private animationTimer: number | null = null
+  private readonly pillRadius: number = 20
 
   aboutToAppear(): void {
     // System bar colors are set globally in EntryAbility
@@ -137,7 +138,9 @@ export struct PracticePage {
       })
     }
     .height(52)
+    .width('100%')
     .padding({ left: 16, right: 16 })
+    .backgroundColor(Color.Black)
   }
 
   @Builder
@@ -185,6 +188,30 @@ export struct PracticePage {
     .width(200)
     .height(200)
     .scale({ x: this.circleScale, y: this.circleScale }) // 使用状态控制的缩放
+  }
+
+  @Builder
+  private MorseDisplay() {
+    Column() {
+      Text(
+        this.vm.getShowHint() || this.vm.getShowCorrectAnswer()
+          ? this.vm.getCurrentMorse().split('.').join('·')
+          : '?'
+      )
+        .fontSize(36)
+        .fontWeight(FontWeight.Bold)
+        .fontColor(this.vm.getShowHint() || this.vm.getShowCorrectAnswer() ? Color.White : '#FFFFFF80')
+        .fontFamily('monospace')
+        .letterSpacing(2)
+        .textAlign(TextAlign.Center)
+        .width('100%')
+    }
+    .height(80)
+    .width(150)
+    .backgroundColor('#1A1A1A')
+    .borderRadius(this.pillRadius)
+    .justifyContent(FlexAlign.Center)
+    .alignItems(HorizontalAlign.Center)
   }
 
   private getCircumference(): number {
@@ -237,35 +264,25 @@ export struct PracticePage {
 
   @Builder
   private InputDisplay() {
-    Stack({ alignContent: Alignment.Center }) {
-      // 占位文本（始终存在但透明）
-      Text('- - -')
-        .fontSize(36)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(Color.Transparent)
-        .fontFamily('monospace')
-        .letterSpacing(4)
-
-      // 主要输入文本
-      Text(
-        this.vm.getShowHint() || this.vm.getShowCorrectAnswer() ?
-        this.vm.getCurrentMorse().split('.').join('·') :
-        this.vm.getUserInput().split('.').join('·')
-      )
+    Column() {
+      Text(this.vm.getUserInput().split('.').join('·'))
         .fontSize(36)
         .fontWeight(FontWeight.Bold)
         .fontFamily('monospace')
         .letterSpacing(4)
         .fontColor(
-          this.vm.getShowCorrectAnswer() ? Color.Green :
-          (this.vm.getShowHint() ? Color.White :
-          (this.vm.getShowResult() && this.vm.getIsCorrect() ? Color.Green :
+          this.vm.getShowResult() && this.vm.getIsCorrect() ? Color.Green :
           (this.vm.getShowResult() && !this.vm.getIsCorrect() ? Color.Red :
-          (this.vm.getUserInput().length === 0 ? Color.Transparent : '#FFD700'))))
+          (this.vm.getUserInput().length === 0 ? Color.Transparent : '#FFD700'))
         )
+        .textAlign(TextAlign.Center)
+        .width('100%')
     }
-    .width('100%')
-    .height(60)
+    // Fixed size to reserve space even when empty
+    .width(400)
+    .height(80)
+    .justifyContent(FlexAlign.Center)
+    .alignItems(HorizontalAlign.Center)
   }
 
   @Builder
@@ -285,7 +302,7 @@ export struct PracticePage {
           
           // 显示toast提示
           promptAction.showToast({
-            message: wasFavorite ? `取消收藏 "${currentChar}"` : `收藏 "${currentChar}"`,
+            message: wasFavorite ? `已取消收藏` : `已收藏`,
             duration: 1500,
             bottom: '80%'
           })
@@ -327,7 +344,7 @@ export struct PracticePage {
       }
       .height(80)
       .backgroundColor('#1A1A1A')
-      .borderRadius(20)
+      .borderRadius(this.pillRadius)
       .border({ width: 1, color: '#333333' })
       .onClick(() => this.vm.addDot())
       .layoutWeight(1)
@@ -341,12 +358,12 @@ export struct PracticePage {
       }
       .height(80)
       .backgroundColor('#1A1A1A')
-      .borderRadius(20)
+      .borderRadius(this.pillRadius)
       .border({ width: 1, color: '#333333' })
       .onClick(() => this.vm.addDash())
       .layoutWeight(1)
     }
-    .padding({ left: 20, right: 20, bottom: 20 })
+    .padding({ left: 20, right: 20, bottom: 60 })
   }
 
 
@@ -360,19 +377,26 @@ export struct PracticePage {
         Column() {
           Blank().height(20)
 
-          // 主要内容
+          // 主要内容（对齐 LetterLessonPage 布局）
           Column() {
             // 字符与进度圆圈
             this.ProgressCircle()
 
-            Blank().height(40)
+            Blank().height(60)
 
+            // 目标电码/提示显示
+            this.MorseDisplay()
+
+            Blank().height(20)
+
+            // 用户输入显示
             this.InputDisplay()
           }
           .width('100%')
           .justifyContent(FlexAlign.Center)
           .alignItems(HorizontalAlign.Center)
 
+          Blank().height(20)
           this.ToolButtons()
           Blank().height(26)
           this.BottomKeys()

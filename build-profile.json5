@@ -1,69 +1,70 @@
 {
-  "app": {
-    "signingConfigs": [
+  app: {
+    products: [
       {
-        "name": "default",
-        "type": "HarmonyOS",
-        "material": {
-          "certpath": "/Users/yangyangshi/.ohos/config/default_morse_Sy15OF2MAvf3gS8046RSidVqmz-wG5nu5zL2br881ls=.cer",
-          "keyAlias": "debugKey",
-          "keyPassword": "0000001B708A7439AF8A1F61B470FEFFA6A9E14403A1380ECFA5E27CD08BE3FA5DB708F4C5F5342CC29DA1",
-          "profile": "/Users/yangyangshi/.ohos/config/default_morse_Sy15OF2MAvf3gS8046RSidVqmz-wG5nu5zL2br881ls=.p7b",
-          "signAlg": "SHA256withECDSA",
-          "storeFile": "/Users/yangyangshi/.ohos/config/default_morse_Sy15OF2MAvf3gS8046RSidVqmz-wG5nu5zL2br881ls=.p12",
-          "storePassword": "0000001B3C25241754E7AF4934A03284BD65DCAB3171299FFBC342582B532838EA65B96977C79973575EA0"
-        }
+        name: "default",
+        signingConfig: "default",
+        compileSdkVersion: "5.1.0(18)",
+        targetSdkVersion: "5.1.0(18)",
+        compatibleSdkVersion: "5.0.0(12)",
+        runtimeOS: "HarmonyOS",
       },
       {
-        "name": "release",
-        "type": "HarmonyOS",
-        "material": {
-          "storeFile": "/Users/yangyangshi/Documents/huawei_profile/douhua.p12",
-          "storePassword": "0000003840AE9F1C3EF5AA53A6B76C187FF73617DA05CFF3534E832C05BB2BA558300B081E819A8F6C29FD102832604F353E78213ABF45D49636B2519BFE119D97BCF2FE208DC75F",
-          "keyAlias": "deveco",
-          "keyPassword": "00000038FF30E50CAD29D700888EB65792F5CA1A002AF1BF12E69BCA0CDF45024100B83454169E375923A8807D1FE20D1E844ADD8DCF4121A222A9F3D7088B07944611FCA45E0191",
-          "signAlg": "SHA256withECDSA",
-          "profile": "/Users/yangyangshi/Documents/huawei_profile/morseRelease.p7b",
-          "certpath": "/Users/yangyangshi/Documents/huawei_profile/douhua_release.cer"
-        }
-      }
+        name: "prodRelease",
+        signingConfig: "release",
+        compileSdkVersion: "5.1.0(18)",
+        targetSdkVersion: "5.1.0(18)",
+        compatibleSdkVersion: "5.0.0(12)",
+        runtimeOS: "HarmonyOS",
+      },
     ],
-    "products": [
+    buildModeSet: [
       {
-        "name": "default",
-        "signingConfig": "default",
-        "targetSdkVersion": "5.1.0(18)",
-        "compatibleSdkVersion": "5.0.0(12)",
-        "runtimeOS": "HarmonyOS",
-        "buildOption": {
-          "strictMode": {
-            "caseSensitiveCheck": true,
-            "useNormalizedOHMUrl": true
-          }
-        }
-      }
-    ],
-    "buildModeSet": [
-      {
-        "name": "debug",
+        name: "debug",
       },
       {
-        "name": "release"
-      }
-    ]
+        name: "release",
+      },
+    ],
+    signingConfigs: [
+      {
+        name: "default",
+        type: "HarmonyOS",
+        material: {
+          certpath: "/Users/yangyangshi/.ohos/config/default_morse_Sy15OF2MAvf3gS8046RSidVqmz-wG5nu5zL2br881ls=.cer",
+          keyAlias: "debugKey",
+          keyPassword: "0000001B54E1DAB557A674CE3839EBA3B38005893B0C8747D1D9643CD5C9D0BF9880F5AB11C9B5915C11C1",
+          profile: "/Users/yangyangshi/.ohos/config/default_morse_Sy15OF2MAvf3gS8046RSidVqmz-wG5nu5zL2br881ls=.p7b",
+          signAlg: "SHA256withECDSA",
+          storeFile: "/Users/yangyangshi/.ohos/config/default_morse_Sy15OF2MAvf3gS8046RSidVqmz-wG5nu5zL2br881ls=.p12",
+          storePassword: "0000001B56546A5752FDD609EF455F4303B7094114F102D5C19A26F518DAC5CF6142466BA60F09AA43F4AF",
+        },
+      },
+      {
+        name: "release",
+        type: "HarmonyOS",
+        material: {
+          storeFile: "/Users/yangyangshi/Documents/huawei_profile/douhua.p12",
+          storePassword: "00000038999CFF36FDA094B2A4FC3AF6DBE46B3C0BB50F0E3BD4FABA2394628C876C74ABDFA2D722F168ACF2440868A1633B5152403745F72181B40863F60AE96B926AECB1E8D85B",
+          keyAlias: "deveco",
+          keyPassword: "00000038659160C862BB8AADA677F85CAB9FF75A246A3B39779AC8C23C26F0AD7E01ED75A68F73326A88C407996D04B70409E3C05AF9516021B4FD916C72153952A21A781D8DB6C3",
+          signAlg: "SHA256withECDSA",
+          profile: "/Users/yangyangshi/Documents/huawei_profile/morseRelease.p7b",
+          certpath: "/Users/yangyangshi/Documents/huawei_profile/douhua_release.cer",
+        },
+      },
+    ],
   },
-  "modules": [
+  modules: [
     {
-      "name": "entry",
-      "srcPath": "./entry",
-      "targets": [
+      name: "entry",
+      srcPath: "./entry",
+      targets: [
         {
-          "name": "default",
-          "applyToProducts": [
-            "default"
-          ]
-        }
-      ]
-    }
-  ]
+          name: "default",
+          applyToProducts: ["default", "prodRelease"],
+        },
+      ],
+    },
+  ],
 }
