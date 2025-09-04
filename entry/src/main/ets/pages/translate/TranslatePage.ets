@@ -1,5 +1,6 @@
 import { MorseCodeData } from '../../models/MorseCode'
-import window from '@ohos.window'
+// System bar colors are set globally in EntryAbility
+import { promptAction } from '@kit.ArkUI'
 
 @Component
 export struct TranslatePage {
@@ -8,22 +9,19 @@ export struct TranslatePage {
   @State morseInput: string = ''
 
   aboutToAppear() {
-    // Set status bar color
-    const uiContext = this.getUIContext()
-    const hostContext = uiContext.getHostContext()
-    if (hostContext) {
-      window.getLastWindow(hostContext).then((windowClass) => {
-        windowClass.setWindowSystemBarProperties({
-          statusBarColor: '#000000',
-          statusBarContentColor: '#FFFFFF'
-        })
-      })
-    }
+    // System bar colors are set globally in EntryAbility
   }
 
   private getOutput(): string {
     if (this.isTextToMorse) {
-      return MorseCodeData.textToMorse(this.textInput)
+      return MorseCodeData.textToMorse(this.textInput, (char: string) => {
+        // 显示中文字符不在拼音表中的提示
+        promptAction.showToast({
+          message: `"${char}" 不在拼音表中`,
+          duration: 2000,
+          bottom: '80%'
+        })
+      })
     } else {
       return MorseCodeData.morseToText(this.morseInput)
     }
@@ -71,89 +69,59 @@ export struct TranslatePage {
 
   @Builder
   private InputArea() {
-    Column() {
+    RelativeContainer() {
+      // 输入框
       if (this.isTextToMorse) {
         TextArea({ placeholder: '在此输入文本，如: Hello World' })
-          .height(180)
+          .layoutWeight(1)
           .fontSize(24)
           .fontColor(Color.White)
           .placeholderColor(Color.White)
           .caretColor(Color.White)
           .margin(12)
+          .maxLines(6)
           .onChange((v: string) => { this.textInput = v })
+          .id('text_input_area')
       } else {
         TextArea({ placeholder: '在此输入电码，如: ··· --- ···' })
-          .height(180)
+          .layoutWeight(1)
           .fontSize(24)
           .fontColor(Color.White)
           .placeholderColor(Color.White)
           .caretColor(Color.White)
           .margin(12)
+          .maxLines(6)
           .onChange((v: string) => { this.morseInput = v })
+          .id('morse_input_area')
       }
 
-      if (this.isTextToMorse) {
-        // Quick input row (styled chips)
-        Scroll() {
-          Row() {
-            Button('SOS')
-              .onClick(() => { this.textInput = 'SOS' })
-              .backgroundColor('#1A1A1A')
-              .fontColor('#FFFFFFCC')
-              .borderRadius(16)
-              .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-              .border({ width: 1, color: '#333333' })
-              .margin({ right: 6 })
-
-            Button('Hello')
-              .onClick(() => { this.textInput = 'Hello' })
-              .backgroundColor('#1A1A1A')
-              .fontColor('#FFFFFFCC')
-              .borderRadius(16)
-              .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-              .border({ width: 1, color: '#333333' })
-              .margin({ right: 6 })
-
-            Button('World')
-              .onClick(() => { this.textInput = 'World' })
-              .backgroundColor('#1A1A1A')
-              .fontColor('#FFFFFFCC')
-              .borderRadius(16)
-              .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-              .border({ width: 1, color: '#333333' })
-              .margin({ right: 6 })
-
-            Button('Test')
-              .onClick(() => { this.textInput = 'Test' })
-              .backgroundColor('#1A1A1A')
-              .fontColor('#FFFFFFCC')
-              .borderRadius(16)
-              .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-              .border({ width: 1, color: '#333333' })
-              .margin({ right: 6 })
-
-            Button('中国')
-              .onClick(() => { this.textInput = '中国' })
-              .backgroundColor('#1A1A1A')
-              .fontColor('#FFFFFFCC')
-              .borderRadius(16)
-              .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-              .border({ width: 1, color: '#333333' })
-              .margin({ right: 6 })
-
-            Button('你好')
-              .onClick(() => { this.textInput = '你好' })
-              .backgroundColor('#1A1A1A')
-              .fontColor('#FFFFFFCC')
-              .borderRadius(16)
-              .padding({ left: 12, right: 12, top: 6, bottom: 6 })
-              .border({ width: 1, color: '#333333' })
-              .margin({ right: 6 })
+      // 清除按钮（右下角浮动）
+      if ((this.isTextToMorse && this.textInput.length > 0) || (!this.isTextToMorse && this.morseInput.length > 0)) {
+        Button() {
+          Image($rawfile('ic_clear.svg'))
+            .width(20)
+            .height(20)
+        }
+        .width(36)
+        .height(36)
+        .backgroundColor(Color.Transparent)
+        .borderRadius(18)
+        .alignRules({
+          bottom: { anchor: this.isTextToMorse ? 'text_input_area' : 'morse_input_area', align: VerticalAlign.Bottom },
+          right: { anchor: this.isTextToMorse ? 'text_input_area' : 'morse_input_area', align: HorizontalAlign.End }
+        })
+        .margin({ right: 8, bottom: 8 })
+        .onClick(() => {
+          if (this.isTextToMorse) {
+            this.textInput = ''
+          } else {
+            this.morseInput = ''
           }
-          .padding({ left: 12, right: 12, bottom: 8 })
-        }.scrollable(ScrollDirection.Horizontal)
+        })
+        .zIndex(1)
       }
     }
+    .height(200)
     .backgroundColor('#1A1A1A')
     .borderRadius(12)
     .margin({ left: 12, right: 12 })
@@ -162,16 +130,47 @@ export struct TranslatePage {
 
   @Builder
   private OutputArea() {
-    Column() {
+    RelativeContainer() {
+      // 输出框
       TextArea({ text: this.getOutput().length > 0 ? this.getOutput() : '输出将在此显示' })
-        .height(180)
+        .layoutWeight(1)
         .fontSize(24)
         .margin(12)
         .backgroundColor(Color.Transparent)
         .fontColor('#FFFFFF')
         .fontFamily(this.isTextToMorse ? 'monospace' : '')
         .enabled(false)
+        .maxLines(6)
+        .id('output_area')
+
+      // 复制按钮（右下角浮动，仅当有输出时显示）
+      if (this.getOutput().length > 0) {
+        Button() {
+          Image($rawfile('ic_copy.svg'))
+            .width(20)
+            .height(20)
+        }
+        .width(36)
+        .height(36)
+        .backgroundColor(Color.Transparent)
+        .borderRadius(18)
+        .alignRules({
+          bottom: { anchor: 'output_area', align: VerticalAlign.Bottom },
+          right: { anchor: 'output_area', align: HorizontalAlign.End }
+        })
+        .margin({ right: 8, bottom: 8 })
+        .onClick(() => {
+          // 复制到剪贴板
+          promptAction.showToast({
+            message: '已复制到剪贴板',
+            duration: 1500,
+            bottom: '80%'
+          })
+        })
+        .zIndex(1)
+      }
     }
+    .height(200)
     .backgroundColor('#1A1A1A')
     .borderRadius(12)
     .margin({ left: 12, right: 12, bottom: 12 })
@@ -182,16 +181,18 @@ export struct TranslatePage {
     Column() {
       this.TitleBar()
       
-      // 内容区域 - 限制宽度为480vp
+      // 内容区域 - 响应式宽度，最大480vp
       Column() {
         this.ModeToggle()
         this.InputArea()
         Blank().height(16)
         this.OutputArea()
       }
-      .width(480)
+      .width('100%')
+      .constraintSize({ maxWidth: 480 })
+      .padding({ left: 20, right: 20 })
       .layoutWeight(1)
-      .justifyContent(FlexAlign.Center)
+      .justifyContent(FlexAlign.SpaceEvenly)
       .alignItems(HorizontalAlign.Center)
     }
     .width('100%')

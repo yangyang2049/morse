@@ -18,11 +18,14 @@ export default class EntryAbility extends UIAbility {
     // Main window is created, set main page for this ability
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
 
-    // Set status bar style
+    // Set status bar and navigation bar style
     windowStage.getMainWindow().then((windowClass) => {
-      // Set status bar content color to white
+      // Set status bar and navigation bar properties
       windowClass.setWindowSystemBarProperties({
-        statusBarContentColor: '#FFFFFF'
+        statusBarColor: '#000000',
+        statusBarContentColor: '#FFFFFF',
+        navigationBarColor: '#000000',
+        navigationBarContentColor: '#FFFFFF'
       });
     });
 

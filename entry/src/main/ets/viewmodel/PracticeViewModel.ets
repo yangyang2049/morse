@@ -1,5 +1,6 @@
 import { MorseCode, MorseCodeData } from '../models/MorseCode'
 import { promptAction } from '@kit.ArkUI'
+import { FavoritesStore } from '../store/FavoritesStore'
 
 @Observed
 export class PracticeViewModel {
@@ -24,6 +25,7 @@ export class PracticeViewModel {
   private currentIndex: number = 0
   @Track completionCount: Map<number, number> = new Map()
   @Track hadIncorrectOnCompletion: Map<number, boolean> = new Map()
+  private favoritesStore: FavoritesStore = FavoritesStore.getInstance()
 
   // Derived values (methods for compatibility with existing pages)
   getProgress(): number { 
@@ -78,6 +80,12 @@ export class PracticeViewModel {
     this.loadCodes()
   }
 
+  // Initialize with specific characters (for favorites and mistakes)
+  initWithCharacters(difficulty: string, characters: string[]): void {
+    this.difficulty = difficulty
+    this.loadCodesFromCharacters(characters)
+  }
+
   // Load codes based on difficulty
   private loadCodes(): void {
     switch (this.difficulty) {
@@ -106,6 +114,18 @@ export class PracticeViewModel {
     this.generateNewCharacter()
   }
 
+  // Load codes from specific characters (for favorites and mistakes)
+  private loadCodesFromCharacters(characters: string[]): void {
+    const allCodes = [...MorseCodeData.englishAlphabet, ...MorseCodeData.numbers, ...MorseCodeData.punctuation]
+    this.currentCodes = allCodes.filter(code => characters.includes(code.character))
+    
+    // Reset session completion tracking when loading new code set
+    this.completionCount = new Map()
+    this.hadIncorrectOnCompletion = new Map()
+    this.currentIndex = -1
+    this.generateNewCharacter()
+  }
+
   // Generate new character for practice
   generateNewCharacter(): void {
     if (this.currentCodes.length === 0) return
@@ -119,7 +139,8 @@ export class PracticeViewModel {
     this.showResult = false
     this.isCorrect = false
     this.hintRevealed = false
-    this.isFavorite = false
+    // 初始化收藏状态为当前字符在收藏夹中的真实状态
+    this.isFavorite = this.favoritesStore.isFavorite(this.currentCharacter)
     this.correctCount = 0 // Reset correct count for new character
     this.showCorrectAnswer = false
     this.hasIncorrectAttempt = false // Reset incorrect attempt flag
@@ -185,12 +206,15 @@ export class PracticeViewModel {
         }, 1500)
       }
     } else {
-      // Wrong answer, show system toast at bottom
+      // Wrong answer, show system toast at top of screen
       promptAction.showToast({
         message: '再试一次',
-        duration: 1500
-        // Remove bottom property to show at default bottom position
+        duration: 1500,
+        bottom: '80%'
       })
+      
+      // Add to mistakes if not already there
+      this.favoritesStore.addToMistakes(this.currentCharacter)
       
       // Mark that user made incorrect attempt (if not already marked)
       if (!this.hasIncorrectAttempt) {
@@ -217,9 +241,9 @@ export class PracticeViewModel {
     this.userInput = ''
   }
 
-  // Toggle favorite status
+  // Toggle favorite status (sync with store state)
   toggleFavorite(): void {
-    this.isFavorite = !this.isFavorite
+    this.isFavorite = this.favoritesStore.isFavorite(this.currentCharacter)
   }
 
   // Skip to next character

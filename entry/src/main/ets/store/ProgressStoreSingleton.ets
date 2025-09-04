@@ -1,6 +1,7 @@
 import { preferences } from '@kit.ArkData'
 import Context from '@ohos.app.ability.common'
 import { LessonConfig } from '../data/LessonConfig'
+import { eventHub, Events, LessonCompletedEventData } from '../utils/EventHub'
 
 export interface ProgressTarget {
   unitIdx: number
@@ -11,12 +12,9 @@ type UnitId = 'intro' | 'alphabet' | 'numbers' | 'punctuation' | 'words'
 const UNITS: UnitId[] = ['intro', 'alphabet', 'numbers', 'punctuation', 'words']
 
 const PREFS_NAME = 'learn_progress'
-const KEY_UNLOCKED = 'unlocked_lessons'
 const KEY_COMPLETED = 'completed_lessons'
 
-
-
-export class ProgressStore {
+class ProgressStore {
   /** 已完成课程编号集合（1-based） */
   completedLessons: Set<number> = new Set()
 
@@ -29,22 +27,15 @@ export class ProgressStore {
     const prefs = await this.getPrefs(context)
     const completedArray: number[] = Array.from(this.completedLessons)
     const jsonString = JSON.stringify(completedArray)
-    console.error(`[STORE] persist: saving completedArray=[${completedArray.join(',')}] as json="${jsonString}"`)
     await prefs.put(KEY_COMPLETED, jsonString)
     await prefs.flush()
-    console.error(`[STORE] persist: save completed`)
   }
 
   private parseSet(raw: string): Set<number> {
     try {
-      console.error(`[STORE] parseSet: input="${raw}"`)
       const arr = JSON.parse(raw) as number[]
-      console.error(`[STORE] parseSet: parsed array=[${arr.join(',')}]`)
       const filtered = arr.filter(n => Number.isInteger(n) && n > 0)
-      console.error(`[STORE] parseSet: filtered=[${filtered.join(',')}]`)
-      const result = new Set(filtered)
-      console.error(`[STORE] parseSet: result set=[${Array.from(result).join(',')}]`)
-      return result
+      return new Set(filtered)
     } catch (error) {
       console.error(`[STORE] parseSet: error parsing "${raw}":`, error)
       return new Set()
@@ -58,29 +49,34 @@ export class ProgressStore {
 
   // ───────────────────────────────── lifecycle ───────────────────────────────
   async load(context: Context): Promise<void> {
-    console.error('[STORE] load: begin')
     const prefs = await this.getPrefs(context)
-
     const completedRaw = await prefs.get(KEY_COMPLETED, '[]')
-    console.error(`[STORE] load: raw data=${completedRaw}`)
     this.completedLessons = this.parseSet(completedRaw as string)
-
-    const completedArray = Array.from(this.completedLessons)
-    console.error(`[STORE] load: completed=${completedArray.join(',')}`)
+    console.error(`[STORE] load: loaded completedLessons=${Array.from(this.completedLessons).join(',')}`)
   }
 
   // ───────────────────────────────── mutations ───────────────────────────────
   async saveLessonCompleted(lessonNumber: number, context: Context): Promise<void> {
-    console.error(`[STORE] saveLessonCompleted: lessonNumber=${lessonNumber}`)
     if (lessonNumber <= 0) {
       console.error(`[STORE] saveLessonCompleted: invalid lesson number ${lessonNumber}`)
       return
     }
-    console.error(`[STORE] saveLessonCompleted: before markLessonCompleted, completedLessons=[${Array.from(this.completedLessons).join(',')}]`)
+    
+    // 重新加载最新数据确保一致性
+    await this.load(context)
+    
     this.markLessonCompleted(lessonNumber)
-    console.error(`[STORE] saveLessonCompleted: after markLessonCompleted, completedLessons=[${Array.from(this.completedLessons).join(',')}]`)
     await this.persist(context)
-    console.error(`[STORE] saveLessonCompleted: after persist, completedLessons=[${Array.from(this.completedLessons).join(',')}]`)
+    console.log(`[STORE] Lesson ${lessonNumber} completed and saved. Total completed: ${Array.from(this.completedLessons).join(',')}`)
+    
+    // 发送课程完成事件
+    const eventData: LessonCompletedEventData = {
+      lessonNumber: lessonNumber,
+      completedLessons: Array.from(this.completedLessons),
+      unitUnlocked: this.getUnitUnlocked()
+    }
+    console.error(`[STORE] saveLessonCompleted: sending event with completedLessons=${Array.from(this.completedLessons).join(',')}`)
+    eventHub.emit(Events.LESSON_COMPLETED, eventData)
   }
 
   // ───────────────────────────────── queries ────────────────────────────────
@@ -90,7 +86,6 @@ export class ProgressStore {
     
     // A lesson is unlocked if the previous lesson is completed
     const prevLessonCompleted = this.completedLessons.has(n - 1)
-    console.error(`[STORE] isLessonUnlocked: lesson=${n}, prevLesson=${n-1}, prevCompleted=${prevLessonCompleted}, completedSet=${Array.from(this.completedLessons).join(',')}`)
     return prevLessonCompleted
   }
 
@@ -111,7 +106,8 @@ export class ProgressStore {
   }
 
   /**
-   * 计算当前学习目标：定位到第一个\n   * “已解锁但未完成”的课程所在的单元及其索引。
+   * 计算当前学习目标：定位到第一个
+   * "已解锁但未完成"的课程所在的单元及其索引。
    */
   computeTarget(): ProgressTarget {
     let target = 0
@@ -138,3 +134,9 @@ export class ProgressStore {
     return { unitIdx, lessonIdx }
   }
 }
+
+// 单例实例
+export const progressStore = new ProgressStore()
+
+
+

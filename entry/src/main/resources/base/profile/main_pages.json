@@ -5,6 +5,6 @@
     "pages/learn/LessonQuizPage",
     "pages/learn/KnowledgeLessonPage",
     "pages/practice/PracticePage",
-    "pages/translate/ChineseTelegraphCodePage"
+    "pages/codetable/ChineseTelegraphCodePage"
   ]
 }

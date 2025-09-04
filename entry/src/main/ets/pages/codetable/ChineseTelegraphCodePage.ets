@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI'
-import window from '@ohos.window'
+// System bar colors are set globally in EntryAbility
 import util from '@ohos.util'
 
 interface ChineseTelegraphCode {
@@ -13,19 +13,15 @@ export struct ChineseTelegraphCodePage {
   @State codes: ChineseTelegraphCode[] = []
   @State searchText: string = ''
   @State filteredCodes: ChineseTelegraphCode[] = []
+  @State isLoading: boolean = true
 
   aboutToAppear() {
-    // Set status bar color
-    const uiContext = this.getUIContext()
-    const hostContext = uiContext.getHostContext()
-    window.getLastWindow(hostContext).then((windowClass) => {
-      windowClass.setWindowSystemBarProperties({
-        statusBarColor: '#000000',
-        statusBarContentColor: '#FFFFFF'
-      })
-    })
+    // System bar colors are set globally in EntryAbility
 
-    this.loadChineseTelegraphCodes()
+    // 延迟加载数据，让页面先显示
+    setTimeout(() => {
+      this.loadChineseTelegraphCodes()
+    }, 100)
   }
 
   private loadChineseTelegraphCodes() {
@@ -42,6 +38,7 @@ export struct ChineseTelegraphCodePage {
           const parsedData = JSON.parse(jsonString) as ChineseTelegraphCode[]
           this.codes = parsedData
           this.filteredCodes = parsedData
+          this.isLoading = false
           console.log(`Loaded ${this.codes.length} Chinese telegraph codes`)
         })
         .catch(() => {
@@ -49,18 +46,23 @@ export struct ChineseTelegraphCodePage {
           // Fallback to empty array
           this.codes = []
           this.filteredCodes = []
+          this.isLoading = false
         })
       } else {
         console.error('Host context is undefined')
         this.codes = []
         this.filteredCodes = []
+        this.isLoading = false
       }
     } catch {
       console.error('Error loading Chinese telegraph codes')
       this.codes = []
       this.filteredCodes = []
+      this.isLoading = false
     }
   }
+
+  // Removed onPageShow system bar re-application to avoid flicker
 
   private onSearchTextChange(text: string) {
     this.searchText = text
@@ -105,21 +107,24 @@ export struct ChineseTelegraphCodePage {
 
   @Builder
   SearchBar() {
-    Row() {
-      TextInput({ placeholder: '搜索汉字或电码...' })
-        .layoutWeight(1)
-        .height(40)
-        .backgroundColor('#1A1A1A')
-        .borderRadius(20)
-        .padding({ left: 16, right: 16 })
-        .fontColor(Color.White)
-        .placeholderColor('#666666')
-        .onChange((value: string) => {
-          this.onSearchTextChange(value)
-        })
-    }
+    Search({
+      value: this.searchText,
+      placeholder: '搜索汉字或电码...'
+    })
+    .placeholderColor('#666666')
+    .fontColor(Color.White)
+    .backgroundColor('#1A1A1A')
+    .borderRadius(20)
+    .height(40)
+      .searchIcon({ color: Color.White })
+      .onChange((value: string) => {
+      this.onSearchTextChange(value)
+    })
+    .onSubmit((value: string) => {
+      this.onSearchTextChange(value)
+    })
     .width('100%')
-    .padding({ left: 16, right: 16, top: 16, bottom: 8 })
+    .margin({ left: 16, right: 16, top: 16, bottom: 8 })
   }
 
   @Builder
@@ -171,27 +176,56 @@ export struct ChineseTelegraphCodePage {
     .border({ width: 1, color: '#333333' })
   }
 
+  @Builder
+  LoadingIndicator() {
+    Column() {
+      LoadingProgress()
+        .width(40)
+        .height(40)
+        .color('#FFD700')
+      
+      Blank().height(16)
+      
+      Text('加载中...')
+        .fontSize(16)
+        .fontColor('#CCCCCC')
+        .textAlign(TextAlign.Center)
+    }
+    .width('100%')
+    .height(200)
+    .justifyContent(FlexAlign.Center)
+    .alignItems(HorizontalAlign.Center)
+  }
+
   build() {
     Column() {
       this.TitleBar()
       
-      // 内容区域 - 限制宽度为480vp
+      // 内容区域 - 响应式宽度，最大480vp
       Column() {
-        this.SearchBar()
-        this.TableHeader()
+        if (this.isLoading) {
+          // 加载状态
+          this.LoadingIndicator()
+        } else {
+          // 正常内容
+          this.SearchBar()
+          this.TableHeader()
 
-        List() {
-          ForEach(this.filteredCodes, (code: ChineseTelegraphCode, index: number) => {
-            ListItem() {
-              this.TableRow(code, index)
-            }
-          }, (code: ChineseTelegraphCode) => code.character + code.code)
+          List() {
+            ForEach(this.filteredCodes, (code: ChineseTelegraphCode, index: number) => {
+              ListItem() {
+                this.TableRow(code, index)
+              }
+            }, (code: ChineseTelegraphCode) => code.character + code.code)
+          }
+          .layoutWeight(1)
+          .divider({ strokeWidth: 0 })
+          .scrollBar(BarState.Auto)
         }
-        .layoutWeight(1)
-        .divider({ strokeWidth: 0 })
-        .scrollBar(BarState.Auto)
       }
-      .width(480)
+      .width('100%')
+      .constraintSize({ maxWidth: 480 })
+      .padding({ left: 20, right: 20 })
       .layoutWeight(1)
       .justifyContent(FlexAlign.Center)
       .alignItems(HorizontalAlign.Center)

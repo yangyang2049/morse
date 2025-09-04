@@ -1,5 +1,5 @@
 import { MorseCode, MorseCodeData } from '../../models/MorseCode'
-import window from '@ohos.window'
+// System bar colors are set globally in EntryAbility
 import { router } from '@kit.ArkUI'
 
 interface Category {
@@ -18,17 +18,7 @@ export struct CodeTablePage {
   ]
 
   aboutToAppear() {
-    // Set status bar color
-    const uiContext = this.getUIContext()
-    const hostContext = uiContext.getHostContext()
-    if (hostContext) {
-      window.getLastWindow(hostContext).then((windowClass) => {
-        windowClass.setWindowSystemBarProperties({
-          statusBarColor: '#000000',
-          statusBarContentColor: '#FFFFFF'
-        })
-      })
-    }
+    // System bar colors are set globally in EntryAbility
   }
 
   private getFiltered(): MorseCode[] {
@@ -77,7 +67,7 @@ export struct CodeTablePage {
         .backgroundColor(Color.Transparent)
         .onClick(() => {
           router.push({
-            url: 'pages/translate/ChineseTelegraphCodePage'
+            url: 'pages/codetable/ChineseTelegraphCodePage'
           })
         })
       }
@@ -140,7 +130,9 @@ export struct CodeTablePage {
         .width('100%')
         .layoutWeight(1)
       }
-      .width(480)
+      .width('100%')
+      .constraintSize({ maxWidth: 480 })
+      .padding({ left: 20, right: 20 })
       .layoutWeight(1)
       .justifyContent(FlexAlign.Center)
       .alignItems(HorizontalAlign.Center)

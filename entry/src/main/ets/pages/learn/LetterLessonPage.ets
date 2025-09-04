@@ -2,7 +2,7 @@ import { MorseCode, MorseCodeData } from '../../models/MorseCode'
 import { router } from '@kit.ArkUI'
 import { LetterLessonViewModel } from '../../viewmodel/LetterLessonViewModel'
 import { LessonData } from '../../data/LessonData'
-import window from '@ohos.window'
+// System bar colors are set globally in EntryAbility
 
 @Entry
 @Component
@@ -10,17 +10,8 @@ struct LetterLessonPage {
   @State viewModel: LetterLessonViewModel = new LetterLessonViewModel()
 
   aboutToAppear() {
-    // 设置状态栏颜色
     const uiContext = this.getUIContext()
     const hostContext = uiContext.getHostContext()
-    if (hostContext) {
-      window.getLastWindow(hostContext).then((windowClass) => {
-        windowClass.setWindowSystemBarProperties({
-          statusBarColor: '#000000',
-          statusBarContentColor: '#FFFFFF'
-        })
-      })
-    }
 
     // 从路由参数获取课程数据
     const params = router.getParams() as Record<string, Object>
@@ -41,6 +32,8 @@ struct LetterLessonPage {
   aboutToDisappear() {
     this.viewModel.destroy()
   }
+
+  // Removed onPageShow system bar re-application to avoid flicker
 
   private setupLessonData(lessonId: string): MorseCode[] {
     console.log(`[LetterLessonPage] setupLessonData: lessonId=${lessonId}`)
@@ -244,7 +237,7 @@ struct LetterLessonPage {
       .onClick(() => this.viewModel.addDash())
       .layoutWeight(1)
     }
-    .padding({ left: 20, right: 20, bottom: 20 })
+    .padding({ left: 20, right: 20, bottom: 60 })
   }
 
   @Builder
@@ -331,11 +324,7 @@ struct LetterLessonPage {
           .borderRadius(8)
           .onClick(async () => {
             this.viewModel.closeCompletionDialog()
-            const uiContext = this.getUIContext()
-            const hostContext = uiContext.getHostContext()
-            if (hostContext) {
-              await this.viewModel.markLessonCompleted(hostContext)
-            }
+            // 课程已经在最后一个字母完成时标记了，这里不需要重复标记
             router.back()
           })
 
@@ -353,11 +342,7 @@ struct LetterLessonPage {
           .borderRadius(8)
           .onClick(async () => {
             this.viewModel.closeCompletionDialog()
-            const uiContext = this.getUIContext()
-            const hostContext = uiContext.getHostContext()
-            if (hostContext) {
-              await this.viewModel.markLessonCompleted(hostContext)
-            }
+            // 课程已经在最后一个字母完成时标记了，这里不需要重复标记
             this.viewModel.restartLesson()
           })
         }
@@ -380,9 +365,10 @@ struct LetterLessonPage {
 
   build() {
     Column() {
-      Column() {
-        this.TitleBar()
+      this.TitleBar()
 
+      // 内容区域 - 响应式宽度，最大480vp
+      Column() {
         Blank().height(20)
 
         Column() {
@@ -397,9 +383,12 @@ struct LetterLessonPage {
 
         this.BottomKeys()
       }
-      .width(480)
+      .width('100%')
+      .constraintSize({ maxWidth: 480 })
+      .padding({ left: 20, right: 20 })
       .height('100%')
-      .alignSelf(ItemAlign.Center)
+      .justifyContent(FlexAlign.Center)
+      .alignItems(HorizontalAlign.Center)
     }
     .width('100%')
     .height('100%')

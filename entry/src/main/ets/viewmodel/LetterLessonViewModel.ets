@@ -1,6 +1,6 @@
 import { MorseCode } from '../models/MorseCode'
 import { LearnViewModel } from './LearnViewModel'
-import { globalProgressState } from '../store/GlobalProgressState'
+import { progressStore } from '../store/ProgressStoreSingleton'
 import Context from '@ohos.app.ability.common'
 
 @Observed
@@ -23,7 +23,7 @@ export class LetterLessonViewModel {
   // 进度相关
   progressVisual: number = 0
   showCompletedColor: boolean = false
-  readonly REQUIRED_PRACTICE_COUNT: number = 5
+  readonly REQUIRED_PRACTICE_COUNT: number = 3
   
   // 对话框状态
   showCompletionDialog: boolean = false
@@ -33,11 +33,13 @@ export class LetterLessonViewModel {
   private autoCheckTimer: number | null = null
   private progressTimer: number | null = null
   private learnViewModel: LearnViewModel = new LearnViewModel()
+  private context: Context | null = null
   
   async init(context: Context, lessonId: string, title: string, codes: MorseCode[]): Promise<void> {
     this.lessonId = lessonId
     this.title = title
     this.codes = codes
+    this.context = context
     await this.learnViewModel.init(context)
   }
   
@@ -122,16 +124,36 @@ export class LetterLessonViewModel {
       this.showCompletedColor = false
       this.clearInput()
     } else {
+      // 课程完成，立即标记为完成
+      this.markLessonCompletedImmediately()
       this.showCompletionDialog = true
     }
   }
   
+  private async markLessonCompletedImmediately(): Promise<void> {
+    if (this.lessonId && !this.isLessonCompleted && this.context) {
+      try {
+        const lessonNumber = parseInt(this.lessonId) || 0
+        console.error(`[LetterLessonViewModel] markLessonCompletedImmediately: Starting for lessonNumber=${lessonNumber}`)
+        
+        // 使用存储的context立即标记课程完成
+        await progressStore.saveLessonCompleted(lessonNumber, this.context)
+        this.isLessonCompleted = true
+        console.error(`[LetterLessonViewModel] markLessonCompletedImmediately: Completed for lessonNumber=${lessonNumber}`)
+      } catch (error) {
+        console.error(`[LetterLessonViewModel] markLessonCompletedImmediately: Error: ${error}`)
+      }
+    } else {
+      console.error(`[LetterLessonViewModel] markLessonCompletedImmediately: Cannot complete - lessonId=${this.lessonId}, isLessonCompleted=${this.isLessonCompleted}, context=${!!this.context}`)
+    }
+  }
+
   async markLessonCompleted(context: Context): Promise<void> {
     if (this.lessonId && !this.isLessonCompleted) {
       try {
         const lessonNumber = parseInt(this.lessonId) || 0
-        // 使用全局状态标记课程完成
-        await globalProgressState.markLessonCompleted(lessonNumber, context)
+        // 使用单例 ProgressStore 标记课程完成
+        await progressStore.saveLessonCompleted(lessonNumber, context)
         this.isLessonCompleted = true
         
         console.error(`[LetterLessonViewModel] markLessonCompleted: Completed for lessonNumber=${lessonNumber}`)

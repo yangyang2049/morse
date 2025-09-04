@@ -1,45 +1,43 @@
 import { LearnViewModel } from '../../viewmodel/LearnViewModel'
 import { LessonItem } from '../../types/LessonTypes'
 import { router } from '@kit.ArkUI'
-import window from '@ohos.window'
+// System bar colors are set globally in EntryAbility
 
 @Component
 export struct LearnPage {
   private scroller: Scroller = new Scroller()
   @State vm: LearnViewModel = new LearnViewModel()
   @State private isInitialized: boolean = false
+  @State private refreshTrigger: number = 0
 
   aboutToAppear(): void {
-    // Set status bar color
-    const uiContext = this.getUIContext()
-    const hostContext = uiContext.getHostContext()
-    if (hostContext) {
-      window.getLastWindow(hostContext).then((windowClass) => {
-        windowClass.setWindowSystemBarProperties({
-          statusBarColor: '#000000',
-          statusBarContentColor: '#FFFFFF'
-        })
-      })
-    }
-
-    console.error('[LEARN] aboutToAppear: init()')
+    // System bar colors are set globally in EntryAbility
     const uiContext2 = this.getUIContext()
     const hostContext2 = uiContext2.getHostContext()
     if (hostContext2) {
+      // 设置页面刷新回调
+      this.vm.setPageRefreshCallback(() => {
+        console.error(`[LEARN] Page refresh triggered by ViewModel`)
+        this.refreshTrigger++
+      })
+      
       this.vm.init(hostContext2).then(() => {
         this.isInitialized = true
-        console.error('[LEARN] aboutToAppear: initialized')
       })
     }
   }
 
   onPageShow(): void {
     // Refresh state when returning to this page
-    console.error('[LEARN] onPageShow: refreshing state')
+    console.error(`[LEARN] onPageShow: triggered - refreshing state after lesson completion`)
     const uiContext = this.getUIContext()
     const hostContext = uiContext.getHostContext()
     if (hostContext) {
-      this.vm.loadUnlockState(hostContext)
+      this.vm.loadUnlockState(hostContext).then(() => {
+
+      }).catch((error: Error) => {
+        console.error('[LEARN] onPageShow: loadUnlockState failed:', error)
+      })
     }
   }
 
@@ -55,27 +53,22 @@ export struct LearnPage {
         Text(item.title)
           .fontSize(18)
           .fontWeight(FontWeight.Bold)
-          .fontColor((!unitLocked && item.unlocked) ? Color.White : '#B0B0B0') // Gray when lesson or unit locked
+          .fontColor(Color.White)
           .margin({ bottom: item.subtitle ? 8 : 0 })
 
         if (item.subtitle) {
           Text(item.subtitle)
             .fontSize(14)
-            .fontColor((!unitLocked && item.unlocked) ? '#B0B0B0' : '#808080') // Gray for locked
+            .fontColor('#B0B0B0')
         }
       }
       .layoutWeight(1)
 
-      // Icon logic: when unit is locked, suppress per-lesson icon (just gray out);
-      // otherwise show ✓ for completed, › for next unlocked, 🔒 for locked lesson
-      if (unitLocked) {
-        Text('').fontSize(16)
-      } else if (item.completed) {
+      // Icon logic: show ✓ for completed, › for available
+      if (item.completed) {
         Text('✓').fontSize(20).fontColor(Color.Green)
-      } else if (item.unlocked) {
-        Text('›').fontSize(16).fontColor(Color.White)
       } else {
-        Text('🔒').fontSize(16).fontColor('#FFFFFF80')
+        Text('›').fontSize(16).fontColor(Color.White)
       }
     }
     .width('100%')
@@ -83,10 +76,10 @@ export struct LearnPage {
     .backgroundColor('#1A1A1A')
     .border({ width: 1, color: '#333333' })
     .borderRadius(12)
-    .opacity((!unitLocked && item.unlocked) ? 1.0 : 0.6) // Gray out locked or unit-locked lessons
+    .opacity(1.0) // All lessons are now fully visible
     .onClick(() => {
-      // Only navigate if the lesson and unit are unlocked
-      if (!unitLocked && item.unlocked) {
+      // All lessons are now unlocked, only check if it's not a placeholder
+      if (item.title !== '占位') {
         console.error(`[LEARN] LessonCard click: key=${item.key} unlocked=${item.unlocked} unitLocked=${unitLocked}`)
         if (item.key === 'intro_1') {
           // Navigate to lesson page for the 2nd intro lesson (Chinese)
@@ -197,14 +190,11 @@ export struct LearnPage {
       {
         Row() {
           Text(title)
-            .fontSize(32)
+            .fontSize(28)
             .fontWeight(FontWeight.Bold)
             .fontColor(Color.White)
             .layoutWeight(1)
             .textAlign(TextAlign.Center)
-          if (!isUnlocked) {
-            Text('🔒').fontSize(24).fontColor('#FFFFFF99')
-          }
         }
         .margin({ top: 24, bottom: 32 })
 
@@ -223,8 +213,8 @@ export struct LearnPage {
         .layoutWeight(1)
         .scrollBar(BarState.Off)  // 移除滚动条
         .edgeEffect(EdgeEffect.Spring)  // 添加弹性效果
-        .opacity(isUnlocked ? 1.0 : 0.45)
-        .enabled(isUnlocked)  // 禁用滚动如果单元未解锁
+        .opacity(1.0)
+        .enabled(true)  // 所有单元都启用滚动
       }
     }
     .padding(16)
@@ -234,17 +224,15 @@ export struct LearnPage {
     .border({ width: 1, color: '#333333' })
     .borderRadius(12)
     .onClick(() => {
-      if (!isUnlocked) {
-        // 可以添加一个提示，告知用户需要先解锁该单元
-        console.info(`单元 ${unitNumber} 尚未解锁`)
-      }
+      // 所有单元都已解锁，无需特殊处理
+      console.info(`单元 ${unitNumber} 已解锁`)
     })
   }
 
   build() {
     Column() {
       if (this.isInitialized) {
-        // Title bar
+        // Title bar - 引用refreshTrigger使其响应式
         Row() {
           Text('学习')
             .fontSize(18)
@@ -256,29 +244,45 @@ export struct LearnPage {
         .height(52)
         .padding({ left: 16, right: 16 })
         .backgroundColor(Color.Black)
+        .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger
 
-        // Horizontal scroll of unit cards
+        // Horizontal scroll of unit cards - 让所有课程卡片都引用refreshTrigger
         Scroll(this.scroller) {
           Row() {
             // Intro unit (2 lessons + padding)
-            Column() { this.UnitCard('摩斯密码基础', 1, this.vm.introLessons, true) }
-              .width(320).height(500).margin({ right: 16 })
+            Column() { 
+              this.UnitCard('摩斯密码基础', 1, this.vm.introLessons, true) 
+            }
+            .width(320).height(500).margin({ right: 16 })
+            .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger
 
             // Alphabet unit (9)
-            Column() { this.UnitCard('字母', 2, this.vm.alphabetLessons, this.vm.unitUnlocked.get('alphabet') ?? false) }
-              .width(320).height(500).margin({ right: 16 })
+            Column() { 
+              this.UnitCard('字母', 2, this.vm.alphabetLessons, true) 
+            }
+            .width(320).height(500).margin({ right: 16 })
+            .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger
 
             // Numbers unit (4)
-            Column() { this.UnitCard('数字', 3, this.vm.numberLessons, this.vm.unitUnlocked.get('numbers') ?? false) }
-              .width(320).height(500).margin({ right: 16 })
+            Column() { 
+              this.UnitCard('数字', 3, this.vm.numberLessons, true) 
+            }
+            .width(320).height(500).margin({ right: 16 })
+            .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger
 
             // Punctuation unit (3 + pad)
-            Column() { this.UnitCard('符号', 4, this.vm.punctuationLessons, this.vm.unitUnlocked.get('punctuation') ?? false) }
-              .width(320).height(500).margin({ right: 16 })
+            Column() { 
+              this.UnitCard('符号', 4, this.vm.punctuationLessons, true) 
+            }
+            .width(320).height(500).margin({ right: 16 })
+            .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger
 
             // Words unit (3 + pad)
-            Column() { this.UnitCard('单词', 5, this.vm.wordLessons, this.vm.unitUnlocked.get('words') ?? false) }
-              .width(320).height(500)
+            Column() { 
+              this.UnitCard('单词', 5, this.vm.wordLessons, true) 
+            }
+            .width(320).height(500)
+            .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger
           }
         }
         .scrollable(ScrollDirection.Horizontal)

@@ -1,5 +1,6 @@
 import { LessonData } from '../data/LessonData'
 import { LessonNavParams } from '../types/LessonTypes'
+import { progressStore } from '../store/ProgressStoreSingleton'
 import Context from '@ohos.app.ability.common'
 
 @Observed
@@ -13,14 +14,23 @@ export class KnowledgeLessonViewModel {
   sections: Map<string, string[]> = new Map()
   currentPageIndex: number = 0
   
+  // 课程完成状态
+  isLessonCompleted: boolean = false
+  private context: Context | null = null
+  
   // 初始化课程数据
-  init(params: LessonNavParams): void {
+  init(params: LessonNavParams, context?: Context): void {
     console.error(`[KnowledgeLessonViewModel] init: params=`, JSON.stringify(params))
     
     // 设置课程基本信息
     if (params.title) this.title = params.title
     if (params.testTitle) this.testTitle = params.testTitle
     if (params.lessonCompletedKey) this.lessonCompletedKey = params.lessonCompletedKey
+    
+    // 存储context
+    if (context) {
+      this.context = context
+    }
     
     // 根据课程类型加载对应的数据
     this.loadLessonData()
@@ -100,5 +110,24 @@ export class KnowledgeLessonViewModel {
   // 获取当前页码（从1开始）
   getCurrentPageNumber(): number {
     return this.currentPageIndex + 1
+  }
+  
+  // 立即标记课程完成
+  async markLessonCompletedImmediately(): Promise<void> {
+    if (this.lessonCompletedKey && !this.isLessonCompleted && this.context) {
+      try {
+        const lessonNumber = parseInt(this.lessonCompletedKey) || 0
+        console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Starting for lessonNumber=${lessonNumber}`)
+        
+        // 使用存储的context立即标记课程完成
+        await progressStore.saveLessonCompleted(lessonNumber, this.context)
+        this.isLessonCompleted = true
+        console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Completed for lessonNumber=${lessonNumber}`)
+      } catch (error) {
+        console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Error: ${error}`)
+      }
+    } else {
+      console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Cannot complete - lessonCompletedKey=${this.lessonCompletedKey}, isLessonCompleted=${this.isLessonCompleted}, context=${!!this.context}`)
+    }
   }
 }

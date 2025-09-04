@@ -1,8 +1,9 @@
 import { PracticeViewModel } from '../../viewmodel/PracticeViewModel'
 import { MorseCode } from '../../models/MorseCode'
-import { router } from '@kit.ArkUI'
+import { router, promptAction } from '@kit.ArkUI'
 import { PracticeRecordDialog } from '../../widgets/PracticeRecordDialog'
-import window from '@ohos.window'
+import { FavoritesStore } from '../../store/FavoritesStore'
+// Removed per-page window system bar handling; EntryAbility sets it globally
 
 @Entry
 @Component
@@ -12,6 +13,7 @@ export struct PracticePage {
   @State displayCharacter: string = '' // 用于显示的字符，控制动画时序
   // 可视化进度（0~1），用于平滑填充进度弧
   @State progressVisual: number = 0
+  @State favoritesStore: FavoritesStore = FavoritesStore.getInstance()
   private progressTimer: number | null = null
   private targetProgress: number = 0
   private dialogController: CustomDialogController = new CustomDialogController({
@@ -27,28 +29,26 @@ export struct PracticePage {
   private animationTimer: number | null = null
 
   aboutToAppear(): void {
-    // Set status bar color
-    const uiContext = this.getUIContext()
-    const hostContext = uiContext.getHostContext()
-    if (hostContext) {
-      window.getLastWindow(hostContext).then((windowClass) => {
-        windowClass.setWindowSystemBarProperties({
-          statusBarColor: '#000000',
-          statusBarContentColor: '#FFFFFF'
-        })
-      })
-    }
+    // System bar colors are set globally in EntryAbility
 
-    // 从路由参数获取难度（容错处理，避免无参数时崩溃）
+    // 从路由参数获取难度和字符列表（容错处理，避免无参数时崩溃）
     try {
       const params = (router.getParams?.() as Record<string, Object>) ?? {}
       const diff = params['difficulty'] as string
+      const characters = params['characters'] as string[]
       this.difficulty = diff && typeof diff === 'string' ? diff : '简单'
+      
+      // 如果是收藏或错题本模式，使用指定的字符列表
+      if ((this.difficulty === '收藏' || this.difficulty === '错题本') && characters && Array.isArray(characters)) {
+        this.vm.initWithCharacters(this.difficulty, characters)
+      } else {
+        this.vm.init(this.difficulty)
+      }
     } catch {
       this.difficulty = '简单'
+      this.vm.init(this.difficulty)
     }
     console.error(`[PracticePage] aboutToAppear: difficulty=${this.difficulty}`)
-    this.vm.init(this.difficulty)
     this.displayCharacter = this.vm.getCurrentCharacter() // 初始化显示字符
     this.lastCharacterChangeId = this.vm.getCharacterChangeId()
     this.startAnimationCheck()
@@ -64,6 +64,8 @@ export struct PracticePage {
       this.progressTimer = null
     }
   }
+
+  // Removed onPageShow system bar re-application to avoid flicker
 
   // 开始检查字符变化的定时器
   private startAnimationCheck(): void {
@@ -272,9 +274,22 @@ export struct PracticePage {
       // 收藏按钮
       Button() {
         Image($rawfile('ic_star.svg')).width(24).height(24)
-          .fillColor(this.vm.getIsFavorite() ? Color.Red : Color.White)
+          .fillColor(this.vm.getIsFavorite() ? '#FFD700' : Color.White)
       }
-        .onClick(() => this.vm.toggleFavorite())
+        .onClick(() => {
+          const currentChar = this.vm.getCurrentCharacter()
+          const wasFavorite = this.favoritesStore.isFavorite(currentChar)
+          this.favoritesStore.toggleFavorite(currentChar)
+          // 同步VM中的收藏状态以驱动UI更新
+          this.vm.toggleFavorite()
+          
+          // 显示toast提示
+          promptAction.showToast({
+            message: wasFavorite ? `取消收藏 "${currentChar}"` : `收藏 "${currentChar}"`,
+            duration: 1500,
+            bottom: '80%'
+          })
+        })
         .width(48).height(48)
         .backgroundColor(Color.Transparent)
 
@@ -341,25 +356,33 @@ export struct PracticePage {
       Column() {
         this.TitleBar()
 
-        Blank().height(20)
-
-        // 主要内容 - 限制宽度为480vp
+        // 内容区域 - 响应式宽度，最大480vp
         Column() {
-          // 字符与进度圆圈
-          this.ProgressCircle()
+          Blank().height(20)
 
-          Blank().height(40)
+          // 主要内容
+          Column() {
+            // 字符与进度圆圈
+            this.ProgressCircle()
 
-          this.InputDisplay()
+            Blank().height(40)
+
+            this.InputDisplay()
+          }
+          .width('100%')
+          .justifyContent(FlexAlign.Center)
+          .alignItems(HorizontalAlign.Center)
+
+          this.ToolButtons()
+          Blank().height(26)
+          this.BottomKeys()
         }
-        .width(480)
+        .width('100%')
+        .constraintSize({ maxWidth: 480 })
+        .padding({ left: 20, right: 20 })
         .layoutWeight(1)
         .justifyContent(FlexAlign.Center)
         .alignItems(HorizontalAlign.Center)
-
-        this.ToolButtons()
-        Blank().height(26)
-        this.BottomKeys()
       }
       .width('100%')
       .height('100%')

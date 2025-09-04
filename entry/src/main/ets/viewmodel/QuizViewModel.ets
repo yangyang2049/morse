@@ -1,4 +1,6 @@
 import { QuestionItem, ExplanationItem, ButtonStyle } from '../types/LessonTypes'
+import { progressStore } from '../store/ProgressStoreSingleton'
+import Context from '@ohos.app.ability.common'
 
 @Observed
 export class QuizViewModel {
@@ -16,14 +18,23 @@ export class QuizViewModel {
   showDelayedContent: boolean = false
   showNextButton: boolean = false
   progressSaved: boolean = false
+  isLessonCompleted: boolean = false
+  
+  // Context for immediate completion marking
+  private context: Context | null = null
 
   // 测试数据
   questions: QuestionItem[] = []
   explanations: ExplanationItem[] = []
 
   // 初始化测试数据
-  initializeTestData(pageTitle: string): void {
+  initializeTestData(pageTitle: string, context?: Context): void {
     console.error(`[QuizViewModel] initializeTestData: pageTitle=${pageTitle}`)
+    
+    // 存储context
+    if (context) {
+      this.context = context
+    }
     
     if (pageTitle.includes('基础') || pageTitle.includes('intro') || pageTitle.includes('Intro')) {
       this.questions = [
@@ -50,9 +61,9 @@ export class QuizViewModel {
         },
         {
           type: 'multiple_choice',
-          question: '摩斯密码是在哪个年代开发的？',
-          options: ['1820年代', '1830-1840年代', '1850年代', '1860年代'],
-          answer: 1, // 1830-1840年代
+          question: '摩斯密码是在哪个 年代开发的？',
+          options: ['1820 年代', '1830-1840 年代', '1850 年代', '1860 年代'],
+          answer: 1, // 1830-1840 年代
           points: 20,
         },
         {
@@ -79,7 +90,7 @@ export class QuizViewModel {
         },
         {
           title: '历史背景',
-          content: '• 塞缪尔·摩斯与阿尔弗雷德·韦尔在1830-1840年代合作开发\n• 最初用于电报系统，后来演化为国际摩斯密码\n• 成为全球标准的无线电通信编码系统',
+          content: '• 塞缪尔·摩斯与阿尔弗雷德·韦尔在1830-1840 年代合作开发\n• 最初用于电报系统，后来演化为国际摩斯密码\n• 成为全球标准的无线电通信编码系统',
         },
         {
           title: '学习策略',
@@ -105,9 +116,9 @@ export class QuizViewModel {
         },
         {
           type: 'multiple_choice',
-          question: '中文摩尔斯电码是在哪个年代开始制定的？',
-          options: ['1900年代', '1920年代', '1950年代', '1980年代'],
-          answer: 1, // 1920年代
+          question: '中文摩尔斯电码是在哪个 年代开始制定的？',
+          options: ['1900 年代', '1920 年代', '1950 年代', '1980 年代'],
+          answer: 1, // 1920 年代
           points: 20,
         },
         {
@@ -137,7 +148,7 @@ export class QuizViewModel {
         },
         {
           title: '历史发展背景',
-          content: '• 1920年代：初步制定中文摩尔斯电码标准\n• 当时为了适应中文电报通信的需求\n• 国际电信联盟（ITU）参与制定\n• 经过多次优化形成现代标准',
+          content: '• 1920 年代：初步制定中文摩尔斯电码标准\n• 当时为了适应中文电报通信的需求\n• 国际电信联盟（ITU）参与制定\n• 经过多次优化形成现代标准',
         },
         {
           title: '应用场景分析',
@@ -167,6 +178,11 @@ export class QuizViewModel {
     }
     console.error(`[QuizViewModel] selectAnswer: qIdx=${this.currentQuestionIndex} type=${this.questions[this.currentQuestionIndex].type} selected=${this.selectedAnswer} correct=${isCorrect} score=${this.score}`)
 
+    // 检查是否达到100分，如果是则立即标记课程完成
+    if (this.score >= 100 && !this.isLessonCompleted) {
+      this.markLessonCompletedImmediately()
+    }
+
     // 显示解释
     this.showExplanation = true
     // 延迟内容显示
@@ -184,6 +200,26 @@ export class QuizViewModel {
     this.showResult = true
     const willSave = this.score >= 100
     console.error(`[QuizViewModel] showTestResult: score=${this.score} willPersist=${willSave}`)
+  }
+
+  // 立即标记课程完成
+  private async markLessonCompletedImmediately(): Promise<void> {
+    if (this.lessonCompletedKey && !this.isLessonCompleted && this.context) {
+      try {
+        const lessonNumber = parseInt(this.lessonCompletedKey) || 0
+        console.error(`[QuizViewModel] markLessonCompletedImmediately: Starting for lessonNumber=${lessonNumber}`)
+        
+        // 使用存储的context立即标记课程完成
+        await progressStore.saveLessonCompleted(lessonNumber, this.context)
+        this.isLessonCompleted = true
+        this.progressSaved = true
+        console.error(`[QuizViewModel] markLessonCompletedImmediately: Completed for lessonNumber=${lessonNumber}`)
+      } catch (error) {
+        console.error(`[QuizViewModel] markLessonCompletedImmediately: Error: ${error}`)
+      }
+    } else {
+      console.error(`[QuizViewModel] markLessonCompletedImmediately: Cannot complete - lessonCompletedKey=${this.lessonCompletedKey}, isLessonCompleted=${this.isLessonCompleted}, context=${!!this.context}`)
+    }
   }
 
   // 重新开始测试

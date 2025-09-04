@@ -1,5 +1,7 @@
 import { router } from '@kit.ArkUI'
-import window from '@ohos.window'
+// System bar colors are set globally in EntryAbility
+import { FavoritesStore } from '../../store/FavoritesStore'
+import { promptAction } from '@kit.ArkUI'
 
 interface DifficultyItem {
   label: string
@@ -9,6 +11,8 @@ interface DifficultyItem {
 @Entry
 @Component
 export struct PracticeDifficultyPage {
+  @State favoritesStore: FavoritesStore = FavoritesStore.getInstance()
+  
   private difficulties: DifficultyItem[] = [
     { label: '简单', desc: '仅字母' },
     { label: '中等', desc: '字母 + 数字' },
@@ -16,17 +20,7 @@ export struct PracticeDifficultyPage {
   ]
 
   aboutToAppear() {
-    // Set status bar color
-    const uiContext = this.getUIContext()
-    const hostContext = uiContext.getHostContext()
-    if (hostContext) {
-      window.getLastWindow(hostContext).then((windowClass) => {
-        windowClass.setWindowSystemBarProperties({
-          statusBarColor: '#000000',
-          statusBarContentColor: '#FFFFFF'
-        })
-      })
-    }
+    // System bar colors are set globally in EntryAbility
   }
 
   private openPractice(difficulty: string): void {
@@ -35,6 +29,46 @@ export struct PracticeDifficultyPage {
       url: 'pages/practice/PracticePage',
       params: {
         difficulty: difficulty
+      }
+    })
+  }
+
+  private openFavorites(): void {
+    const favorites = this.favoritesStore.getFavoriteCharacters()
+    if (favorites.length === 0) {
+      promptAction.showToast({
+        message: '收藏夹为空，先去练习一些字母吧！',
+        duration: 2000,
+        bottom: '80%'
+      })
+      return
+    }
+    
+    router.push({
+      url: 'pages/practice/PracticePage',
+      params: {
+        difficulty: '收藏',
+        characters: favorites
+      }
+    })
+  }
+
+  private openMistakes(): void {
+    const mistakes = this.favoritesStore.getMistakeCharacters()
+    if (mistakes.length === 0) {
+      promptAction.showToast({
+        message: '错题本为空，还没有错题哦！',
+        duration: 2000,
+        bottom: '80%'
+      })
+      return
+    }
+    
+    router.push({
+      url: 'pages/practice/PracticePage',
+      params: {
+        difficulty: '错题本',
+        characters: mistakes
       }
     })
   }
@@ -70,6 +104,36 @@ export struct PracticeDifficultyPage {
   }
 
   @Builder
+  private SpecialCard(title: string, desc: string, count: number, onClick: () => void) {
+    // 居中文本的卡片项 - 与DifficultyCard保持一致的样式
+    Column() {
+      // 内容垂直居中对齐
+      Column() {
+        Text(title)
+          .fontSize(18)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(Color.White)
+          .textAlign(TextAlign.Center)
+
+        Text(desc)
+          .fontSize(12)
+          .fontColor('#CCCCCC')
+          .textAlign(TextAlign.Center)
+          .margin({ top: 6 })
+      }
+      .alignItems(HorizontalAlign.Center)
+      .justifyContent(FlexAlign.Center)
+      .width('100%')
+      .padding({ left: 16, right: 16, top: 18, bottom: 18 })
+    }
+    .width('100%')
+    .backgroundColor('#1A1A1A')
+    .borderRadius(14)
+    .border({ width: 1, color: '#333333' })
+    .onClick(onClick)
+  }
+
+  @Builder
   private TitleBar() {
     // 顶部标题栏
     Row() {
@@ -88,9 +152,9 @@ export struct PracticeDifficultyPage {
     Column() {
       this.TitleBar()
 
-      // 内容区域 - 限制宽度为480vp
+      // 内容区域 - 响应式宽度，最大480vp
       Column() {
-        // 条目列表，条目之间留出合理的间距
+        // 难度选择卡片
         ForEach(this.difficulties, (item: DifficultyItem, index: number) => {
           Column() {
             this.DifficultyCard(item)
@@ -100,8 +164,18 @@ export struct PracticeDifficultyPage {
           }
           .width('100%')
         })
+
+        // 收藏和错题本卡片
+        Column() {
+          Blank().height(24)
+          this.SpecialCard('收藏', '练习收藏的字母', 0, () => this.openFavorites())
+          Blank().height(16)
+          this.SpecialCard('错题本', '复习做错的字母', 0, () => this.openMistakes())
+        }
+        .width('100%')
       }
-      .width(480)
+      .width('100%')
+      .constraintSize({ maxWidth: 480 })
       .padding({ left: 20, right: 20, top: 20 })
       .layoutWeight(1)
       .justifyContent(FlexAlign.Center)

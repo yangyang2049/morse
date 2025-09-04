@@ -1,9 +1,8 @@
 import { router } from '@kit.ArkUI'
 import preferences from '@ohos.data.preferences'
-import window from '@ohos.window'
+// System bar colors are set globally in EntryAbility
 import { ExplanationTipsCard } from '../../widgets/ExplanationTipsCard'
 import { LearnViewModel } from '../../viewmodel/LearnViewModel'
-import { globalProgressState } from '../../store/GlobalProgressState'
 import { QuizViewModel } from '../../viewmodel/QuizViewModel'
 import { QuizNavParams, QuestionItem, ExplanationItem, ButtonStyle } from '../../types/LessonTypes'
 
@@ -14,17 +13,7 @@ struct LessonQuizPage {
   @State learnViewModel: LearnViewModel = new LearnViewModel()
 
   aboutToAppear() {
-    // Set status bar color
-    const uiContext = this.getUIContext()
-    const hostContext = uiContext.getHostContext()
-    if (hostContext) {
-      window.getLastWindow(hostContext).then((windowClass) => {
-        windowClass.setWindowSystemBarProperties({
-          statusBarColor: '#000000',
-          statusBarContentColor: '#FFFFFF'
-        })
-      })
-    }
+    // System bar colors are set globally in EntryAbility
 
     // Load route params, if any
     try {
@@ -45,9 +34,10 @@ struct LessonQuizPage {
       this.learnViewModel.init(hostContext2)
     }
     console.error('[QUIZ] aboutToAppear: init ViewModel called')
-    this.quizViewModel.initializeTestData(this.quizViewModel.pageTitle)
+    this.quizViewModel.initializeTestData(this.quizViewModel.pageTitle, hostContext2)
   }
 
+  // Removed onPageShow system bar re-application to avoid flicker
 
   selectAnswer(answer: number) {
     this.quizViewModel.selectAnswer(answer)
@@ -55,10 +45,7 @@ struct LessonQuizPage {
 
   showTestResult() {
     this.quizViewModel.showTestResult()
-    const willSave = this.quizViewModel.score >= 100
-    if (willSave) {
-      this.markLessonCompleted()
-    }
+    // 课程已经在达到100分时立即标记了，这里不需要重复标记
   }
 
   async markLessonCompleted() {
@@ -68,8 +55,7 @@ struct LessonQuizPage {
       const hostContext = uiContext.getHostContext()
       if (hostContext) {
         const lessonNumber = parseInt(this.quizViewModel.lessonCompletedKey) || 0
-        // 使用全局状态标记课程完成
-        await globalProgressState.markLessonCompleted(lessonNumber, hostContext)
+
         
         console.error(`[QUIZ] markLessonCompleted: Completed for lessonNumber=${lessonNumber}`)
       }
@@ -85,11 +71,7 @@ struct LessonQuizPage {
 
   async goToNextLesson() {
     console.error(`[QUIZ] goToNextLesson: score=${this.quizViewModel.score} progressSaved=${this.quizViewModel.progressSaved}`)
-    // Ensure progress is persisted before leaving so Learn tab sees the unlocks
-    if (this.quizViewModel.score >= 100 && !this.quizViewModel.progressSaved) {
-      console.error('[QUIZ] goToNextLesson: awaiting persist...')
-      await this.markLessonCompleted()
-    }
+    // 课程已经在达到100分时立即标记了，这里不需要重复标记
     // 弹出两次返回到学习页面
     console.error('[QUIZ] goToNextLesson: navigating back twice')
     router.back()
@@ -98,10 +80,7 @@ struct LessonQuizPage {
 
   async backAfterPersist() {
     console.error(`[QUIZ] backAfterPersist: score=${this.quizViewModel.score} progressSaved=${this.quizViewModel.progressSaved}`)
-    if (this.quizViewModel.score >= 100 && !this.quizViewModel.progressSaved) {
-      console.error('[QUIZ] backAfterPersist: awaiting persist...')
-      await this.markLessonCompleted()
-    }
+    // 课程已经在达到100分时立即标记了，这里不需要重复标记
     console.error('[QUIZ] backAfterPersist: navigating back once')
     router.back()
   }
@@ -473,22 +452,24 @@ struct LessonQuizPage {
     Column() {
       this.TitleBar()
 
-      if (this.quizViewModel.showResult) {
-        this.ResultScreen()
-      } else {
-        Column() {
+      // 内容区域 - 响应式宽度，最大480vp
+      Column() {
+        if (this.quizViewModel.showResult) {
+          this.ResultScreen()
+        } else {
           this.QuestionScreen()
         }
-        .layoutWeight(1)
-        .constraintSize({ maxWidth: 480 })
-        .width('100%')
       }
+      .width('100%')
+      .constraintSize({ maxWidth: 480 })
+      .padding({ left: 20, right: 20 })
+      .layoutWeight(1)
+      .justifyContent(FlexAlign.Center)
+      .alignItems(HorizontalAlign.Center)
     }
     .width('100%')
     .height('100%')
     .backgroundColor(Color.Black)
     .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
-    .justifyContent(FlexAlign.Center)
-    .alignItems(HorizontalAlign.Center)
   }
 }

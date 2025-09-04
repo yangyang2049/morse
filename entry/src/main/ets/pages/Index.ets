@@ -2,33 +2,23 @@ import { LearnPage } from './learn/LearnPage'
 import { PracticeDifficultyPage } from './practice/PracticeDifficultyPage'
 import { TranslatePage } from './translate/TranslatePage'
 import { CodeTablePage } from './codetable/CodeTablePage'
-import { globalProgressState, GlobalProgressState } from '../store/GlobalProgressState'
-import window from '@ohos.window'
+import { eventHub, Events } from '../utils/EventHub'
+// Window system bar properties are managed globally in EntryAbility
 
 @Entry
 @Component
 struct Index {
   @State currentIndex: number = 0
-  @State globalState: GlobalProgressState = globalProgressState
+  @State refreshKey: number = 0
 
   aboutToAppear() {
-    // Set status bar color
-    const uiContext = this.getUIContext()
-    const hostContext = uiContext.getHostContext()
-    if (hostContext) {
-      window.getLastWindow(hostContext).then((windowClass) => {
-        windowClass.setWindowSystemBarProperties({
-          statusBarColor: '#000000',
-          statusBarContentColor: '#FFFFFF'
-        })
-      })
-      
-      // 初始化全局状态
-      globalProgressState.init(hostContext).then(() => {
-        // 触发 UI 更新
-        this.globalState = globalProgressState
-      })
-    }
+    // System bar colors are set globally in EntryAbility
+    
+    // 监听课程完成事件
+    eventHub.on(Events.LESSON_COMPLETED, (data: Object) => {
+      console.error('[INDEX] Lesson completed event received, rebuilding pages')
+      this.refreshKey++
+    })
   }
 
   @Builder TabBuilder(targetIndex: number, selectedImg: Resource, normalImg: Resource) {
@@ -49,21 +39,25 @@ struct Index {
         LearnPage()
       }
       .tabBar(this.TabBuilder(0, $rawfile('ic_learn.svg'), $rawfile('ic_learn.svg')))
+      .opacity(this.refreshKey >= 0 ? 1 : 1) // 引用refreshKey
 
       TabContent() {
         PracticeDifficultyPage()
       }
       .tabBar(this.TabBuilder(1, $rawfile('ic_train.svg'), $rawfile('ic_train.svg')))
+      .opacity(this.refreshKey >= 0 ? 1 : 1) // 引用refreshKey
 
       TabContent() {
         TranslatePage()
       }
       .tabBar(this.TabBuilder(2, $rawfile('ic_translate.svg'), $rawfile('ic_translate.svg')))
+      .opacity(this.refreshKey >= 0 ? 1 : 1) // 引用refreshKey
 
       TabContent() {
         CodeTablePage()
       }
       .tabBar(this.TabBuilder(3, $rawfile('ic_table.svg'), $rawfile('ic_table.svg')))
+      .opacity(this.refreshKey >= 0 ? 1 : 1) // 引用refreshKey
     }
     .vertical(false)
     .barMode(BarMode.Fixed)
@@ -73,6 +67,7 @@ struct Index {
     .animationDuration(400)
     .onChange((index: number) => {
       this.currentIndex = index
+      console.error(`[INDEX] Tab changed to index: ${index}`)
     })
     .width('100%')
     .height('100%')

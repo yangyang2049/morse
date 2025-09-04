@@ -53,15 +53,16 @@ export struct PracticeRecordDialog {
         
         // 关闭按钮
         Button() {
-          Text('✕')
-            .fontColor(Color.White)
-            .fontSize(24)
+          Image($rawfile('ic_close.svg'))
+            .width(20)
+            .height(20)
+            .fillColor(Color.White)
         }
         .onClick(() => {
           this.controller.close()
         })
-        .width(24)
-        .height(24)
+        .width(32)
+        .height(32)
         .backgroundColor(Color.Transparent)
         .border({ width: 0 })
       }
@@ -98,14 +99,16 @@ export struct PracticeRecordDialog {
             }
           }, (code: MorseCode, index: number) => `${code.character}_${index}`)
         }
-        .columnsTemplate('1fr 1fr 1fr 1fr 1fr')
-        .rowsGap(8)
-        .columnsGap(8)
+        .columnsTemplate('1fr 1fr 1fr 1fr')
+        .rowsGap(12)
+        .columnsGap(12)
         .width('100%')
+        .padding({ right: 8 })
       }
       .layoutWeight(1)
       .scrollable(ScrollDirection.Vertical)
       .scrollBar(BarState.Auto)
+      .edgeEffect(EdgeEffect.Spring)
       .padding({ left: 20, right: 20 })
 
       Blank().height(16)
@@ -123,9 +126,16 @@ export struct PracticeRecordDialog {
             .fontSize(12)
             .fontColor('rgba(255, 255, 255, 0.7)')
         }
+        .layoutWeight(1)
         .alignItems(HorizontalAlign.Center)
+        .justifyContent(FlexAlign.Center)
         
-        Blank().layoutWeight(1)
+        // 垂直分隔线
+        Column()
+          .width(1)
+          .height(40)
+          .backgroundColor('rgba(255, 255, 255, 0.2)')
+          .margin({ left: 8, right: 8 })
         
         // 总数量
         Column() {
@@ -138,10 +148,12 @@ export struct PracticeRecordDialog {
             .fontSize(12)
             .fontColor('rgba(255, 255, 255, 0.7)')
         }
+        .layoutWeight(1)
         .alignItems(HorizontalAlign.Center)
+        .justifyContent(FlexAlign.Center)
       }
       .width('100%')
-      .justifyContent(FlexAlign.SpaceAround)
+      .justifyContent(FlexAlign.SpaceBetween)
       .padding(12)
       .backgroundColor('#1A1A1A')
       .borderRadius(12)

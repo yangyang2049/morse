@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI'
-import window from '@ohos.window'
+// System bar colors are set globally in EntryAbility
 import { KnowledgeLessonViewModel } from '../../viewmodel/KnowledgeLessonViewModel'
 import { LessonNavParams } from '../../types/LessonTypes'
 
@@ -12,23 +12,13 @@ struct KnowledgeLessonPage {
   @State customSections: string[] = []
 
   aboutToAppear() {
-    // Set status bar color
     const uiContext = this.getUIContext()
     const hostContext = uiContext.getHostContext()
-    if (hostContext) {
-      window.getLastWindow(hostContext).then((windowClass) => {
-        windowClass.setWindowSystemBarProperties({
-          statusBarColor: '#000000',
-          statusBarContentColor: '#FFFFFF'
-        })
-      })
-    }
-
     // Read navigation params and initialize ViewModel
     try {
       const params: LessonNavParams = (router.getParams() as Record<string, Object>) ?? {}
       console.error(`[KNOWLEDGE_LESSON] aboutToAppear: Raw params=`, JSON.stringify(params))
-      this.viewModel.init(params)
+      this.viewModel.init(params, hostContext)
       
       // Update local state if params are provided
       if (params.title) {
@@ -38,6 +28,8 @@ struct KnowledgeLessonPage {
       console.warn('No params or failed to read params for KnowledgeLessonPage:', e)
     }
   }
+
+  // Removed onPageShow system bar re-application to avoid flicker
 
   @Builder
   TitleBar() {
@@ -293,7 +285,10 @@ struct KnowledgeLessonPage {
     .height(48)
     .backgroundColor('#FFD700')
     .borderRadius(12)
-    .onClick(() => {
+    .onClick(async () => {
+      console.error(`[KNOWLEDGE_LESSON] CompleteButton: User completed learning, marking lesson as completed`)
+      // 立即标记课程完成
+      await this.viewModel.markLessonCompletedImmediately()
       router.back()
     })
   }
@@ -352,13 +347,22 @@ struct KnowledgeLessonPage {
     Column() {
       this.TitleBar()
 
-      if (this.isSectionMode()) {
-        // 使用分章节模式（原LessonPage的功能）
-        this.buildSectionContent()
-      } else {
-        // 使用简单内容模式（原KnowledgeLessonPage的功能）
-        this.buildSimpleContent()
+      // 内容区域 - 响应式宽度，最大480vp
+      Column() {
+        if (this.isSectionMode()) {
+          // 使用分章节模式（原LessonPage的功能）
+          this.buildSectionContent()
+        } else {
+          // 使用简单内容模式（原KnowledgeLessonPage的功能）
+          this.buildSimpleContent()
+        }
       }
+      .width('100%')
+      .constraintSize({ maxWidth: 480 })
+      .padding({ left: 20, right: 20 })
+      .layoutWeight(1)
+      .justifyContent(FlexAlign.Center)
+      .alignItems(HorizontalAlign.Center)
     }
     .width('100%')
     .height('100%')

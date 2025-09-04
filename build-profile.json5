@@ -13,6 +13,19 @@
           "storeFile": "/Users/yangyangshi/.ohos/config/default_morse_Sy15OF2MAvf3gS8046RSidVqmz-wG5nu5zL2br881ls=.p12",
           "storePassword": "0000001B3C25241754E7AF4934A03284BD65DCAB3171299FFBC342582B532838EA65B96977C79973575EA0"
         }
+      },
+      {
+        "name": "release",
+        "type": "HarmonyOS",
+        "material": {
+          "storeFile": "/Users/yangyangshi/Documents/huawei_profile/douhua.p12",
+          "storePassword": "0000003840AE9F1C3EF5AA53A6B76C187FF73617DA05CFF3534E832C05BB2BA558300B081E819A8F6C29FD102832604F353E78213ABF45D49636B2519BFE119D97BCF2FE208DC75F",
+          "keyAlias": "deveco",
+          "keyPassword": "00000038FF30E50CAD29D700888EB65792F5CA1A002AF1BF12E69BCA0CDF45024100B83454169E375923A8807D1FE20D1E844ADD8DCF4121A222A9F3D7088B07944611FCA45E0191",
+          "signAlg": "SHA256withECDSA",
+          "profile": "/Users/yangyangshi/Documents/huawei_profile/morseRelease.p7b",
+          "certpath": "/Users/yangyangshi/Documents/huawei_profile/douhua_release.cer"
+        }
       }
     ],
     "products": [
