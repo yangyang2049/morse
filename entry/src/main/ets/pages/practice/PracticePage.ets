@@ -33,8 +33,6 @@ export struct PracticePage {
   private readonly pillRadius: number = 20
 
   aboutToAppear(): void {
-    // System bar colors are set globally in EntryAbility
-
     // 从路由参数获取难度和字符列表（容错处理，避免无参数时崩溃）
     try {
       const params = (router.getParams?.() as Record<string, Object>) ?? {}

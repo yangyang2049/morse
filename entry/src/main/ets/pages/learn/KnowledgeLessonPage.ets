@@ -14,6 +14,7 @@ struct KnowledgeLessonPage {
   aboutToAppear() {
     const uiContext = this.getUIContext()
     const hostContext = uiContext.getHostContext()
+    
     // Read navigation params and initialize ViewModel
     try {
       const params: LessonNavParams = (router.getParams() as Record<string, Object>) ?? {}
@@ -336,7 +337,7 @@ struct KnowledgeLessonPage {
     .scrollBar(BarState.Off)
     .edgeEffect(EdgeEffect.Spring)
     .layoutWeight(1)
-    .padding({ left: 16, right: 16, top: 16, bottom: 16 })
+    .padding({ left: 16, right: 16, top: 16, bottom: 24 })
   }
 
   build() {
@@ -354,10 +355,9 @@ struct KnowledgeLessonPage {
         }
       }
       .width('100%')
-      .padding({ left: 20, right: 20 })
       .layoutWeight(1)
-      .justifyContent(FlexAlign.Center)
-      .alignItems(HorizontalAlign.Center)
+      .justifyContent(FlexAlign.Start)
+      .alignItems(HorizontalAlign.Start)
     }
     .width('100%')
     .height('100%')

@@ -31,7 +31,6 @@ export struct ChineseTelegraphCodePage {
   private static isDataLoaded: boolean = false
 
   aboutToAppear() {
-    // System bar colors are set globally in EntryAbility
     console.log('ChineseTelegraphCodePage aboutToAppear called')
     
     // 延迟加载数据，让页面先显示

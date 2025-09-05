@@ -13,8 +13,6 @@ struct LessonQuizPage {
   @State learnViewModel: LearnViewModel = new LearnViewModel()
 
   aboutToAppear() {
-    // System bar colors are set globally in EntryAbility
-
     // Load route params, if any
     try {
       const params = (router.getParams() as QuizNavParams) ?? {}
@@ -163,13 +161,10 @@ struct LessonQuizPage {
 
       Row() {
         Button() {
-          Row() {
-            Image($rawfile('ic_back.svg')).width(16).height(16).fillColor('#1A1A1A').margin({ right: 8 })
-            Text('返回')
-              .fontSize(16)
-              .fontWeight(FontWeight.Bold)
-              .fontColor('#1A1A1A')
-          }
+          Text('返回')
+            .fontSize(16)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#1A1A1A')
         }
         .layoutWeight(1)
         .height(48)
@@ -181,13 +176,10 @@ struct LessonQuizPage {
 
         if (this.quizViewModel.score >= 100) {
           Button() {
-            Row() {
-              Text('下一课')
-                .fontSize(16)
-                .fontWeight(FontWeight.Bold)
-                .fontColor('#1A1A1A')
-              Image($rawfile('ic_forward.svg')).width(16).height(16).fillColor('#1A1A1A').margin({ left: 8 })
-            }
+            Text('下一课')
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#1A1A1A')
           }
           .layoutWeight(1)
           .height(48)
@@ -199,13 +191,10 @@ struct LessonQuizPage {
           })
         } else {
           Button() {
-            Row() {
-              Text('重新测试')
-                .fontSize(16)
-                .fontWeight(FontWeight.Bold)
-                .fontColor(Color.White)
-              Image($rawfile('ic_forward.svg')).width(16).height(16).fillColor(Color.White).margin({ left: 8 })
-            }
+            Text('重新测试')
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#1A1A1A')
           }
           .layoutWeight(1)
           .height(48)
