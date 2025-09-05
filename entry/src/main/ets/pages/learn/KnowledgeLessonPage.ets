@@ -89,11 +89,7 @@ struct KnowledgeLessonPage {
     Column() {
       ForEach(contents, (content: string, index: number) => {
         Column() {
-          if (contents.length === 1) {
-            this.buildSingleLine(content)
-          } else {
-            this.buildBulletLine(content)
-          }
+          this.buildSingleLine(content)
           if (index < contents.length - 1) {
             Blank().height(8)
           }

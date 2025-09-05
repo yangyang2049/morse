@@ -117,7 +117,7 @@ export struct CodeTablePage {
         ForEach(this.getFiltered(), (code: MorseCode) => {
           ListItem() {
             Row() {
-              // 第一列：字符 (40%) - 左对齐
+              // 第一列：字符 (30%) - 左对齐
               Row() {
                 Stack() {
                   Text(code.character)
@@ -131,10 +131,10 @@ export struct CodeTablePage {
                 .backgroundColor('#1A1A1A')
                 .borderRadius(25)
               }
-              .width('40%')
+              .width('30%')
               .justifyContent(FlexAlign.Start)
 
-              // 第二列：摩尔斯电码 (50%) - 右对齐
+              // 第二列：摩尔斯电码 (55%) - 右对齐
               Row() {
                 Text(this.toDisplayMorse(code.morse))
                   .textAlign(TextAlign.End)
@@ -143,10 +143,16 @@ export struct CodeTablePage {
                   .fontFamily('monospace')
                   .fontColor('#FFFFFF')
               }
-              .width('50%')
+              .width('55%')
               .justifyContent(FlexAlign.End)
 
-              // 第三列：播放按钮 (10%) - 左对齐
+              // 第三列：空白间距 (5%)
+              Row() {
+                Blank()
+              }
+              .width('5%')
+
+              // 第四列：播放按钮 (10%) - 左对齐
               Row() {
                 Button() {
                   Image($rawfile('ic_play.svg'))

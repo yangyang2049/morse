@@ -14,6 +14,21 @@ export struct ChineseTelegraphCodePage {
   @State searchText: string = ''
   @State filteredCodes: ChineseTelegraphCode[] = []
   @State isLoading: boolean = true
+  @State isSearching: boolean = false
+  
+  // 分页相关状态
+  @State currentPage: number = 0
+  @State pageSize: number = 100
+  @State hasMoreData: boolean = true
+  @State isLoadingMore: boolean = false
+  
+  // 搜索相关状态
+  @State searchResults: ChineseTelegraphCode[] = []
+  @State isSearchMode: boolean = false
+  
+  // 数据缓存
+  private static allDataCache: ChineseTelegraphCode[] | null = null
+  private static isDataLoaded: boolean = false
 
   aboutToAppear() {
     // System bar colors are set globally in EntryAbility
@@ -22,13 +37,24 @@ export struct ChineseTelegraphCodePage {
     // 延迟加载数据，让页面先显示
     setTimeout(() => {
       console.log('Starting to load Chinese telegraph codes...')
-      this.loadChineseTelegraphCodes()
+      this.loadFirstPage()
     }, 100)
   }
 
-  private loadChineseTelegraphCodes() {
+  // 加载第一页数据
+  private loadFirstPage() {
+    this.loadPage(0)
+  }
+  
+  // 加载指定页面的数据
+  private loadPage(page: number) {
+    // 如果数据已缓存，直接使用缓存
+    if (ChineseTelegraphCodePage.isDataLoaded && ChineseTelegraphCodePage.allDataCache) {
+      this.processPageData(ChineseTelegraphCodePage.allDataCache, page)
+      return
+    }
+    
     try {
-      // Load from rawfile using the correct context access method
       const context = this.getUIContext().getHostContext()
       if (context) {
         context.resourceManager.getRawFileContent('chinese_telegraph_codes_full.json')
@@ -36,31 +62,71 @@ export struct ChineseTelegraphCodePage {
           const decoder = new util.TextDecoder('utf-8')
           const uint8Array = new Uint8Array(data)
           const jsonString = decoder.decode(uint8Array)
-          const parsedData = JSON.parse(jsonString) as ChineseTelegraphCode[]
-          this.codes = parsedData
-          this.filteredCodes = parsedData
-          this.isLoading = false
-          console.log(`Loaded ${this.codes.length} Chinese telegraph codes`)
+          const allData = JSON.parse(jsonString) as ChineseTelegraphCode[]
+          
+          // 缓存数据
+          ChineseTelegraphCodePage.allDataCache = allData
+          ChineseTelegraphCodePage.isDataLoaded = true
+          
+          this.processPageData(allData, page)
         })
         .catch((error: Error) => {
           console.error('Failed to load Chinese telegraph codes:', error.message ?? '')
-          // Fallback to empty array
-          this.codes = []
-          this.filteredCodes = []
-          this.isLoading = false
+          this.handleLoadError()
         })
       } else {
         console.error('Host context is undefined')
-        this.codes = []
-        this.filteredCodes = []
-        this.isLoading = false
+        this.handleLoadError()
       }
     } catch {
-      console.error('Error loading Chinese telegraph codes')
-      this.codes = []
-      this.filteredCodes = []
-      this.isLoading = false
+      this.handleLoadError()
     }
+  }
+  
+  // 处理分页数据
+  private processPageData(allData: ChineseTelegraphCode[], page: number) {
+    // 计算分页数据
+    const startIndex = page * this.pageSize
+    const endIndex = Math.min(startIndex + this.pageSize, allData.length)
+    const pageData = allData.slice(startIndex, endIndex)
+    
+    if (page === 0) {
+      // 第一页，替换所有数据
+      this.codes = pageData
+      this.filteredCodes = pageData
+      this.isLoading = false
+    } else {
+      // 后续页，追加数据
+      this.codes = [...this.codes, ...pageData]
+      if (!this.isSearchMode) {
+        this.filteredCodes = [...this.filteredCodes, ...pageData]
+      }
+      this.isLoadingMore = false
+    }
+    
+    // 检查是否还有更多数据
+    this.hasMoreData = endIndex < allData.length
+    this.currentPage = page
+    
+    console.log(`Loaded page ${page + 1}, total items: ${this.codes.length}`)
+  }
+  
+  // 处理加载错误
+  private handleLoadError() {
+    this.codes = []
+    this.filteredCodes = []
+    this.isLoading = false
+    this.isLoadingMore = false
+  }
+  
+  // 加载更多数据
+  private loadMoreData() {
+    if (this.isLoadingMore || !this.hasMoreData || this.isSearchMode) {
+      return
+    }
+    
+    this.isLoadingMore = true
+    this.loadPage(this.currentPage + 1)
   }
 
   // Removed onPageShow system bar re-application to avoid flicker
@@ -68,12 +134,77 @@ export struct ChineseTelegraphCodePage {
   private onSearchTextChange(text: string) {
     this.searchText = text
     if (text.trim() === '') {
+      // 清空搜索，恢复分页模式
+      this.isSearchMode = false
       this.filteredCodes = this.codes
+      this.searchResults = []
     } else {
-      this.filteredCodes = this.codes.filter(code => 
-        code.character.includes(text) || code.code.includes(text)
-      )
+      // 进入搜索模式
+      this.isSearchMode = true
+      this.isSearching = true
+      
+      // 延迟搜索，避免频繁搜索
+      setTimeout(() => {
+        this.performSearch(text)
+      }, 300)
     }
+  }
+  
+  // 执行搜索
+  private performSearch(text: string) {
+    if (this.searchText !== text) {
+      return // 搜索文本已改变，忽略此次搜索
+    }
+    
+    // 如果数据已缓存，直接使用缓存进行搜索
+    if (ChineseTelegraphCodePage.isDataLoaded && ChineseTelegraphCodePage.allDataCache) {
+      this.performSearchOnData(ChineseTelegraphCodePage.allDataCache, text)
+      return
+    }
+    
+    // 如果数据未缓存，先加载数据
+    try {
+      const context = this.getUIContext().getHostContext()
+      if (context) {
+        context.resourceManager.getRawFileContent('chinese_telegraph_codes_full.json')
+        .then((data: ArrayBuffer) => {
+          const decoder = new util.TextDecoder('utf-8')
+          const uint8Array = new Uint8Array(data)
+          const jsonString = decoder.decode(uint8Array)
+          const allData = JSON.parse(jsonString) as ChineseTelegraphCode[]
+          
+          // 缓存数据
+          ChineseTelegraphCodePage.allDataCache = allData
+          ChineseTelegraphCodePage.isDataLoaded = true
+          
+          this.performSearchOnData(allData, text)
+        })
+        .catch((error: Error) => {
+          console.error('Search failed:', error.message ?? '')
+          this.searchResults = []
+          this.filteredCodes = []
+          this.isSearching = false
+        })
+      }
+    } catch {
+      this.searchResults = []
+      this.filteredCodes = []
+      this.isSearching = false
+    }
+  }
+  
+  // 在指定数据中执行搜索
+  private performSearchOnData(allData: ChineseTelegraphCode[], text: string) {
+    // 在全部数据中搜索
+    const results = allData.filter(code => 
+      code.character.includes(text) || code.code.includes(text)
+    )
+    
+    this.searchResults = results
+    this.filteredCodes = results
+    this.isSearching = false
+    
+    console.log(`Search for "${text}" found ${results.length} results`)
   }
 
   @Builder
@@ -130,24 +261,43 @@ export struct ChineseTelegraphCodePage {
 
   @Builder
   SearchBar() {
-    Search({
-      value: this.searchText,
-      placeholder: '搜索汉字或电码...'
-    })
-    .placeholderColor('#666666')
-    .fontColor(Color.White)
-    .backgroundColor('#1A1A1A')
-    .borderRadius(20)
-    .height(40)
-    .searchIcon({ color: Color.White })
-    .onChange((value: string) => {
-      this.onSearchTextChange(value)
-    })
-    .onSubmit((value: string) => {
-      this.onSearchTextChange(value)
-    })
-    .width('100%')
-    .margin({ left: 16, right: 16, top: 16, bottom: 8 })
+    Column() {
+      Search({
+        value: this.searchText,
+        placeholder: '搜索汉字或电码...'
+      })
+      .placeholderColor('#666666')
+      .fontColor(Color.White)
+      .backgroundColor('#1A1A1A')
+      .borderRadius(20)
+      .height(40)
+      .searchIcon({ color: Color.White })
+      .onChange((value: string) => {
+        this.onSearchTextChange(value)
+      })
+      .onSubmit((value: string) => {
+        this.onSearchTextChange(value)
+      })
+      .width('100%')
+      .margin({ left: 16, right: 16, top: 16, bottom: 8 })
+      
+      // 搜索状态指示器
+      if (this.isSearching) {
+        Row() {
+          LoadingProgress()
+            .width(16)
+            .height(16)
+            .color('#FFD700')
+          
+          Text('搜索中...')
+            .fontSize(12)
+            .fontColor('#CCCCCC')
+            .margin({ left: 8 })
+        }
+        .margin({ left: 16, right: 16, bottom: 8 })
+        .justifyContent(FlexAlign.Start)
+      }
+    }
   }
 
   @Builder
@@ -219,6 +369,40 @@ export struct ChineseTelegraphCodePage {
     .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
   }
+  
+  @Builder
+  LoadMoreButton() {
+    Button() {
+      if (this.isLoadingMore) {
+        Row() {
+          LoadingProgress()
+            .width(16)
+            .height(16)
+            .color('#FFD700')
+          
+          Text('加载中...')
+            .fontSize(14)
+            .fontColor(Color.White)
+            .margin({ left: 8 })
+        }
+        .justifyContent(FlexAlign.Center)
+        .alignItems(VerticalAlign.Center)
+      } else {
+        Text('加载更多')
+          .fontSize(14)
+          .fontColor(Color.White)
+      }
+    }
+    .width('100%')
+    .height(48)
+    .backgroundColor('#1A1A1A')
+    .border({ width: 1, color: '#333333' })
+    .borderRadius(8)
+    .margin({ top: 8, bottom: 8 })
+    .onClick(() => {
+      this.loadMoreData()
+    })
+  }
 
   build() {
     Column() {
@@ -253,10 +437,23 @@ export struct ChineseTelegraphCodePage {
                   this.TableRow(code, index)
                 }
               }, (code: ChineseTelegraphCode) => code.character + code.code)
+              
+              // 加载更多按钮（仅在分页模式且还有更多数据时显示）
+              if (!this.isSearchMode && this.hasMoreData) {
+                ListItem() {
+                  this.LoadMoreButton()
+                }
+              }
             }
             .layoutWeight(1)
             .divider({ strokeWidth: 0 })
             .scrollBar(BarState.Auto)
+            .onReachEnd(() => {
+              // 滚动到底部时自动加载更多
+              if (!this.isSearchMode && this.hasMoreData && !this.isLoadingMore) {
+                this.loadMoreData()
+              }
+            })
           }
         }
       }

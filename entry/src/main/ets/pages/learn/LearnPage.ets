@@ -135,7 +135,7 @@ export struct LearnPage {
           router.push({
             url: 'pages/learn/KnowledgeLessonPage',
             params: {
-              title: '摩斯密码基础课程',
+              title: '摩斯密码基础知识',
               testTitle: '基础知识测试',
               lessonCompletedKey: '1'
             }

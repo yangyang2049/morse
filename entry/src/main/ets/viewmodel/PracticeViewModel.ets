@@ -18,6 +18,7 @@ export class PracticeViewModel {
   @Track difficulty: string = '简单'
   @Track hasIncorrectAttempt: boolean = false // Track if user made incorrect attempt
   @Track characterChangeId: number = 0 // 用于触发字符变化动画的唯一ID
+  @Track isCurrentCharacterInMistakes: boolean = false // Track if current character is in mistakes
   
   private checkTimer: number | null = null
   private hintTimer: number | null = null
@@ -56,6 +57,16 @@ export class PracticeViewModel {
   }
   getHadIncorrectOnCompletion(): Map<number, boolean> { 
     return this.hadIncorrectOnCompletion 
+  }
+  
+  // 获取当前字符的连续正确次数
+  getConsecutiveCorrectCount(): number {
+    return this.favoritesStore.getConsecutiveCorrectCount(this.currentCharacter)
+  }
+  
+  // 检查当前字符是否在错题本中
+  isInMistakes(): boolean {
+    return this.isCurrentCharacterInMistakes
   }
   getCharacterChangeId(): number {
     return this.characterChangeId
@@ -141,6 +152,8 @@ export class PracticeViewModel {
     this.hintRevealed = false
     // 初始化收藏状态为当前字符在收藏夹中的真实状态
     this.isFavorite = this.favoritesStore.isFavorite(this.currentCharacter)
+    // 更新错题本状态
+    this.isCurrentCharacterInMistakes = this.favoritesStore.isMistake(this.currentCharacter)
     this.correctCount = 0 // Reset correct count for new character
     this.showCorrectAnswer = false
     this.hasIncorrectAttempt = false // Reset incorrect attempt flag
@@ -184,6 +197,25 @@ export class PracticeViewModel {
       this.correctCount++
       const requiredCount = this.hasIncorrectAttempt ? 2 : 1
 
+      // 增加连续正确次数（仅在错题本中时）
+      if (this.favoritesStore.isMistake(this.currentCharacter)) {
+        const consecutiveCount = this.favoritesStore.incrementConsecutiveCorrect(this.currentCharacter)
+        console.log(`Character ${this.currentCharacter} consecutive correct: ${consecutiveCount}`)
+        
+        // 检查是否应该从错题本移除
+        if (this.favoritesStore.tryRemoveFromMistakes(this.currentCharacter)) {
+          console.log(`Character ${this.currentCharacter} removed from mistakes after 3 consecutive correct answers`)
+          // 更新错题本状态
+          this.isCurrentCharacterInMistakes = false
+          // 显示移除提示
+          promptAction.showToast({
+            message: `🎉 ${this.currentCharacter} 已从错题本移除！`,
+            duration: 2000,
+            bottom: '70%'
+          })
+        }
+      }
+
       if (this.correctCount >= requiredCount) {
         // Character completed, move to next
         // Mark this character as practiced in this session
@@ -215,6 +247,9 @@ export class PracticeViewModel {
       
       // Add to mistakes if not already there
       this.favoritesStore.addToMistakes(this.currentCharacter)
+      
+      // 重置连续正确次数（因为答错了）
+      this.favoritesStore.resetConsecutiveCorrect(this.currentCharacter)
       
       // Mark that user made incorrect attempt (if not already marked)
       if (!this.hasIncorrectAttempt) {
