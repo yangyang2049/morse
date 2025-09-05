@@ -70,5 +70,4 @@ export const eventHub = EventHub.getInstance()
 // 事件名称常量
 export class Events {
   static readonly LESSON_COMPLETED = 'lesson_completed'
-  static readonly PROGRESS_UPDATED = 'progress_updated'
 }

@@ -62,9 +62,7 @@ class ProgressStore {
       return
     }
     
-    // 重新加载最新数据确保一致性
-    await this.load(context)
-    
+    // 直接标记课程完成，不需要重新加载
     this.markLessonCompleted(lessonNumber)
     await this.persist(context)
     console.log(`[STORE] Lesson ${lessonNumber} completed and saved. Total completed: ${Array.from(this.completedLessons).join(',')}`)
@@ -86,11 +84,14 @@ class ProgressStore {
     
     // A lesson is unlocked if the previous lesson is completed
     const prevLessonCompleted = this.completedLessons.has(n - 1)
+    console.error(`[STORE] isLessonUnlocked: lesson${n} unlocked=${prevLessonCompleted} (prev lesson ${n-1} completed=${prevLessonCompleted})`)
     return prevLessonCompleted
   }
 
   isLessonCompleted(n: number): boolean {
-    return this.completedLessons.has(n)
+    const completed = this.completedLessons.has(n)
+    console.error(`[STORE] isLessonCompleted: lesson${n} completed=${completed}`)
+    return completed
   }
 
   /**

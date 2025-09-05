@@ -1,6 +1,8 @@
 import { MorseCode, MorseCodeData } from '../../models/MorseCode'
 // System bar colors are set globally in EntryAbility
 import { router } from '@kit.ArkUI'
+import { audioService } from '../../services/AudioService'
+import { Context } from '@kit.AbilityKit'
 
 interface Category {
   key: string
@@ -10,6 +12,7 @@ interface Category {
 @Component
 export struct CodeTablePage {
   @State selected: string = 'all'
+  @State playingCode: string = '' // 跟踪当前播放的摩尔斯码
   private categories: Category[] = [
     { key: 'all', name: '所有码' },
     { key: 'alphabet', name: '字母' },
@@ -38,6 +41,21 @@ export struct CodeTablePage {
   private toDisplayMorse(m: string): string {
     // Avoid replaceAll compatibility issues
     return m.split('.').join('·')
+  }
+
+  // 播放摩尔斯码
+  private async playMorseCode(morseCode: string): Promise<void> {
+    this.playingCode = morseCode
+    try {
+      await audioService.playMorseSequence(morseCode)
+    } catch (error) {
+      console.error('Failed to play morse code:', error)
+    } finally {
+      // 播放完成后重置状态
+      setTimeout(() => {
+        this.playingCode = ''
+      }, 1000)
+    }
   }
 
   build() {
@@ -99,31 +117,70 @@ export struct CodeTablePage {
         ForEach(this.getFiltered(), (code: MorseCode) => {
           ListItem() {
             Row() {
-              // Avatar circle with centered character
-              Stack() {
-                Text(code.character)
+              // 第一列：字符 (40%) - 左对齐
+              Row() {
+                Stack() {
+                  Text(code.character)
+                    .fontSize(20)
+                    .fontWeight(FontWeight.Bold)
+                    .fontColor('#FFD700')
+                    .align(Alignment.Center)
+                }
+                .width(50)
+                .height(50)
+                .backgroundColor('#1A1A1A')
+                .borderRadius(25)
+              }
+              .width('40%')
+              .justifyContent(FlexAlign.Start)
+
+              // 第二列：摩尔斯电码 (50%) - 右对齐
+              Row() {
+                Text(this.toDisplayMorse(code.morse))
+                  .textAlign(TextAlign.End)
                   .fontSize(20)
                   .fontWeight(FontWeight.Bold)
-                  .fontColor('#FFD700')
-                  .align(Alignment.Center)
+                  .fontFamily('monospace')
+                  .fontColor('#FFFFFF')
               }
-              .width(50)
-              .height(50)
-              .backgroundColor('#1A1A1A')
-              .borderRadius(25)
-              .margin({ right: 12 })
+              .width('50%')
+              .justifyContent(FlexAlign.End)
 
-              // Morse text right aligned
-              Text(this.toDisplayMorse(code.morse))
-                .layoutWeight(1)
-                .textAlign(TextAlign.End)
-                .fontSize(20)
-                .fontWeight(FontWeight.Bold)
-                .fontFamily('monospace')
-                .fontColor('#FFFFFF')
+              // 第三列：播放按钮 (10%) - 左对齐
+              Row() {
+                Button() {
+                  Image($rawfile('ic_play.svg'))
+                    .width(20)
+                    .height(20)
+                    .scale({ 
+                      x: this.playingCode === code.morse ? 0.9 : 1.0, 
+                      y: this.playingCode === code.morse ? 0.9 : 1.0 
+                    })
+                    .opacity(this.playingCode === code.morse ? 0.7 : 1.0)
+                    .animation({ duration: 150, curve: Curve.EaseInOut })
+                }
+                .width(40)
+                .height(40)
+                .backgroundColor(this.playingCode === code.morse ? 'rgba(255, 215, 0, 0.1)' : Color.Transparent)
+                .borderRadius(20)
+                .animation({ duration: 150, curve: Curve.EaseInOut })
+                .onClick(async () => {
+                  if (this.playingCode === code.morse) {
+                    // 如果正在播放，停止播放
+                    audioService.stopAudio()
+                    this.playingCode = ''
+                  } else {
+                    // 播放摩尔斯码
+                    await this.playMorseCode(code.morse)
+                  }
+                })
+              }
+              .width('10%')
+              .justifyContent(FlexAlign.Start)
             }
             .width('100%')
             .padding({ left: 24, right: 24, top: 12, bottom: 12 })
+            .alignItems(VerticalAlign.Center)
           }
         }, (code: MorseCode) => code.character + ':' + code.morse)
         }

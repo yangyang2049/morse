@@ -1,8 +1,10 @@
 # Morse (HarmonyOS) — Project Summary
 
-<div style="margin-top: 20px; text-align: left;">
 
 ## Todo
-copy content of 1 unit completely from flutter project
-
-</div>
+[ ] Auto Unlock lessons
+[ ] Vibration
+[ ] Flashlight for text to code
+[x] Sound
+[ ] Settings
+[ ] Review in lessons

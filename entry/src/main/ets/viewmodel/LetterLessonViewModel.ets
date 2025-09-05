@@ -1,33 +1,42 @@
 import { MorseCode } from '../models/MorseCode'
 import { LearnViewModel } from './LearnViewModel'
 import { progressStore } from '../store/ProgressStoreSingleton'
+import { audioService } from '../services/AudioService'
 import Context from '@ohos.app.ability.common'
 
 @Observed
 export class LetterLessonViewModel {
   // 课程数据
-  codes: MorseCode[] = []
-  lessonId: string = ''
-  title: string = ''
+  @Track codes: MorseCode[] = []
+  @Track lessonId: string = ''
+  @Track title: string = ''
   
   // 学习状态
-  currentIndex: number = 0
-  userInput: string = ''
-  showResult: boolean = false
-  isCorrect: boolean = false
-  showMorseCode: boolean = true
-  completionCount: Map<number, number> = new Map()
-  practiceCount: Map<number, number> = new Map()
-  hintRevealed: Map<number, boolean> = new Map()
+  @Track currentIndex: number = 0
+  @Track userInput: string = ''
+  @Track showResult: boolean = false
+  @Track isCorrect: boolean = false
+  @Track showMorseCode: boolean = true
+  @Track completionCount: Map<number, number> = new Map()
+  @Track practiceCount: Map<number, number> = new Map()
+  @Track hintRevealed: Map<number, boolean> = new Map()
   
   // 进度相关
-  progressVisual: number = 0
-  showCompletedColor: boolean = false
-  readonly REQUIRED_PRACTICE_COUNT: number = 3
+  @Track progressVisual: number = 0
+  @Track showCompletedColor: boolean = false
+  @Track REQUIRED_PRACTICE_COUNT: number = 3
+  
+  // 设置项
+  @Track soundEnabled: boolean = true
   
   // 对话框状态
-  showCompletionDialog: boolean = false
+  @Track showCompletionDialog: boolean = false
+  @Track showSettingsDialog: boolean = false
   isLessonCompleted: boolean = false
+  
+  // 复习模式状态
+  @Track isReviewMode: boolean = false // 复习模式：所有练习完成后显示提示
+  @Track reviewIndex: number = 0 // 复习模式中的当前索引
   
   // 内部状态
   private autoCheckTimer: number | null = null
@@ -45,15 +54,51 @@ export class LetterLessonViewModel {
   
   // 输入操作
   addDot(): void {
-    this.userInput = (this.userInput + '.').trim()
+    this.userInput = this.userInput + '.'
     this.showResult = false
     this.startAutoCheck()
   }
   
   addDash(): void {
-    this.userInput = (this.userInput + '-').trim()
+    this.userInput = this.userInput + '-'
     this.showResult = false
     this.startAutoCheck()
+  }
+  
+  addSpace(): void {
+    // 防止首位或连续空格
+    if (this.userInput.length === 0) {
+      return
+    }
+    if (this.userInput.endsWith(' ')) {
+      return
+    }
+    this.userInput = this.userInput + ' '
+    this.showResult = false
+    this.startAutoCheck()
+  }
+
+  // 播放当前字母的摩尔斯码音频
+  async playCurrentMorseCode(): Promise<void> {
+    const currentCode = this.codes[this.currentIndex]
+    if (currentCode && currentCode.morse) {
+      try {
+        await audioService.playMorseSequence(currentCode.morse)
+      } catch (error) {
+        console.error('Failed to play morse code audio:', error)
+      }
+    }
+  }
+
+  // 播放用户输入的摩尔斯码音频
+  async playUserInput(): Promise<void> {
+    if (this.userInput.trim().length > 0) {
+      try {
+        await audioService.playMorseSequence(this.userInput)
+      } catch (error) {
+        console.error('Failed to play user input audio:', error)
+      }
+    }
   }
   
   clearInput(): void {
@@ -71,62 +116,113 @@ export class LetterLessonViewModel {
       clearTimeout(this.autoCheckTimer)
       this.autoCheckTimer = null
     }
+    
+    // 单词课程使用更长的检查时间
+    const isWordLesson = this.lessonId && parseInt(this.lessonId) >= 19 && parseInt(this.lessonId) <= 21
+    const checkDelay = isWordLesson ? 1800 : 800
+    
     this.autoCheckTimer = setTimeout(() => {
       this.autoCheckTimer = null
       this.checkAnswer()
-    }, 800)
+    }, checkDelay)
   }
   
   private checkAnswer(): void {
     const currentCode = this.codes[this.currentIndex]
-    const isCorrect = this.userInput === currentCode.morse
+    const isWordLesson = this.lessonId && parseInt(this.lessonId) >= 19 && parseInt(this.lessonId) <= 21
+    const userNormalized = this.normalizeMorseForComparison(this.userInput, !!isWordLesson)
+    const answerNormalized = this.normalizeMorseForComparison(currentCode.morse, !!isWordLesson)
+    const isCorrect = userNormalized === answerNormalized
 
     this.isCorrect = isCorrect
     this.showResult = true
 
-    if (isCorrect) {
-      const currentPracticeCount = this.practiceCount.get(this.currentIndex) || 0
-      const newCount = currentPracticeCount + 1
-      this.practiceCount.set(this.currentIndex, newCount)
-      
-      const targetProgress = Math.min(newCount / this.REQUIRED_PRACTICE_COUNT, 1)
-      if (newCount >= this.REQUIRED_PRACTICE_COUNT) {
-        this.animateProgressTo(targetProgress, 320, () => {
-          this.showCompletedColor = true
-        })
-      } else {
-        this.showCompletedColor = false
-        this.animateProgressTo(targetProgress, 320)
+    if (this.isReviewMode) {
+      // 复习模式：无论正确还是错误都继续
+      if (!isCorrect) {
+        // 如果错误，显示提示
+        this.showMorseCode = true
       }
+      setTimeout(() => {
+        this.moveToNext()
+      }, 1000)
+    } else {
+      // 正常练习模式
+      if (isCorrect) {
+        const currentPracticeCount = this.practiceCount.get(this.currentIndex) || 0
+        const newCount = currentPracticeCount + 1
+        this.practiceCount.set(this.currentIndex, newCount)
+        
+        const targetProgress = Math.min(newCount / this.REQUIRED_PRACTICE_COUNT, 1)
+        if (newCount >= this.REQUIRED_PRACTICE_COUNT) {
+          this.animateProgressTo(targetProgress, 320, () => {
+            this.showCompletedColor = true
+          })
+        } else {
+          this.showCompletedColor = false
+          this.animateProgressTo(targetProgress, 320)
+        }
 
-      if (newCount >= this.REQUIRED_PRACTICE_COUNT) {
-        this.completionCount.set(this.currentIndex, 1)
-        setTimeout(() => {
-          this.moveToNext()
-        }, 1000)
+        if (newCount >= this.REQUIRED_PRACTICE_COUNT) {
+          this.completionCount.set(this.currentIndex, 1)
+          setTimeout(() => {
+            this.moveToNext()
+          }, 1000)
+        } else {
+          setTimeout(() => {
+            this.clearInput()
+          }, 1000)
+        }
       } else {
         setTimeout(() => {
           this.clearInput()
-        }, 1000)
+        }, 1500)
       }
-    } else {
-      setTimeout(() => {
-        this.clearInput()
-      }, 1500)
     }
+  }
+
+  private normalizeMorseForComparison(input: string, isWordLesson: boolean): string {
+    // 统一点划字符并标准化空格
+    let s: string = input.replace(/·/g, '.').replace(/[–—]/g, '-')
+    if (isWordLesson) {
+      // 单词课：忽略所有空格，仅对比点划序列
+      s = s.replace(/\s+/g, '')
+    } else {
+      s = s.trim()
+    }
+    return s
   }
   
   private moveToNext(): void {
-    if (this.currentIndex < this.codes.length - 1) {
-      this.currentIndex++
-      const nextCount = this.practiceCount.get(this.currentIndex) || 0
-      this.progressVisual = Math.min(nextCount / this.REQUIRED_PRACTICE_COUNT, 1)
-      this.showCompletedColor = false
-      this.clearInput()
+    if (this.isReviewMode) {
+      // 复习模式：按顺序显示所有字符
+      if (this.reviewIndex < this.codes.length - 1) {
+        this.reviewIndex++
+        this.currentIndex = this.reviewIndex
+        this.showMorseCode = false // 隐藏提示，准备下一个字符
+        this.clearInput()
+      } else {
+        // 复习模式完成，显示完成对话框
+        this.markLessonCompletedImmediately()
+        this.showCompletionDialog = true
+      }
     } else {
-      // 课程完成，立即标记为完成
-      this.markLessonCompletedImmediately()
-      this.showCompletionDialog = true
+      // 正常练习模式
+      if (this.currentIndex < this.codes.length - 1) {
+        this.currentIndex++
+        const nextCount = this.practiceCount.get(this.currentIndex) || 0
+        this.progressVisual = Math.min(nextCount / this.REQUIRED_PRACTICE_COUNT, 1)
+        this.showCompletedColor = false
+        this.clearInput()
+      } else {
+        // 所有练习完成，进入复习模式
+        this.isReviewMode = true
+        this.reviewIndex = 0
+        this.currentIndex = 0
+        this.showMorseCode = false // 隐藏提示
+        this.clearInput()
+        console.log('[LetterLessonViewModel] Entering review mode')
+      }
     }
   }
   
@@ -168,15 +264,22 @@ export class LetterLessonViewModel {
     this.showCompletionDialog = false
   }
   
+  // 重新开始课程
   restartLesson(): void {
     this.currentIndex = 0
+    this.reviewIndex = 0
+    this.isReviewMode = false
+    this.userInput = ''
+    this.showResult = false
+    this.isCorrect = false
+    this.showMorseCode = true
+    this.showCompletedColor = false
+    this.progressVisual = 0
     this.completionCount.clear()
     this.practiceCount.clear()
-    this.progressVisual = 0
-    this.showCompletedColor = false
-    this.clearInput()
-    this.showCompletionDialog = false
+    this.hintRevealed.clear()
   }
+  
   
   // 进度动画
   private animateProgressTo(target: number, duration: number = 320, onComplete?: () => void) {

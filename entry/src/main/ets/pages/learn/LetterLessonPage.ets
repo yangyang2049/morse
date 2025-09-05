@@ -2,6 +2,8 @@ import { MorseCode, MorseCodeData } from '../../models/MorseCode'
 import { router } from '@kit.ArkUI'
 import { LetterLessonViewModel } from '../../viewmodel/LetterLessonViewModel'
 import { LessonData } from '../../data/LessonData'
+import { audioService } from '../../services/AudioService'
+import { Context } from '@kit.AbilityKit'
 // System bar colors are set globally in EntryAbility
 
 @Entry
@@ -45,6 +47,7 @@ struct LetterLessonPage {
     const lessonNumber = parseInt(this.viewModel.lessonId) || 0
     return (lessonNumber >= 12 && lessonNumber <= 15) || (lessonNumber >= 16 && lessonNumber <= 18)
   }
+
 
   // Removed onPageShow system bar re-application to avoid flicker
 
@@ -96,9 +99,21 @@ struct LetterLessonPage {
       const wordGroups = LessonData.getWordGroups()
       if (lessonIndex < wordGroups.length) {
         const targetWords = wordGroups[lessonIndex]
-        return targetWords.map(word => new MorseCode(word, '', ''))
+        // 为每个单词预计算摩斯电码（使用标准点/划表示）
+        return targetWords.map(word => new MorseCode(
+          word,
+          // textToMorse 输出包含“·”，转换为标准“.”以与其他课程保持一致
+          MorseCodeData.textToMorse(word).replace(/·/g, '.'),
+          ''
+        ))
       } else {
-        return [new MorseCode('THE', '', ''), new MorseCode('AND', '', ''), new MorseCode('FOR', '', '')]
+        // 默认单词集
+        const fallback = ['THE', 'AND', 'FOR']
+        return fallback.map(word => new MorseCode(
+          word,
+          MorseCodeData.textToMorse(word).replace(/·/g, '.'),
+          ''
+        ))
       }
     } else {
       // 默认返回字母课程
@@ -118,30 +133,34 @@ struct LetterLessonPage {
           router.back()
         })
 
-        Row() {
-          ForEach(this.viewModel.codes, (code: MorseCode, index: number) => {
-            Text(code.character)
-              .fontSize(this.isWordLesson() ? 14 : 18)
-              .fontWeight(FontWeight.Bold)
-              .fontColor(this.viewModel.getLetterStatusColor(index))
-              .margin({ right: 8 })
-          })
+        Blank().width(20)
+
+        Scroll() {
+          Row() {
+            ForEach(this.viewModel.codes, (code: MorseCode, index: number) => {
+              Text(code.character)
+                .fontSize(this.isWordLesson() ? 12 : 18)
+                .fontWeight(FontWeight.Bold)
+                .fontColor(this.viewModel.getLetterStatusColor(index))
+                .margin({ right: 8 })
+            })
+          }
+          .justifyContent(FlexAlign.Center)
         }
         .layoutWeight(1)
-        .justifyContent(FlexAlign.Center)
+        .scrollable(ScrollDirection.Horizontal)
+        .scrollBar(BarState.Off)
 
-        if (this.viewModel.codes.length <= 10) {
-          Button() {
-            Image(this.viewModel.showMorseCode ? $rawfile('ic_eye.svg') : $rawfile('ic_eye_closed.svg'))
-              .width(22).height(22).fillColor(Color.White)
-          }
-          .backgroundColor(Color.Transparent)
-          .onClick(() => {
-            this.viewModel.showMorseCode = !this.viewModel.showMorseCode
-          })
-        } else {
-          Blank().width(48)
+        Blank().width(20)
+
+        Button() {
+          Image($rawfile('ic_settings.svg'))
+            .width(22).height(22)
         }
+        .backgroundColor(Color.Transparent)
+        .onClick(() => {
+          this.viewModel.showSettingsDialog = true
+        })
       }
       .height(52)
       .padding({ left: 16, right: 16 })
@@ -175,7 +194,7 @@ struct LetterLessonPage {
         })
       
       Text(this.viewModel.codes[this.viewModel.currentIndex]?.character || '')
-        .fontSize(this.isWordLesson() ? 48 : 80)
+        .fontSize(this.isWordLesson() ? 32 : 80)
         .fontWeight(FontWeight.Bold)
         .fontColor('#1A1A1A')
         .textAlign(TextAlign.Center)
@@ -186,36 +205,81 @@ struct LetterLessonPage {
   @Builder
   private MorseDisplay() {
     Column() {
-      Text(this.viewModel.shouldShowHint(this.viewModel.currentIndex) ? 
-        (this.viewModel.codes[this.viewModel.currentIndex]?.morse || '').replace(/\./g, '·') : '?')
-        .fontSize(this.isWordLesson() ? 24 : 36)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(this.viewModel.shouldShowHint(this.viewModel.currentIndex) ? Color.White : '#FFFFFF80')
-        .fontFamily('monospace')
-        .letterSpacing(2)
+      if (this.viewModel.showMorseCode) {
+        // 用图形化方式显示摩尔斯码
+        // 用图形化方式显示摩尔斯码
+        Row() {
+          ForEach((this.viewModel.codes[this.viewModel.currentIndex]?.morse || '').split(''), (char: string, index: number) => {
+            if (char === '.') {
+              Circle({ width: this.isWordLesson() ? 4 : 8, height: this.isWordLesson() ? 4 : 8 })
+                .fill(Color.White)
+                .margin({ right: this.isWordLesson() ? 4 : 8 })
+            } else if (char === '-') {
+              Rect({ width: this.isWordLesson() ? 8 : 16, height: this.isWordLesson() ? 2 : 4 })
+                .fill(Color.White)
+                .margin({ right: this.isWordLesson() ? 4 : 8 })
+            } else if (char === ' ') {
+              // 字母间空格 - 单词课程中显示
+              if (this.isWordLesson()) {
+                Blank().width(8).height(2)
+              }
+            }
+          })
+        }
+        .justifyContent(FlexAlign.Center)
+      } else {
+        Image($rawfile('ic_eye.svg'))
+          .width(28)
+          .height(28)
+          .fillColor(Color.White)
+      }
     }
     .height(80)
-    .width(this.isNumberOrSymbolLesson() ? 225 : 150) // 数字和符号课程增加50%宽度
+    .width('95%')
+    .margin({ left: 24, right: 24 })
+    .padding({ left: 16, right: 16, top: 16, bottom: 16 })
     .backgroundColor('#1A1A1A')
     .borderRadius(this.pillRadius)
     .justifyContent(FlexAlign.Center)
+    .onClick(() => {
+      // 点击提示框本身进行显隐切换
+      this.viewModel.showMorseCode = !this.viewModel.showMorseCode
+    })
   }
+
 
   @Builder
   private InputDisplay() {
     Column() {
-      Text(this.viewModel.userInput.replace(/\./g, '·').trim())
-        .fontSize(this.isWordLesson() ? 24 : 36)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(
-          this.viewModel.showResult && this.viewModel.isCorrect ? Color.Green :
-          this.viewModel.showResult && !this.viewModel.isCorrect ? Color.Red :
-          this.viewModel.userInput.trim().length === 0 ? Color.Transparent : '#FFD700'
-        )
-        .fontFamily('monospace')
-        .letterSpacing(4)
-        .textAlign(TextAlign.Center)
-        .width('100%')
+      if (this.viewModel.userInput.trim().length > 0) {
+        // 用图形化方式显示用户输入
+        // 用图形化方式显示用户输入
+        Row() {
+          ForEach(this.viewModel.userInput.split(''), (char: string, index: number) => {
+            if (char === '.') {
+              Circle({ width: this.isWordLesson() ? 4 : 8, height: this.isWordLesson() ? 4 : 8 })
+                .fill(
+                  this.viewModel.showResult && this.viewModel.isCorrect ? Color.Green :
+                  this.viewModel.showResult && !this.viewModel.isCorrect ? Color.Red : '#FFD700'
+                )
+                .margin({ right: this.isWordLesson() ? 4 : 8 })
+            } else if (char === '-') {
+              Rect({ width: this.isWordLesson() ? 8 : 16, height: this.isWordLesson() ? 2 : 4 })
+                .fill(
+                  this.viewModel.showResult && this.viewModel.isCorrect ? Color.Green :
+                  this.viewModel.showResult && !this.viewModel.isCorrect ? Color.Red : '#FFD700'
+                )
+                .margin({ right: this.isWordLesson() ? 4 : 8 })
+            } else if (char === ' ') {
+              // 字母间空格
+              if (this.isWordLesson()) {
+                Blank().width(8).height(2)
+              }
+            }
+          })
+        }
+        .justifyContent(FlexAlign.Center)
+      }
     }
     .height(60)
     .width('100%')
@@ -226,29 +290,98 @@ struct LetterLessonPage {
   @Builder
   private BottomKeys() {
     Row() {
-      Button() {
-        Circle({ width: 20, height: 20 })
-          .fill('#FFD700')
-      }
-      .height(80)
-      .backgroundColor('#1A1A1A')
-      .borderRadius(this.pillRadius)
-      .border({ width: 1, color: '#333333' })
-      .onClick(() => this.viewModel.addDot())
-      .layoutWeight(1)
+      if (this.isWordLesson()) {
+        // 单词课程：三个按钮（点、空格、划）
+        Button() {
+          Circle({ width: 20, height: 20 })
+            .fill('#FFD700')
+        }
+        .height(80)
+        .backgroundColor('#1A1A1A')
+        .borderRadius(this.pillRadius)
+        .border({ width: 1, color: '#333333' })
+        .onClick(async () => {
+          this.viewModel.addDot()
+          if (this.viewModel.soundEnabled) {
+            await audioService.playDit()
+          }
+        })
+        .layoutWeight(1)
 
-      Blank().width(20)
+        Blank().width(8)
 
-      Button() {
-        Rect({ width: 40, height: 12 })
-          .fill('#FFD700')
+        // 短空格按钮
+        Button() {
+          Text('⎵')
+            .fontSize(16)
+            .fontColor('#FFD700')
+            .fontWeight(FontWeight.Bold)
+        }
+        .height(80)
+        .width(60)
+        .backgroundColor('#1A1A1A')
+        .borderRadius(12)
+        .border({ width: 1, color: '#333333' })
+        .onClick(async () => {
+          this.viewModel.addSpace()
+          if (this.viewModel.soundEnabled) {
+            await audioService.playSpace()
+          }
+        })
+
+        Blank().width(8)
+
+        Button() {
+          Rect({ width: 40, height: 12 })
+            .fill('#FFD700')
+        }
+        .height(80)
+        .backgroundColor('#1A1A1A')
+        .borderRadius(this.pillRadius)
+        .border({ width: 1, color: '#333333' })
+        .onClick(async () => {
+          this.viewModel.addDash()
+          if (this.viewModel.soundEnabled) {
+            await audioService.playDah()
+          }
+        })
+        .layoutWeight(1)
+      } else {
+        // 其他课程：两个按钮（点、划），平均分配宽度
+        Button() {
+          Circle({ width: 20, height: 20 })
+            .fill('#FFD700')
+        }
+        .height(80)
+        .backgroundColor('#1A1A1A')
+        .borderRadius(this.pillRadius)
+        .border({ width: 1, color: '#333333' })
+        .onClick(async () => {
+          this.viewModel.addDot()
+          if (this.viewModel.soundEnabled) {
+            await audioService.playDit()
+          }
+        })
+        .layoutWeight(1)
+
+        Blank().width(20)
+
+        Button() {
+          Rect({ width: 40, height: 12 })
+            .fill('#FFD700')
+        }
+        .height(80)
+        .backgroundColor('#1A1A1A')
+        .borderRadius(this.pillRadius)
+        .border({ width: 1, color: '#333333' })
+        .onClick(async () => {
+          this.viewModel.addDash()
+          if (this.viewModel.soundEnabled) {
+            await audioService.playDah()
+          }
+        })
+        .layoutWeight(1)
       }
-      .height(80)
-      .backgroundColor('#1A1A1A')
-      .borderRadius(this.pillRadius)
-      .border({ width: 1, color: '#333333' })
-      .onClick(() => this.viewModel.addDash())
-      .layoutWeight(1)
     }
     .padding({ left: 20, right: 20, bottom: 60 })
   }
@@ -361,7 +494,7 @@ struct LetterLessonPage {
         }
         .width('100%')
       }
-      .width(400)
+      .width(360)
       .padding(20)
       .backgroundColor('#000000')
       .border({ width: 2, color: Color.Green })
@@ -375,6 +508,124 @@ struct LetterLessonPage {
     .height('100%')
     .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
+  }
+
+  @Builder
+  private SettingsDialog() {
+    // 设置对话框：声音开关与练习次数步进器
+    Column() {
+      Blank().layoutWeight(1)
+
+      Column() {
+        Text('设置')
+          .fontSize(20)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#FFFFFF')
+          .textAlign(TextAlign.Center)
+
+        Blank().height(12)
+
+        // 声音
+        Row() {
+          Text('声音')
+            .fontSize(16)
+            .fontColor('#FFFFFF')
+          Blank().layoutWeight(1)
+          Toggle({ type: ToggleType.Switch, isOn: this.viewModel.soundEnabled })
+            .selectedColor('#FFD700')
+            .onChange((isOn: boolean) => {
+              this.viewModel.soundEnabled = isOn
+            })
+        }
+        .height(44)
+        .padding({ left: 4, right: 4 })
+
+        Blank().height(8)
+
+        // 练习次数 (3-5) - 单行布局，系统步进器不可用时使用 +/-
+        Row() {
+          Text('练习次数')
+            .fontSize(16)
+            .fontColor('#FFFFFF')
+          Blank().layoutWeight(1)
+
+          Button() {
+            Text('-').fontSize(18).fontColor(Color.White)
+          }
+          .height(36)
+          .width(44)
+          .backgroundColor('#333333')
+          .borderRadius(8)
+          .onClick(() => {
+            const next = Math.max(3, Math.min(5, this.viewModel.REQUIRED_PRACTICE_COUNT - 1))
+            this.viewModel.REQUIRED_PRACTICE_COUNT = next
+            // 修正当前进度显示
+            const count = this.viewModel.practiceCount.get(this.viewModel.currentIndex) || 0
+            this.viewModel.progressVisual = Math.min(count / this.viewModel.REQUIRED_PRACTICE_COUNT, 1)
+          })
+
+          Blank().width(12)
+
+          Text(`${this.viewModel.REQUIRED_PRACTICE_COUNT}`)
+            .fontSize(18)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#FFD700')
+
+          Blank().width(12)
+
+          Button() {
+            Text('+').fontSize(18).fontColor(Color.White)
+          }
+          .height(36)
+          .width(44)
+          .backgroundColor('#333333')
+          .borderRadius(8)
+          .onClick(() => {
+            const next = Math.max(3, Math.min(5, this.viewModel.REQUIRED_PRACTICE_COUNT + 1))
+            this.viewModel.REQUIRED_PRACTICE_COUNT = next
+            const count = this.viewModel.practiceCount.get(this.viewModel.currentIndex) || 0
+            this.viewModel.progressVisual = Math.min(count / this.viewModel.REQUIRED_PRACTICE_COUNT, 1)
+          })
+        }
+        .height(44)
+        .alignItems(VerticalAlign.Center)
+
+        Blank().height(16)
+
+        Button() {
+          Text('关闭')
+            .fontSize(16)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(Color.Black)
+        }
+        .height(44)
+        .width('100%')
+        .backgroundColor('#FFD700')
+        .borderRadius(8)
+        .onClick(() => { this.viewModel.showSettingsDialog = false })
+      }
+      .width(320)
+      .padding(20)
+      .backgroundColor('#000000')
+      .border({ width: 1, color: '#333333' })
+      .borderRadius(12)
+      .shadow({ radius: 24, color: 'rgba(0,0,0,0.4)', offsetX: 0, offsetY: 12 })
+
+      Blank().layoutWeight(1)
+    }
+    .width('100%')
+    .height('100%')
+    .justifyContent(FlexAlign.Center)
+    .alignItems(HorizontalAlign.Center)
+  }
+
+  @Builder
+  private OverlayCover() {
+    if (this.viewModel.showCompletionDialog) {
+      this.CompletionDialog()
+    } else if (this.viewModel.showSettingsDialog) {
+      this.SettingsDialog()
+    }
   }
 
   build() {
@@ -408,11 +659,11 @@ struct LetterLessonPage {
     .height('100%')
     .backgroundColor(Color.Black)
     .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
-    .bindContentCover(this.viewModel.showCompletionDialog, this.CompletionDialog(), {
+    .bindContentCover(this.viewModel.showCompletionDialog || this.viewModel.showSettingsDialog, this.OverlayCover(), {
       modalTransition: ModalTransition.NONE,
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       onWillAppear: () => {
-        console.log('Completion dialog will appear')
+        console.log('Overlay will appear')
       }
     })
   }

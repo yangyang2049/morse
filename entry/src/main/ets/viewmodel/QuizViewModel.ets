@@ -61,7 +61,7 @@ export class QuizViewModel {
         },
         {
           type: 'multiple_choice',
-          question: '摩斯密码是在哪个 年代开发的？',
+          question: '摩斯密码是在哪个年代开发的？',
           options: ['1820 年代', '1830-1840 年代', '1850 年代', '1860 年代'],
           answer: 1, // 1830-1840 年代
           points: 20,
@@ -116,7 +116,7 @@ export class QuizViewModel {
         },
         {
           type: 'multiple_choice',
-          question: '中文摩尔斯电码是在哪个 年代开始制定的？',
+          question: '中文摩尔斯电码是在哪个年代开始制定的？',
           options: ['1900 年代', '1920 年代', '1950 年代', '1980 年代'],
           answer: 1, // 1920 年代
           points: 20,
@@ -202,18 +202,19 @@ export class QuizViewModel {
     console.error(`[QuizViewModel] showTestResult: score=${this.score} willPersist=${willSave}`)
   }
 
-  // 立即标记课程完成
+  // 立即标记课程完成 - 简化逻辑
   private async markLessonCompletedImmediately(): Promise<void> {
     if (this.lessonCompletedKey && !this.isLessonCompleted && this.context) {
       try {
         const lessonNumber = parseInt(this.lessonCompletedKey) || 0
         console.error(`[QuizViewModel] markLessonCompletedImmediately: Starting for lessonNumber=${lessonNumber}`)
         
-        // 使用存储的context立即标记课程完成
+        // 使用存储的context立即标记课程完成 - 这会自动发送事件
         await progressStore.saveLessonCompleted(lessonNumber, this.context)
         this.isLessonCompleted = true
         this.progressSaved = true
         console.error(`[QuizViewModel] markLessonCompletedImmediately: Completed for lessonNumber=${lessonNumber}`)
+        
       } catch (error) {
         console.error(`[QuizViewModel] markLessonCompletedImmediately: Error: ${error}`)
       }

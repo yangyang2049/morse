@@ -347,7 +347,7 @@ struct KnowledgeLessonPage {
     Column() {
       this.TitleBar()
 
-      // 内容区域 - 响应式宽度，最大480vp
+      // 内容区域
       Column() {
         if (this.isSectionMode()) {
           // 使用分章节模式（原LessonPage的功能）
@@ -358,7 +358,6 @@ struct KnowledgeLessonPage {
         }
       }
       .width('100%')
-      .constraintSize({ maxWidth: 480 })
       .padding({ left: 20, right: 20 })
       .layoutWeight(1)
       .justifyContent(FlexAlign.Center)

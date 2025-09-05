@@ -3,6 +3,8 @@ import { MorseCode } from '../../models/MorseCode'
 import { router, promptAction } from '@kit.ArkUI'
 import { PracticeRecordDialog } from '../../widgets/PracticeRecordDialog'
 import { FavoritesStore } from '../../store/FavoritesStore'
+import { audioService } from '../../services/AudioService'
+import { Context } from '@kit.AbilityKit'
 // Removed per-page window system bar handling; EntryAbility sets it globally
 
 @Entry
@@ -14,6 +16,7 @@ export struct PracticePage {
   // 可视化进度（0~1），用于平滑填充进度弧
   @State progressVisual: number = 0
   @State favoritesStore: FavoritesStore = FavoritesStore.getInstance()
+  @State soundEnabled: boolean = true // 声音开关状态
   private progressTimer: number | null = null
   private targetProgress: number = 0
   private dialogController: CustomDialogController = new CustomDialogController({
@@ -193,25 +196,31 @@ export struct PracticePage {
   @Builder
   private MorseDisplay() {
     Column() {
-      Text(
-        this.vm.getShowHint() || this.vm.getShowCorrectAnswer()
-          ? this.vm.getCurrentMorse().split('.').join('·')
-          : '?'
-      )
-        .fontSize(36)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(this.vm.getShowHint() || this.vm.getShowCorrectAnswer() ? Color.White : '#FFFFFF80')
-        .fontFamily('monospace')
-        .letterSpacing(2)
-        .textAlign(TextAlign.Center)
-        .width('100%')
+      if (this.vm.getShowHint() || this.vm.getShowCorrectAnswer()) {
+        Text(this.vm.getCurrentMorse().split('.').join('·'))
+          .fontSize(36)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(Color.White)
+          .fontFamily('monospace')
+          .letterSpacing(2)
+          .textAlign(TextAlign.Center)
+          .width('100%')
+      } else {
+        Image($rawfile('ic_eye.svg'))
+          .width(28)
+          .height(28)
+          .fillColor('#FFFFFF')
+      }
     }
-    .height(80)
+    .height(60)
     .width(150)
     .backgroundColor('#1A1A1A')
     .borderRadius(this.pillRadius)
     .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
+    .onClick(() => {
+      this.vm.flashHint()
+    })
   }
 
   private getCircumference(): number {
@@ -280,7 +289,7 @@ export struct PracticePage {
     }
     // Fixed size to reserve space even when empty
     .width(400)
-    .height(80)
+    .height(60)
     .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
   }
@@ -312,11 +321,14 @@ export struct PracticePage {
 
       Blank().width(40)
 
-      // 提示按钮（眼睛）
+      // 声音开关按钮
       Button() {
-        Image($rawfile('ic_eye.svg')).width(24).height(24).fillColor(Color.White)
+        Image($rawfile(this.soundEnabled ? 'ic_sound_on.svg' : 'ic_sound_off.svg'))
+          .width(24).height(24).fillColor(Color.White)
       }
-        .onClick(() => this.vm.flashHint())
+        .onClick(() => {
+          this.soundEnabled = !this.soundEnabled
+        })
         .width(48).height(48)
         .backgroundColor(Color.Transparent)
 
@@ -346,7 +358,12 @@ export struct PracticePage {
       .backgroundColor('#1A1A1A')
       .borderRadius(this.pillRadius)
       .border({ width: 1, color: '#333333' })
-      .onClick(() => this.vm.addDot())
+      .onClick(async () => {
+        this.vm.addDot()
+        if (this.soundEnabled) {
+          await audioService.playDit()
+        }
+      })
       .layoutWeight(1)
 
       Blank().width(20)
@@ -360,10 +377,15 @@ export struct PracticePage {
       .backgroundColor('#1A1A1A')
       .borderRadius(this.pillRadius)
       .border({ width: 1, color: '#333333' })
-      .onClick(() => this.vm.addDash())
+      .onClick(async () => {
+        this.vm.addDash()
+        if (this.soundEnabled) {
+          await audioService.playDah()
+        }
+      })
       .layoutWeight(1)
     }
-    .padding({ left: 20, right: 20, bottom: 20 })
+    .padding({ left: 20, right: 20, bottom: 12 })
   }
 
 
@@ -375,19 +397,19 @@ export struct PracticePage {
 
         // 内容区域 - 响应式宽度，最大480vp
         Column() {
-          Blank().height(20)
+          Blank().height(12)
 
           // 主要内容（对齐 LetterLessonPage 布局）
           Column() {
             // 字符与进度圆圈
             this.ProgressCircle()
 
-            Blank().height(60)
+            Blank().height(40)
 
             // 目标电码/提示显示
             this.MorseDisplay()
 
-            Blank().height(20)
+            Blank().height(12)
 
             // 用户输入显示
             this.InputDisplay()
@@ -396,9 +418,9 @@ export struct PracticePage {
           .justifyContent(FlexAlign.Center)
           .alignItems(HorizontalAlign.Center)
 
-          Blank().height(20)
+          Blank().height(12)
           this.ToolButtons()
-          Blank().height(26)
+          Blank().height(16)
           this.BottomKeys()
         }
         .width('100%')

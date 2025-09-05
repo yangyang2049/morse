@@ -24,8 +24,8 @@ export class LessonConfig {
     ['number_lesson_3', 15], // 复习：0-9
     
     // 符号单元 (16-18)
-    ['punctuation_lesson_0', 16], // ., ? ! : ;
-    ['punctuation_lesson_1', 17], // = + - _ " ' , ( ) / @
+    ['punctuation_lesson_0', 16], // . , ? ! : ;
+    ['punctuation_lesson_1', 17], // = + - _ " ' ( ) / @
     ['punctuation_lesson_2', 18], // 复习
     
     // 单词单元 (19-21) - 预留

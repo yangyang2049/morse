@@ -396,23 +396,33 @@ struct LessonQuizPage {
     isTrueFalse: boolean = false
   ) {
     Button() {
-      Row() {
-        Text(text)
-          .fontSize(16)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(this.quizViewModel.getButtonStyle(isSelected, isCorrect, isWrong, isTrueFalse).textColor)
-          .layoutWeight(1)
-          .textAlign(TextAlign.Center)
-        
+      Stack({ alignContent: Alignment.Center }) {
+        // 居中文本，不受右侧圆点影响
+        Row() {
+          Text(text)
+            .fontSize(16)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(this.quizViewModel.getButtonStyle(isSelected, isCorrect, isWrong, isTrueFalse).textColor)
+            .width('100%')
+            .textAlign(TextAlign.Center)
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Center)
+        .alignItems(VerticalAlign.Center)
+
+        // 选中圆点悬浮在右侧
         if (isSelected) {
-          Circle({ width: 8, height: 8 })
-            .fill(this.quizViewModel.getButtonStyle(isSelected, isCorrect, isWrong, isTrueFalse).textColor)
-            .margin({ right: 16 })
+          Row() {
+            Circle({ width: 8, height: 8 })
+              .fill(this.quizViewModel.getButtonStyle(isSelected, isCorrect, isWrong, isTrueFalse).textColor)
+          }
+          .width('100%')
+          .justifyContent(FlexAlign.End)
+          .alignItems(VerticalAlign.Center)
+          .padding({ right: 16 })
         }
       }
       .width('100%')
-      .justifyContent(FlexAlign.Center)
-      .alignItems(VerticalAlign.Center)
     }
     .width('100%')
     .height(48)

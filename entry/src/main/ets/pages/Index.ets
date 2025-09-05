@@ -2,23 +2,32 @@ import { LearnPage } from './learn/LearnPage'
 import { PracticeDifficultyPage } from './practice/PracticeDifficultyPage'
 import { TranslatePage } from './translate/TranslatePage'
 import { CodeTablePage } from './codetable/CodeTablePage'
-import { eventHub, Events } from '../utils/EventHub'
+import { audioService } from '../services/AudioService'
+import { Context } from '@kit.AbilityKit'
 // Window system bar properties are managed globally in EntryAbility
 
 @Entry
 @Component
 struct Index {
   @State currentIndex: number = 0
-  @State refreshKey: number = 0
 
   aboutToAppear() {
     // System bar colors are set globally in EntryAbility
     
-    // 监听课程完成事件
-    eventHub.on(Events.LESSON_COMPLETED, (data: Object) => {
-      console.error('[INDEX] Lesson completed event received, rebuilding pages')
-      this.refreshKey++
-    })
+    // 初始化音频服务
+    this.initAudioService()
+  }
+
+  // 初始化音频服务
+  private async initAudioService() {
+    try {
+      // 获取当前页面的Context
+      const context = getContext(this) as Context
+      await audioService.init(context)
+      console.log('[INDEX] AudioService initialized successfully')
+    } catch (error) {
+      console.error('[INDEX] Failed to initialize AudioService:', error)
+    }
   }
 
   @Builder TabBuilder(targetIndex: number, selectedImg: Resource, normalImg: Resource) {
@@ -39,25 +48,21 @@ struct Index {
         LearnPage()
       }
       .tabBar(this.TabBuilder(0, $rawfile('ic_learn.svg'), $rawfile('ic_learn.svg')))
-      .opacity(this.refreshKey >= 0 ? 1 : 1) // 引用refreshKey
 
       TabContent() {
         PracticeDifficultyPage()
       }
       .tabBar(this.TabBuilder(1, $rawfile('ic_train.svg'), $rawfile('ic_train.svg')))
-      .opacity(this.refreshKey >= 0 ? 1 : 1) // 引用refreshKey
 
       TabContent() {
         TranslatePage()
       }
       .tabBar(this.TabBuilder(2, $rawfile('ic_translate.svg'), $rawfile('ic_translate.svg')))
-      .opacity(this.refreshKey >= 0 ? 1 : 1) // 引用refreshKey
 
       TabContent() {
         CodeTablePage()
       }
       .tabBar(this.TabBuilder(3, $rawfile('ic_table.svg'), $rawfile('ic_table.svg')))
-      .opacity(this.refreshKey >= 0 ? 1 : 1) // 引用refreshKey
     }
     .vertical(false)
     .barMode(BarMode.Fixed)

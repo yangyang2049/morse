@@ -71,7 +71,7 @@ export struct TranslatePage {
 
   // 获取输入/输出框的高度
   private getBoxHeight(): number | string {
-    return '30%'
+    return '25%'
   }
 
   @Builder
@@ -240,7 +240,7 @@ export struct TranslatePage {
         }
         .height(40)
         .backgroundColor('#1A1A1A')
-        .borderRadius(8)
+        .borderRadius(0)
         .border({ width: 1, color: '#333333' })
         .onClick(() => this.addSlash())
         .layoutWeight(1)
@@ -256,7 +256,7 @@ export struct TranslatePage {
         }
         .height(40)
         .backgroundColor('#1A1A1A')
-        .borderRadius(8)
+        .borderRadius(0)
         .border({ width: 1, color: '#333333' })
         .onClick(() => this.addSpace())
         .layoutWeight(1)
@@ -272,7 +272,7 @@ export struct TranslatePage {
         }
         .height(40)
         .backgroundColor('#1A1A1A')
-        .borderRadius(8)
+        .borderRadius(0)
         .border({ width: 1, color: '#333333' })
         .onClick(() => this.deleteLast())
         .layoutWeight(1)

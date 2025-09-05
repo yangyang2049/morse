@@ -1,6 +1,7 @@
 import { LearnViewModel } from '../../viewmodel/LearnViewModel'
 import { LessonItem } from '../../types/LessonTypes'
 import { router } from '@kit.ArkUI'
+import { eventHub, Events } from '../../utils/EventHub'
 // System bar colors are set globally in EntryAbility
 
 @Component
@@ -9,17 +10,22 @@ export struct LearnPage {
   @State vm: LearnViewModel = new LearnViewModel()
   @State private isInitialized: boolean = false
   @State private refreshTrigger: number = 0
+  private lessonCompletedCallback: ((data: Object) => void) | null = null
 
   aboutToAppear(): void {
     // System bar colors are set globally in EntryAbility
     const uiContext2 = this.getUIContext()
     const hostContext2 = uiContext2.getHostContext()
     if (hostContext2) {
-      // 设置页面刷新回调
-      this.vm.setPageRefreshCallback(() => {
-        console.error(`[LEARN] Page refresh triggered by ViewModel`)
+      // 直接监听课程完成事件 - 确保实时更新
+      this.lessonCompletedCallback = (data: Object) => {
+        console.error(`[LEARN] Direct lesson completed event received`)
+        // 刷新 ViewModel 数据
+        this.vm.refreshLessons()
+        // 触发 UI 更新
         this.refreshTrigger++
-      })
+      }
+      eventHub.on(Events.LESSON_COMPLETED, this.lessonCompletedCallback)
       
       this.vm.init(hostContext2).then(() => {
         this.isInitialized = true
@@ -28,13 +34,13 @@ export struct LearnPage {
   }
 
   onPageShow(): void {
-    // Refresh state when returning to this page
+    // 简化：只在页面显示时刷新状态
     console.error(`[LEARN] onPageShow: triggered - refreshing state after lesson completion`)
     const uiContext = this.getUIContext()
     const hostContext = uiContext.getHostContext()
     if (hostContext) {
       this.vm.loadUnlockState(hostContext).then(() => {
-
+        this.refreshTrigger++
       }).catch((error: Error) => {
         console.error('[LEARN] onPageShow: loadUnlockState failed:', error)
       })
@@ -43,42 +49,67 @@ export struct LearnPage {
 
   aboutToDisappear(): void {
     console.error('[LEARN] aboutToDisappear')
+    // 清理事件监听
+    if (this.lessonCompletedCallback) {
+      eventHub.off(Events.LESSON_COMPLETED, this.lessonCompletedCallback)
+      this.lessonCompletedCallback = null
+    }
   }
 
 
   @Builder
   private LessonCard(item: LessonItem, unitLocked: boolean) {
-    Row() {
-      Column() {
-        Text(item.title)
-          .fontSize(18)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(Color.White)
-          .margin({ bottom: item.subtitle ? 8 : 0 })
+    Stack({ alignContent: Alignment.Center }) {
+      // 占位课程不显示任何内容
+      if (item.title !== '占位') {
+        // 中间内容：标题/副标题始终居中
+        Column() {
+          Text(item.title)
+            .fontSize(18)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(Color.White)
+            .textAlign(TextAlign.Center)
+            .margin({ bottom: item.subtitle ? 8 : 0 })
 
-        if (item.subtitle) {
-          Text(item.subtitle)
-            .fontSize(14)
-            .fontColor('#B0B0B0')
+          if (item.subtitle) {
+            Text(item.subtitle)
+              .fontSize(12)
+              .fontColor('#B0B0B0')
+              .textAlign(TextAlign.Center)
+              .maxLines(2)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
+          }
         }
-      }
-      .layoutWeight(1)
+        .width('100%')
+        .justifyContent(FlexAlign.Center)
+        .alignItems(HorizontalAlign.Center)
 
-      // Icon logic: show ✓ for completed, › for available
-      if (item.completed) {
-        Text('✓').fontSize(20).fontColor(Color.Green)
-      } else {
-        Text('›').fontSize(16).fontColor(Color.White)
+        // 右侧悬浮图标：✓ / 🔒 / › - 引用refreshTrigger确保响应式更新
+        Row() {
+          if (item.completed) {
+            Text('✓').fontSize(20).fontColor(Color.Green)
+          } else if (!item.unlocked) {
+            Text('🔒').fontSize(16).fontColor('#B0B0B0')
+          } else {
+            Text('›').fontSize(16).fontColor(Color.White)
+          }
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.End)
+        .alignItems(VerticalAlign.Center)
+        .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger确保响应式更新
       }
     }
     .width('100%')
     .padding(16)
-    .backgroundColor('#1A1A1A')
-    .border({ width: 1, color: '#333333' })
+    .backgroundColor(item.title === '占位' ? Color.Transparent : '#1A1A1A')
+    .border({ width: item.title === '占位' ? 0 : 1, color: item.title === '占位' ? Color.Transparent : '#333333' })
     .borderRadius(12)
-    .opacity(1.0) // All lessons are now fully visible
+    .opacity(item.unlocked ? 1.0 : 0.6)
+    .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger确保响应式更新
     .onClick(() => {
-      // All lessons are now unlocked, only check if it's not a placeholder
+      // Block navigation if locked or placeholder
+      if (!item.unlocked || item.title === '占位') { return }
       if (item.title !== '占位') {
         console.error(`[LEARN] LessonCard click: key=${item.key} unlocked=${item.unlocked} unitLocked=${unitLocked}`)
         if (item.key === 'intro_1') {
@@ -206,8 +237,9 @@ export struct LearnPage {
                 this.LessonCard(l, !isUnlocked) // Pass unit lock status
                 if (idx < lessons.length - 1) { Blank().height(12) }
               }
-              .opacity(l.title === '占位' ? 0.0 : 1.0)
-            }, (l: LessonItem) => `${l.key}-${l.unlocked ? 'u' : 'l'}-${l.completed ? 'c' : 'n'}`)
+              .opacity(l.title === '占位' ? 0.0 : 1.0) // 占位课程不可见但占据空间
+              .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger确保响应式更新
+            }, (l: LessonItem) => `${l.key}-${l.unlocked ? 'u' : 'l'}-${l.completed ? 'c' : 'n'}-${this.refreshTrigger}`) // 在key中包含refreshTrigger
           }
         }
         .layoutWeight(1)
