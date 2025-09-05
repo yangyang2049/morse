@@ -2,6 +2,7 @@ import { MorseCode } from '../models/MorseCode'
 import { LearnViewModel } from './LearnViewModel'
 import { progressStore } from '../store/ProgressStoreSingleton'
 import { audioService } from '../services/AudioService'
+import { preferences } from '@kit.ArkData'
 import Context from '@ohos.app.ability.common'
 
 @Observed
@@ -32,6 +33,7 @@ export class LetterLessonViewModel {
   // 对话框状态
   @Track showCompletionDialog: boolean = false
   @Track showSettingsDialog: boolean = false
+  @Track showSettingsTooltip: boolean = false
   isLessonCompleted: boolean = false
   
   // 复习模式状态

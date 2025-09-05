@@ -2,6 +2,7 @@ import { LearnViewModel } from '../../viewmodel/LearnViewModel'
 import { LessonItem } from '../../types/LessonTypes'
 import { router } from '@kit.ArkUI'
 import { eventHub, Events } from '../../utils/EventHub'
+import { promptAction } from '@kit.ArkUI'
 // System bar colors are set globally in EntryAbility
 
 @Component
@@ -19,9 +20,9 @@ export struct LearnPage {
     if (hostContext2) {
       // 直接监听课程完成事件 - 确保实时更新
       this.lessonCompletedCallback = (data: Object) => {
-        console.error(`[LEARN] Direct lesson completed event received`)
         // 刷新 ViewModel 数据
         this.vm.refreshLessons()
+        
         // 触发 UI 更新
         this.refreshTrigger++
       }
@@ -35,20 +36,18 @@ export struct LearnPage {
 
   onPageShow(): void {
     // 简化：只在页面显示时刷新状态
-    console.error(`[LEARN] onPageShow: triggered - refreshing state after lesson completion`)
     const uiContext = this.getUIContext()
     const hostContext = uiContext.getHostContext()
     if (hostContext) {
       this.vm.loadUnlockState(hostContext).then(() => {
         this.refreshTrigger++
       }).catch((error: Error) => {
-        console.error('[LEARN] onPageShow: loadUnlockState failed:', error)
+        // 静默处理错误
       })
     }
   }
 
   aboutToDisappear(): void {
-    console.error('[LEARN] aboutToDisappear')
     // 清理事件监听
     if (this.lessonCompletedCallback) {
       eventHub.off(Events.LESSON_COMPLETED, this.lessonCompletedCallback)
@@ -67,14 +66,14 @@ export struct LearnPage {
           Text(item.title)
             .fontSize(18)
             .fontWeight(FontWeight.Bold)
-            .fontColor(Color.White)
+            .fontColor(item.unlocked ? Color.White : '#666666')
             .textAlign(TextAlign.Center)
             .margin({ bottom: item.subtitle ? 8 : 0 })
 
           if (item.subtitle) {
             Text(item.subtitle)
               .fontSize(12)
-              .fontColor('#B0B0B0')
+              .fontColor(item.unlocked ? '#B0B0B0' : '#444444')
               .textAlign(TextAlign.Center)
               .maxLines(2)
               .textOverflow({ overflow: TextOverflow.Ellipsis })
@@ -84,12 +83,14 @@ export struct LearnPage {
         .justifyContent(FlexAlign.Center)
         .alignItems(HorizontalAlign.Center)
 
-        // 右侧悬浮图标：✓ / 🔒 / › - 引用refreshTrigger确保响应式更新
+        // 右侧悬浮图标：✓ / 锁定图标 / › - 引用refreshTrigger确保响应式更新
         Row() {
           if (item.completed) {
             Text('✓').fontSize(20).fontColor(Color.Green)
           } else if (!item.unlocked) {
-            Text('🔒').fontSize(16).fontColor('#B0B0B0')
+            Image($rawfile('ic_lock.svg'))
+              .width(16)
+              .height(16)
           } else {
             Text('›').fontSize(16).fontColor(Color.White)
           }
@@ -108,13 +109,19 @@ export struct LearnPage {
     .opacity(item.unlocked ? 1.0 : 0.6)
     .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger确保响应式更新
     .onClick(() => {
-      // Block navigation if locked or placeholder
-      if (!item.unlocked || item.title === '占位') { return }
+      // Show toast for locked lessons
+      if (!item.unlocked && item.title !== '占位') {
+        promptAction.showToast({
+          message: '请先完成前面的课程',
+          duration: 2000
+        })
+        return
+      }
+      // Block navigation for placeholder lessons
+      if (item.title === '占位') { return }
       if (item.title !== '占位') {
-        console.error(`[LEARN] LessonCard click: key=${item.key} unlocked=${item.unlocked} unitLocked=${unitLocked}`)
         if (item.key === 'intro_1') {
           // Navigate to lesson page for the 2nd intro lesson (Chinese)
-          console.error('[LEARN] Navigating to Chinese lesson page')
           router.push({
             url: 'pages/learn/KnowledgeLessonPage',
             params: {
@@ -125,7 +132,6 @@ export struct LearnPage {
           })
         } else if (item.key.startsWith('intro_')) {
           // Navigate to lesson page for the 1st intro lesson (Basics)
-          console.error('[LEARN] Navigating to Intro lesson page')
           router.push({
             url: 'pages/learn/KnowledgeLessonPage',
             params: {

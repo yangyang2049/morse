@@ -99,9 +99,9 @@ export struct ChineseTelegraphCodePage {
         .layoutWeight(1)
         .textAlign(TextAlign.Center)
 
-      // Info entrance at top-right (emoji memo)
+      // Info entrance at top-right (question mark)
       Button() {
-        Text('📝')
+        Text('?')
           .fontSize(20)
           .fontColor(Color.White)
           .textAlign(TextAlign.Center)
@@ -114,7 +114,7 @@ export struct ChineseTelegraphCodePage {
         // Use system dialog via promptAction
         promptAction.showDialog({
           title: '标准中文电码表说明',
-          message: '• 标准中文电码（Chinese Telegraph Code, CTC）是一套用四位数字表示常用汉字的编码体系，最早用于电报传输。\n\n• 每个汉字对应一个唯一的四位数字（0001–9999），便于在通信中准确传递。\n\n• 本页面可按“汉字”或“电码”搜索，方便快速定位目标。',
+          message: '中文电码表（又称"汉字电报码"）是为了在电报传输时代能够准确、快速地发送和接收汉字而设计的编码系统。\n\n• 起源与标准化\n最早由清末盛宣怀主持制定，后来经过民国与新中国的多次修订，形成了较为统一的国家标准。常见的版本是《标准电码本》，收录 7000 余个常用汉字。\n\n• 编码方式\n每个汉字对应一个四位数字编码，范围一般是 0001–9999。\n例如：\n• "中" = 0029\n• "国" = 0049\n• "电" = 0168\n• "码" = 0203\n\n• 使用方式\n在电报传输中，发送方只需要发送对应的四位数字，接收方就能根据电码本查回原来的汉字。这样既能保证传输准确，也方便跨语言通信（数字是国际通用的）。\n\n本页面可按"汉字"或"电码"搜索，方便快速定位目标。',
           buttons: [
             { text: '知道了', color: '#0A59F7' }
           ]
