@@ -72,7 +72,7 @@ export struct LearnPage {
 
           if (item.subtitle) {
             Text(item.subtitle)
-              .fontSize(12)
+              .fontSize(14)
               .fontColor(item.unlocked ? '#B0B0B0' : '#444444')
               .textAlign(TextAlign.Center)
               .maxLines(2)

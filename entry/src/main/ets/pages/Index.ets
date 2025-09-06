@@ -2,6 +2,7 @@ import { LearnPage } from './learn/LearnPage'
 import { PracticeDifficultyPage } from './practice/PracticeDifficultyPage'
 import { TranslatePage } from './translate/TranslatePage'
 import { CodeTablePage } from './codetable/CodeTablePage'
+import { MePage } from './me/MePage'
 import { audioService } from '../services/AudioService'
 import { Context } from '@kit.AbilityKit'
 // Window system bar properties are managed globally in EntryAbility
@@ -34,7 +35,6 @@ struct Index {
     Column() {
       Image(this.currentIndex === targetIndex ? selectedImg : normalImg)
         .size({ width: 24, height: 24 })
-        .fillColor(this.currentIndex === targetIndex ? Color.White : '#aaaaaa')
     }
     .width('100%')
     .height(50)
@@ -47,22 +47,27 @@ struct Index {
       TabContent() {
         LearnPage()
       }
-      .tabBar(this.TabBuilder(0, $rawfile('ic_learn.svg'), $rawfile('ic_learn.svg')))
+      .tabBar(this.TabBuilder(0, $rawfile('ic_learn.svg'), $rawfile('ic_learn_light.svg')))
 
       TabContent() {
         PracticeDifficultyPage()
       }
-      .tabBar(this.TabBuilder(1, $rawfile('ic_train.svg'), $rawfile('ic_train.svg')))
+      .tabBar(this.TabBuilder(1, $rawfile('ic_train.svg'), $rawfile('ic_train_light.svg')))
 
       TabContent() {
         TranslatePage()
       }
-      .tabBar(this.TabBuilder(2, $rawfile('ic_translate.svg'), $rawfile('ic_translate.svg')))
+      .tabBar(this.TabBuilder(2, $rawfile('ic_translate.svg'), $rawfile('ic_translate_light.svg')))
 
       TabContent() {
         CodeTablePage()
       }
-      .tabBar(this.TabBuilder(3, $rawfile('ic_table.svg'), $rawfile('ic_table.svg')))
+      .tabBar(this.TabBuilder(3, $rawfile('ic_table.svg'), $rawfile('ic_table_light.svg')))
+
+      TabContent() {
+        MePage()
+      }
+      .tabBar(this.TabBuilder(4, $rawfile('ic_me.svg'), $rawfile('ic_me_light.svg')))
     }
     .vertical(false)
     .barMode(BarMode.Fixed)
