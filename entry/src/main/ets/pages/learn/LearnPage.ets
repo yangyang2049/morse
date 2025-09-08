@@ -250,7 +250,7 @@ export struct LearnPage {
         }
         .layoutWeight(1)
         .scrollBar(BarState.Off)  // 移除滚动条
-        .edgeEffect(EdgeEffect.Spring)  // 添加弹性效果
+        .edgeEffect(EdgeEffect.None)  // 移除弹性效果
         .opacity(1.0)
         .enabled(true)  // 所有单元都启用滚动
       }
@@ -324,7 +324,7 @@ export struct LearnPage {
           }
         }
         .scrollable(ScrollDirection.Horizontal)
-        .edgeEffect(EdgeEffect.Spring)
+        .edgeEffect(EdgeEffect.None)
         .scrollBar(BarState.Off)
         .layoutWeight(1)
         .padding({ left: 16, right: 16, top: 16, bottom: 24 })
