@@ -5,7 +5,7 @@ import pasteboard from '@ohos.pasteboard'
 @Component
 export struct MePage {
   @State appVersion: string = '1.0.0'
-  @State appName: string = '摩斯密码'
+  @State appName: string = '摩斯密码 2025'
 
   aboutToAppear() {
     this.loadAppInfo()
@@ -13,18 +13,18 @@ export struct MePage {
 
   private loadAppInfo() {
     this.appVersion = '1.0.0'
-    this.appName = '摩斯密码'
+    this.appName = '摩斯密码 2025'
   }
 
   // 使用说明
   private showInstructions() {
     promptAction.showDialog({
       title: '使用说明',
-      message: '1. 学习：从基础课程开始，逐步掌握摩尔斯电码\n2. 练习：通过不同难度的练习巩固学习成果\n3. 翻译：将文字转换为摩尔斯电码或反向转换\n4. 码表：查看完整的摩尔斯电码对照表\n\n点击播放按钮可以听到摩尔斯电码的声音',
+      message: '1. 学习：从基础课程开始，逐步掌握摩斯密码\n2. 练习：通过不同难度的练习巩固学习成果\n3. 翻译：将文字转换为摩斯密码或反向转换\n4. 码表：查看完整的摩斯密码对照表\n\n点击播放按钮可以听到摩斯密码的声音',
       buttons: [
         {
           text: '知道了',
-          color: '#FFD700'
+          color: '#0A59F7'
         }
       ],
       alignment: DialogAlignment.Center
@@ -41,7 +41,7 @@ export struct MePage {
   // 分享应用
   private shareApp(): void {
     try {
-      const shareText = '推荐一款学习摩尔斯密码的应用：\n《摩斯密码》📡\n\n• 从零学习摩尔斯电码\n• 跟读练习与听力训练\n• 文本与摩斯互相翻译\n\n立即下载：\nhttps://appgallery.huawei.com/app/detail?id=com.douhua.morsecode'
+      const shareText = '推荐一款学习摩尔斯密码的应用：\n《摩斯密码 2025》📡\n\n• 从零学习摩尔斯电码\n• 跟读练习与听力训练\n• 文本与摩斯互相翻译\n\n立即下载：\nhttps://appgallery.huawei.com/app/detail?id=com.douhua.morsecode'
 
       const sysPB = pasteboard.getSystemPasteboard()
       const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, shareText)
