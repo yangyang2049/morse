@@ -9,6 +9,17 @@ import { i18nService } from '../../services/I18nService'
 // 使用$r()函数替代I18n
 // Removed per-page window system bar handling; EntryAbility sets it globally
 
+// 本地化字符串接口
+interface LocalizedStrings {
+  easy: string
+  medium: string
+  hard: string
+  favorites: string
+  mistakes: string
+  favorite_removed: string
+  favorite_added: string
+}
+
 @Entry
 @Component
 export struct PracticePage {
@@ -19,6 +30,21 @@ export struct PracticePage {
   @State progressVisual: number = 0
   @State favoritesStore: FavoritesStore = FavoritesStore.getInstance()
   @State soundEnabled: boolean = true // 声音开关状态
+  // 使用 StorageLink 监听语言变化
+  @StorageLink('currentLanguage') currentLanguage: string = 'zh-CN'
+  // 语言变化计数器，用于强制UI刷新
+  @State langTick: number = 0
+  // 缓存本地化字符串
+  @State strings: LocalizedStrings = {
+    easy: '',
+    medium: '',
+    hard: '',
+    favorites: '',
+    mistakes: '',
+    favorite_removed: '',
+    favorite_added: ''
+  }
+  private languageChangeListener: ((lang: string) => void) | null = null
   private progressTimer: number | null = null
   private targetProgress: number = 0
   private dialogController: CustomDialogController = new CustomDialogController({
@@ -35,12 +61,27 @@ export struct PracticePage {
   private readonly pillRadius: number = 20
 
   aboutToAppear(): void {
+    // 添加语言变化监听器
+    this.languageChangeListener = (lang: string) => {
+      console.log(`[PracticePage] Language changed to: ${lang}`)
+      // 更新缓存的本地化字符串
+      this.strings = this.computeStrings()
+      // 触发UI强制刷新
+      this.langTick++
+    }
+    
+    // 启动语言变化监听
+    this.startLanguageWatcher()
+    
+    // 初始化本地化字符串
+    this.strings = this.computeStrings()
+    
     // 从路由参数获取难度和字符列表（容错处理，避免无参数时崩溃）
     try {
       const params: Record<string, Object> = (router.getParams?.() as Record<string, Object>) ?? {}
       const diff = (params['difficulty'] as string) || ''
       const characters = (params['characters'] as string[]) || []
-      this.difficulty = diff && typeof diff === 'string' ? diff : i18nService.t('easy')
+      this.difficulty = diff && typeof diff === 'string' ? diff : this.strings.easy || i18nService.t('easy')
       
       // 如果是收藏或错题本模式，使用指定的字符列表
       if ((this.difficulty === 'favorites' || this.difficulty === 'mistakes') && characters && Array.isArray(characters)) {
@@ -49,7 +90,7 @@ export struct PracticePage {
         this.vm.init(this.difficulty as string)
       }
     } catch {
-      this.difficulty = i18nService.t('easy')
+      this.difficulty = this.strings.easy || i18nService.t('easy')
       this.vm.init(this.difficulty as string)
     }
     console.error(`[PracticePage] aboutToAppear: difficulty=${this.difficulty}`)
@@ -60,24 +101,27 @@ export struct PracticePage {
 
   // 获取格式化的标题显示
   private getFormattedTitle(): string {
+    // 引用langTick确保标题会更新
+    const _ = this.langTick
+    
     if (typeof this.difficulty === 'string') {
       // 处理特殊模式
       if (this.difficulty === 'favorites') {
-        return i18nService.t('favorites')
+        return this.strings.favorites || i18nService.t('favorites')
       }
       if (this.difficulty === 'mistakes') {
-        return i18nService.t('mistakes')
+        return this.strings.mistakes || i18nService.t('mistakes')
       }
       
-      // 处理难度级别 - 使用国际化服务
+      // 处理难度级别 - 使用缓存的字符串
       if (this.difficulty === 'easy' || this.difficulty === '简单') {
-        return i18nService.t('easy')
+        return this.strings.easy || i18nService.t('easy')
       }
       if (this.difficulty === 'medium' || this.difficulty === '中等') {
-        return i18nService.t('medium')
+        return this.strings.medium || i18nService.t('medium')
       }
       if (this.difficulty === 'hard' || this.difficulty === '困难') {
-        return i18nService.t('hard')
+        return this.strings.hard || i18nService.t('hard')
       }
       
       // 如果是已经本地化的字符串，直接返回
@@ -94,6 +138,40 @@ export struct PracticePage {
     if (this.progressTimer) {
       clearInterval(this.progressTimer)
       this.progressTimer = null
+    }
+    // 清理语言变化监听器
+    if (this.languageChangeListener) {
+      this.languageChangeListener = null
+    }
+  }
+
+  // 启动语言变化监听器
+  private startLanguageWatcher(): void {
+    let lastLanguage = this.currentLanguage
+    const checkLanguageChange = () => {
+      if (this.currentLanguage !== lastLanguage) {
+        console.log(`[PracticePage] Language changed from ${lastLanguage} to ${this.currentLanguage}`)
+        lastLanguage = this.currentLanguage
+        if (this.languageChangeListener) {
+          this.languageChangeListener(this.currentLanguage)
+        }
+      }
+      // 继续监听
+      setTimeout(checkLanguageChange, 100)
+    }
+    checkLanguageChange()
+  }
+
+  // 计算本地化字符串
+  private computeStrings(): LocalizedStrings {
+    return {
+      easy: i18nService.t('easy'),
+      medium: i18nService.t('medium'),
+      hard: i18nService.t('hard'),
+      favorites: i18nService.t('favorites'),
+      mistakes: i18nService.t('mistakes'),
+      favorite_removed: i18nService.t('favorite_removed'),
+      favorite_added: i18nService.t('favorite_added')
     }
   }
 
@@ -338,8 +416,10 @@ export struct PracticePage {
           this.vm.toggleFavorite()
           
           // 显示toast提示
+          // 引用langTick确保toast消息也会更新
+          const _ = this.langTick
           promptAction.showToast({
-            message: wasFavorite ? i18nService.t('favorite_removed') : i18nService.t('favorite_added'),
+            message: wasFavorite ? (this.strings.favorite_removed || i18nService.t('favorite_removed')) : (this.strings.favorite_added || i18nService.t('favorite_added')),
             duration: 1500,
             bottom: '80%'
           })

@@ -6,6 +6,18 @@ import { i18nService } from '../../services/I18nService'
 import { eventHub, Events } from '../../utils/EventHub'
 // 使用$r()函数替代I18n
 
+// 本地化字符串接口
+interface LocalizedStrings {
+  translate: string
+  text_to_morse: string
+  morse_to_text: string
+  input_text_placeholder: string
+  input_morse_placeholder: string
+  output_text_placeholder: string
+  output_morse_placeholder: string
+  copied: string
+}
+
 @Component
 export struct TranslatePage {
   @State isTextToMorse: boolean = true
@@ -17,6 +29,20 @@ export struct TranslatePage {
   @State private refreshTrigger: number = 0
   // 使用 StorageLink 监听语言变化
   @StorageLink('currentLanguage') currentLanguage: string = 'zh-CN'
+  // 语言变化计数器，用于强制UI刷新
+  @State langTick: number = 0
+  // 缓存本地化字符串
+  @State strings: LocalizedStrings = {
+    translate: '',
+    text_to_morse: '',
+    morse_to_text: '',
+    input_text_placeholder: '',
+    input_morse_placeholder: '',
+    output_text_placeholder: '',
+    output_morse_placeholder: '',
+    copied: ''
+  }
+  private languageChangeListener: ((lang: string) => void) | null = null
 
   aboutToAppear() {
     // System bar colors are set globally in EntryAbility
@@ -27,9 +53,58 @@ export struct TranslatePage {
       PinyinService.load(hostContext)
     }
 
+    // 添加语言变化监听器
+    this.languageChangeListener = (lang: string) => {
+      console.log(`[TranslatePage] Language changed to: ${lang}`)
+      // 更新缓存的本地化字符串
+      this.strings = this.computeStrings()
+      // 触发UI强制刷新
+      this.langTick++
+    }
+    
+    // 启动语言变化监听
+    this.startLanguageWatcher()
+    
+    // 初始化本地化字符串
+    this.strings = this.computeStrings()
   }
 
   aboutToDisappear() {
+    // 清理语言变化监听器
+    if (this.languageChangeListener) {
+      this.languageChangeListener = null
+    }
+  }
+
+  // 启动语言变化监听器
+  private startLanguageWatcher(): void {
+    let lastLanguage = this.currentLanguage
+    const checkLanguageChange = () => {
+      if (this.currentLanguage !== lastLanguage) {
+        console.log(`[TranslatePage] Language changed from ${lastLanguage} to ${this.currentLanguage}`)
+        lastLanguage = this.currentLanguage
+        if (this.languageChangeListener) {
+          this.languageChangeListener(this.currentLanguage)
+        }
+      }
+      // 继续监听
+      setTimeout(checkLanguageChange, 100)
+    }
+    checkLanguageChange()
+  }
+
+  // 计算本地化字符串
+  private computeStrings(): LocalizedStrings {
+    return {
+      translate: i18nService.t('translate'),
+      text_to_morse: i18nService.t('text_to_morse'),
+      morse_to_text: i18nService.t('morse_to_text'),
+      input_text_placeholder: i18nService.t('input_text_placeholder'),
+      input_morse_placeholder: i18nService.t('input_morse_placeholder'),
+      output_text_placeholder: i18nService.t('output_text_placeholder'),
+      output_morse_placeholder: i18nService.t('output_morse_placeholder'),
+      copied: i18nService.t('copied')
+    }
   }
 
 
@@ -88,7 +163,13 @@ export struct TranslatePage {
   @Builder
   private TitleBar() {
     Row() {
-      Text(i18nService.t('translate'))
+      // 隐藏的langTick触发器
+      Text(this.langTick.toString())
+        .opacity(0)
+        .width(0)
+        .height(0)
+      
+      Text(this.strings.translate || i18nService.t('translate'))
         .fontSize(20)
         .fontWeight(FontWeight.Bold)
         .fontColor('#FFFFFF')
@@ -103,7 +184,7 @@ export struct TranslatePage {
   private ModeToggle() {
     Row() {
       // 文本 → 电码
-      Button(i18nService.t('text_to_morse'))
+      Button(this.strings.text_to_morse || i18nService.t('text_to_morse'))
         .onClick(() => { this.isTextToMorse = true })
         .backgroundColor(this.isTextToMorse ? '#FFD700' : '#1A1A1A')
         .fontColor(this.isTextToMorse ? '#000000' : '#B0B0B0')
@@ -113,7 +194,7 @@ export struct TranslatePage {
         .border({ width: 1, color: '#333333' })
 
       // 电码 → 文本
-      Button(i18nService.t('morse_to_text'))
+      Button(this.strings.morse_to_text || i18nService.t('morse_to_text'))
         .onClick(() => { this.isTextToMorse = false })
         .backgroundColor(!this.isTextToMorse ? '#FFD700' : '#1A1A1A')
         .fontColor(!this.isTextToMorse ? '#000000' : '#B0B0B0')
@@ -130,7 +211,7 @@ export struct TranslatePage {
     RelativeContainer() {
       // 输入框
       if (this.isTextToMorse) {
-        TextArea({ text: this.textInput, placeholder: i18nService.t('input_text_placeholder') })
+        TextArea({ text: this.textInput, placeholder: this.strings.input_text_placeholder || i18nService.t('input_text_placeholder') })
           .layoutWeight(1)
           .fontSize(this.boxFontSize)
           .fontColor(Color.White)
@@ -141,7 +222,7 @@ export struct TranslatePage {
           .onChange((v: string) => { this.textInput = v })
           .id('text_input_area')
       } else {
-        TextArea({ text: this.morseInput, placeholder: i18nService.t('input_morse_placeholder') })
+        TextArea({ text: this.morseInput, placeholder: this.strings.input_morse_placeholder || i18nService.t('input_morse_placeholder') })
           .layoutWeight(1)
           .fontSize(this.boxFontSize)
           .fontColor(Color.White)
@@ -192,7 +273,7 @@ export struct TranslatePage {
     RelativeContainer() {
       // 输出框
       TextArea({ text: this.getOutput().length > 0 ? this.getOutput() : 
-        (this.isTextToMorse ? i18nService.t('output_text_placeholder') : i18nService.t('output_morse_placeholder')) })
+        (this.isTextToMorse ? (this.strings.output_text_placeholder || i18nService.t('output_text_placeholder')) : (this.strings.output_morse_placeholder || i18nService.t('output_morse_placeholder'))) })
         .layoutWeight(1)
         .fontSize(this.boxFontSize)
         .margin(12)
@@ -220,8 +301,10 @@ export struct TranslatePage {
         .margin({ right: -4, bottom: 8 })
         .onClick(() => {
           // 复制到剪贴板
+          // 引用langTick确保toast消息也会更新
+          const _ = this.langTick
           promptAction.showToast({
-            message: i18nService.t('copied'),
+            message: this.strings.copied || i18nService.t('copied'),
             duration: 1500,
             bottom: '80%'
           })

@@ -14,12 +14,36 @@ struct Index {
   @State currentIndex: number = 0
   // 监听语言变化，确保UI能及时响应
   @StorageLink('currentLanguage') currentLanguage: string = 'zh-CN'
+  // 监听语言刷新触发器，用于强制重建所有标签页
+  @StorageLink('languageRefreshTrigger') languageRefreshTrigger: number = 0
+  // 页面重建键，当语言变化时递增以强制重建所有页面
+  @State pageRebuildKey: number = 0
 
   aboutToAppear() {
     // System bar colors are set globally in EntryAbility
     
     // 初始化音频服务
     this.initAudioService()
+    
+    // 监听语言变化，当语言切换时强制重建所有页面
+    this.watchLanguageChanges()
+  }
+  
+  // 监听语言变化
+  private watchLanguageChanges() {
+    // 使用watcher监听languageRefreshTrigger的变化
+    let lastTrigger = this.languageRefreshTrigger
+    const checkLanguageChange = () => {
+      if (this.languageRefreshTrigger !== lastTrigger) {
+        console.log('[INDEX] Language changed, rebuilding all pages')
+        lastTrigger = this.languageRefreshTrigger
+        // 递增页面重建键，强制所有页面重新构建
+        this.pageRebuildKey++
+      }
+      // 继续监听
+      setTimeout(checkLanguageChange, 100)
+    }
+    checkLanguageChange()
   }
 
   // 初始化音频服务
@@ -49,27 +73,42 @@ struct Index {
   build() {
     Tabs({ barPosition: BarPosition.End, controller: new TabsController(), index: this.currentIndex }) {
       TabContent() {
-        LearnPage()
+        // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
+        if (this.pageRebuildKey >= 0) {
+          LearnPage()
+        }
       }
       .tabBar(this.TabBuilder(0, $rawfile('ic_learn.svg'), $rawfile('ic_learn_light.svg')))
 
       TabContent() {
-        PracticeDifficultyPage()
+        // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
+        if (this.pageRebuildKey >= 0) {
+          PracticeDifficultyPage()
+        }
       }
       .tabBar(this.TabBuilder(1, $rawfile('ic_train.svg'), $rawfile('ic_train_light.svg')))
 
       TabContent() {
-        TranslatePage()
+        // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
+        if (this.pageRebuildKey >= 0) {
+          TranslatePage()
+        }
       }
       .tabBar(this.TabBuilder(2, $rawfile('ic_translate.svg'), $rawfile('ic_translate_light.svg')))
 
       TabContent() {
-        CodeTablePage()
+        // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
+        if (this.pageRebuildKey >= 0) {
+          CodeTablePage()
+        }
       }
       .tabBar(this.TabBuilder(3, $rawfile('ic_table.svg'), $rawfile('ic_table_light.svg')))
 
       TabContent() {
-        MePage()
+        // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
+        if (this.pageRebuildKey >= 0) {
+          MePage()
+        }
       }
       .tabBar(this.TabBuilder(4, $rawfile('ic_me.svg'), $rawfile('ic_me_light.svg')))
     }

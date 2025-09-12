@@ -3,15 +3,121 @@ import { common, Want } from '@kit.AbilityKit'
 import pasteboard from '@ohos.pasteboard'
 import { i18nService, LanguageOption } from '../../services/I18nService'
 
+// 本地化字符串接口
+interface LocalizedStrings {
+  app_name: string
+  version: string
+  language: string
+  instructions: string
+  rating_feedback: string
+  share_app: string
+  other_apps: string
+  periodic_table_app: string
+  copyright: string
+  instructions_title: string
+  instructions_content: string
+  got_it: string
+  share_text: string
+  share_copied: string
+  copy_failed: string
+  opening_app_gallery: string
+  language_selection_title: string
+}
+
 @Component
 export struct MePage {
   @State appVersion: string = '1.0.1'
   // 使用 StorageLink 监听语言变化，触发UI重新渲染
   @StorageLink('currentLanguage') currentLanguage: string = 'zh-CN'
   @StorageLink('languageRefreshTrigger') refreshTrigger: number = 0
+  // 语言变化计数器，用于强制UI刷新
+  @State langTick: number = 0
+  // 缓存本地化字符串
+  @State strings: LocalizedStrings = {
+    app_name: '',
+    version: '',
+    language: '',
+    instructions: '',
+    rating_feedback: '',
+    share_app: '',
+    other_apps: '',
+    periodic_table_app: '',
+    copyright: '',
+    instructions_title: '',
+    instructions_content: '',
+    got_it: '',
+    share_text: '',
+    share_copied: '',
+    copy_failed: '',
+    opening_app_gallery: '',
+    language_selection_title: ''
+  }
+  private languageChangeListener: ((lang: string) => void) | null = null
 
   aboutToAppear() {
+    // 添加语言变化监听器
+    this.languageChangeListener = (lang: string) => {
+      console.log(`[MePage] Language changed to: ${lang}`)
+      // 更新缓存的本地化字符串
+      this.strings = this.computeStrings()
+      // 触发UI强制刷新
+      this.langTick++
+    }
+    
+    // 启动语言变化监听
+    this.startLanguageWatcher()
+    
+    // 初始化本地化字符串
+    this.strings = this.computeStrings()
+    
     this.loadAppInfo()
+  }
+
+  aboutToDisappear() {
+    // 清理语言变化监听器
+    if (this.languageChangeListener) {
+      this.languageChangeListener = null
+    }
+  }
+
+  // 启动语言变化监听器
+  private startLanguageWatcher(): void {
+    let lastLanguage = this.currentLanguage
+    const checkLanguageChange = () => {
+      if (this.currentLanguage !== lastLanguage) {
+        console.log(`[MePage] Language changed from ${lastLanguage} to ${this.currentLanguage}`)
+        lastLanguage = this.currentLanguage
+        if (this.languageChangeListener) {
+          this.languageChangeListener(this.currentLanguage)
+        }
+      }
+      // 继续监听
+      setTimeout(checkLanguageChange, 100)
+    }
+    checkLanguageChange()
+  }
+
+  // 计算本地化字符串
+  private computeStrings(): LocalizedStrings {
+    return {
+      app_name: i18nService.t('app_name'),
+      version: i18nService.t('version'),
+      language: i18nService.t('language'),
+      instructions: i18nService.t('instructions'),
+      rating_feedback: i18nService.t('rating_feedback'),
+      share_app: i18nService.t('share_app'),
+      other_apps: i18nService.t('other_apps'),
+      periodic_table_app: i18nService.t('periodic_table_app'),
+      copyright: i18nService.t('copyright'),
+      instructions_title: i18nService.t('instructions_title'),
+      instructions_content: i18nService.t('instructions_content'),
+      got_it: i18nService.t('got_it'),
+      share_text: i18nService.t('share_text'),
+      share_copied: i18nService.t('share_copied'),
+      copy_failed: i18nService.t('copy_failed'),
+      opening_app_gallery: i18nService.t('opening_app_gallery'),
+      language_selection_title: i18nService.t('language_selection_title')
+    }
   }
 
   private loadAppInfo() {
@@ -20,12 +126,14 @@ export struct MePage {
 
   // 使用说明
   private showInstructions() {
+    // 引用langTick确保对话框内容也会更新
+    const _ = this.langTick
     promptAction.showDialog({
-      title: i18nService.t('instructions_title'),
-      message: i18nService.t('instructions_content'),
+      title: this.strings.instructions_title || i18nService.t('instructions_title'),
+      message: this.strings.instructions_content || i18nService.t('instructions_content'),
       buttons: [
         {
-          text: i18nService.t('got_it'),
+          text: this.strings.got_it || i18nService.t('got_it'),
           color: '#0A59F7'
         }
       ],
@@ -43,20 +151,22 @@ export struct MePage {
   // 分享应用
   private shareApp(): void {
     try {
-      const shareText = i18nService.t('share_text')
+      // 引用langTick确保toast消息也会更新
+      const _ = this.langTick
+      const shareText = this.strings.share_text || i18nService.t('share_text')
 
       const sysPB = pasteboard.getSystemPasteboard()
       const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, shareText)
       sysPB.setPasteData(pasteData)
 
       promptAction.showToast({
-        message: i18nService.t('share_copied'),
+        message: this.strings.share_copied || i18nService.t('share_copied'),
         duration: 2000
       })
     } catch (error) {
       console.error('复制到剪贴板失败:', error)
       promptAction.showToast({
-        message: i18nService.t('copy_failed'),
+        message: this.strings.copy_failed || i18nService.t('copy_failed'),
         duration: 2000
       })
     }
@@ -75,8 +185,10 @@ export struct MePage {
       }
 
       context.startAbility(want).then(() => {
+        // 引用langTick确保toast消息也会更新
+        const _ = this.langTick
         promptAction.showToast({
-          message: i18nService.t('opening_app_gallery'),
+          message: this.strings.opening_app_gallery || i18nService.t('opening_app_gallery'),
           duration: 1500
         })
       }).catch((error: Error) => {
@@ -183,7 +295,13 @@ export struct MePage {
   @Builder LanguageSelectorDialog() {
     Column() {
       Row() {
-        Text(i18nService.t('language_selection_title'))
+        // 隐藏的langTick触发器
+        Text(this.langTick.toString())
+          .opacity(0)
+          .width(0)
+          .height(0)
+        
+        Text(this.strings.language_selection_title || i18nService.t('language_selection_title'))
           .fontSize(18)
           .fontWeight(FontWeight.Bold)
           .fontColor('#FFFFFF')
@@ -250,10 +368,16 @@ export struct MePage {
     .constraintSize({ maxWidth: 480, maxHeight: '60%' })
   }
 
-  @Builder SettingsItem(title: Resource | string, onClick: () => void) {
+  @Builder LanguageSettingsItem() {
     Row() {
+      // 隐藏的langTick触发器
+      Text(this.langTick.toString())
+        .opacity(0)
+        .width(0)
+        .height(0)
+      
       Column() {
-        Text(title)
+        Text(this.strings.language || i18nService.t('language'))
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
           .fontColor('#FFFFFF')
@@ -273,7 +397,167 @@ export struct MePage {
     .width('100%')
     .height(52)
     .padding({ left: 16, right: 16 })
-    .onClick(onClick)
+    .onClick(() => {
+      this.showLanguageDialog = true
+    })
+  }
+
+  @Builder InstructionsSettingsItem() {
+    Row() {
+      // 隐藏的langTick触发器
+      Text(this.langTick.toString())
+        .opacity(0)
+        .width(0)
+        .height(0)
+      
+      Column() {
+        Text(this.strings.instructions || i18nService.t('instructions'))
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#FFFFFF')
+          .textAlign(TextAlign.Start)
+          .width('100%')
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+
+      Image($rawfile('ic_arrow_right.svg'))
+        .width(16)
+        .height(16)
+        .fillColor('#666666')
+    }
+    .width('100%')
+    .height(52)
+    .padding({ left: 16, right: 16 })
+    .onClick(() => {
+      this.showInstructions()
+    })
+  }
+
+  @Builder RatingSettingsItem() {
+    Row() {
+      // 隐藏的langTick触发器
+      Text(this.langTick.toString())
+        .opacity(0)
+        .width(0)
+        .height(0)
+      
+      Column() {
+        Text(this.strings.rating_feedback || i18nService.t('rating_feedback'))
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#FFFFFF')
+          .textAlign(TextAlign.Start)
+          .width('100%')
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+
+      Image($rawfile('ic_arrow_right.svg'))
+        .width(16)
+        .height(16)
+        .fillColor('#666666')
+    }
+    .width('100%')
+    .height(52)
+    .padding({ left: 16, right: 16 })
+    .onClick(() => {
+      this.openAppGallery()
+    })
+  }
+
+  @Builder ShareSettingsItem() {
+    Row() {
+      // 隐藏的langTick触发器
+      Text(this.langTick.toString())
+        .opacity(0)
+        .width(0)
+        .height(0)
+      
+      Column() {
+        Text(this.strings.share_app || i18nService.t('share_app'))
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#FFFFFF')
+          .textAlign(TextAlign.Start)
+          .width('100%')
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+
+      Image($rawfile('ic_arrow_right.svg'))
+        .width(16)
+        .height(16)
+        .fillColor('#666666')
+    }
+    .width('100%')
+    .height(52)
+    .padding({ left: 16, right: 16 })
+    .onClick(() => {
+      this.shareApp()
+    })
+  }
+
+  @Builder OtherAppsSection() {
+    // 其他应用部分
+    Column() {
+      // 隐藏的langTick触发器
+      Text(this.langTick.toString())
+        .opacity(0)
+        .width(0)
+        .height(0)
+      
+      Text(this.strings.other_apps || i18nService.t('other_apps'))
+        .fontSize(14)
+        .fontWeight(FontWeight.Normal)
+        .fontColor('#999999')
+        .margin({ top: 30, bottom: 12, left: 16 })
+        .alignSelf(ItemAlign.Start)
+
+      // 元素周期表应用卡片
+      Row() {
+        Image($r('app.media.appicon_yuansu'))
+          .width(48)
+          .height(48)
+          .borderRadius(8)
+          .margin({ right: 16 })
+
+        Column() {
+          Text(this.strings.periodic_table_app || i18nService.t('periodic_table_app'))
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#FFFFFF')
+            .textAlign(TextAlign.Start)
+            .width('100%')
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+        }
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
+
+        Image($rawfile('ic_arrow_right.svg'))
+          .width(16)
+          .height(16)
+          .fillColor('#666666')
+      }
+      .width('100%')
+      .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+      .backgroundColor('#111111')
+      .borderRadius(12)
+      .border({ width: 1, color: '#222222' })
+      .onClick(() => {
+        this.openPeriodicTableApp()
+      })
+    }
+    .width('100%')
+    .alignItems(HorizontalAlign.Start)
+    .constraintSize({ maxWidth: 400 })
   }
 
   build() {
@@ -294,14 +578,20 @@ export struct MePage {
             offsetY: 2
           })
 
-        Text(i18nService.t('app_name'))
+        // 隐藏的langTick触发器
+        Text(this.langTick.toString())
+          .opacity(0)
+          .width(0)
+          .height(0)
+        
+        Text(this.strings.app_name || i18nService.t('app_name'))
           .fontSize(24)
           .fontWeight(FontWeight.Bold)
           .fontColor('#FFFFFF')
           .margin({ bottom: 4 })
 
         Row() {
-          Text(i18nService.t('version'))
+          Text(this.strings.version || i18nService.t('version'))
             .fontSize(14)
             .fontColor('#B0B0B0')
           Text(` ${this.appVersion}`)
@@ -318,24 +608,16 @@ export struct MePage {
         // 盒子容器
         Column() {
           // 语言切换条目
-          this.SettingsItem(i18nService.t('language'), () => {
-            this.showLanguageDialog = true
-          })
+          this.LanguageSettingsItem()
           Divider().strokeWidth(1).color('#222222')
 
-          this.SettingsItem(i18nService.t('instructions'), () => {
-            this.showInstructions()
-          })
+          this.InstructionsSettingsItem()
           Divider().strokeWidth(1).color('#222222')
 
-          this.SettingsItem(i18nService.t('rating_feedback'), () => {
-            this.openAppGallery()
-          })
+          this.RatingSettingsItem()
           Divider().strokeWidth(1).color('#222222')
 
-          this.SettingsItem(i18nService.t('share_app'), () => {
-            this.shareApp()
-          })
+          this.ShareSettingsItem()
         }
         .width('100%')
         .backgroundColor('#111111')
@@ -344,53 +626,7 @@ export struct MePage {
         .padding({ top: 4, bottom: 4 })
         .constraintSize({ maxWidth: 400 })
 
-        // 其他应用部分
-        Column() {
-          Text(i18nService.t('other_apps'))
-            .fontSize(14)
-            .fontWeight(FontWeight.Normal)
-            .fontColor('#999999')
-            .margin({ top: 30, bottom: 12, left: 16 })
-            .alignSelf(ItemAlign.Start)
-
-          // 元素周期表应用卡片
-          Row() {
-            Image($r('app.media.appicon_yuansu'))
-              .width(48)
-              .height(48)
-              .borderRadius(8)
-              .margin({ right: 16 })
-
-            Column() {
-              Text(i18nService.t('periodic_table_app'))
-                .fontSize(16)
-                .fontWeight(FontWeight.Medium)
-                .fontColor('#FFFFFF')
-                .textAlign(TextAlign.Start)
-                .width('100%')
-                .maxLines(1)
-                .textOverflow({ overflow: TextOverflow.Ellipsis })
-            }
-            .layoutWeight(1)
-            .alignItems(HorizontalAlign.Start)
-
-            Image($rawfile('ic_arrow_right.svg'))
-              .width(16)
-              .height(16)
-              .fillColor('#666666')
-          }
-          .width('100%')
-          .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-          .backgroundColor('#111111')
-          .borderRadius(12)
-          .border({ width: 1, color: '#222222' })
-          .onClick(() => {
-            this.openPeriodicTableApp()
-          })
-        }
-        .width('100%')
-        .alignItems(HorizontalAlign.Start)
-        .constraintSize({ maxWidth: 400 })
+        this.OtherAppsSection()
       }
       .width('100%')
       .padding({ left: 20, right: 20 })
@@ -399,7 +635,7 @@ export struct MePage {
 
       // 底部
       Column() {
-        Text(i18nService.t('copyright'))
+        Text(this.strings.copyright || i18nService.t('copyright'))
           .fontSize(12)
           .fontColor('#999999')
       }

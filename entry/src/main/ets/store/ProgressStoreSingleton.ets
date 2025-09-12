@@ -2,6 +2,7 @@ import { preferences } from '@kit.ArkData'
 import Context from '@ohos.app.ability.common'
 import { LessonConfig } from '../data/LessonConfig'
 import { eventHub, Events, LessonCompletedEventData } from '../utils/EventHub'
+import { languageService } from '../services/LanguageService'
 
 export interface ProgressTarget {
   unitIdx: number
@@ -79,27 +80,8 @@ class ProgressStore {
 
   // ───────────────────────────────── queries ────────────────────────────────
   isLessonUnlocked(n: number): boolean {
-    // Check if this is the first lesson of the intro unit (always unlocked)
-    if (this.isFirstLessonOfIntroUnit(n)) {
-      return true
-    }
-    
-    // Check if this is the first lesson of a unit
-    const isFirstLessonOfUnit = this.isFirstLessonOfAnyUnit(n)
-    if (isFirstLessonOfUnit) {
-      // For first lesson of a unit, check if the last lesson of the previous unit is completed
-      const prevUnitLastLesson = this.getLastLessonOfPreviousUnit(n)
-      if (prevUnitLastLesson > 0) {
-        const prevUnitCompleted = this.completedLessons.has(prevUnitLastLesson)
-        console.error(`[STORE] isLessonUnlocked: lesson${n} (first of unit) unlocked=${prevUnitCompleted} (prev unit last lesson ${prevUnitLastLesson} completed=${prevUnitCompleted})`)
-        return prevUnitCompleted
-      }
-    }
-    
-    // For other lessons, check if the previous lesson is completed
-    const prevLessonCompleted = this.completedLessons.has(n - 1)
-    console.error(`[STORE] isLessonUnlocked: lesson${n} unlocked=${prevLessonCompleted} (prev lesson ${n-1} completed=${prevLessonCompleted})`)
-    return prevLessonCompleted
+    // 所有课程都解锁，移除锁定逻辑
+    return true
   }
 
   isLessonCompleted(n: number): boolean {
@@ -108,54 +90,6 @@ class ProgressStore {
     return completed
   }
 
-  /**
-   * 检查指定课程编号是否是基础单元的第一课
-   */
-  private isFirstLessonOfIntroUnit(lessonNumber: number): boolean {
-    const introStartLesson = LessonConfig.getUnitStartLesson('intro')
-    return lessonNumber === introStartLesson
-  }
-
-  /**
-   * 检查指定课程编号是否是任何单元的第一课
-   */
-  private isFirstLessonOfAnyUnit(lessonNumber: number): boolean {
-    for (const unit of UNITS) {
-      const startLesson = LessonConfig.getUnitStartLesson(unit)
-      if (lessonNumber === startLesson) {
-        return true
-      }
-    }
-    return false
-  }
-
-  /**
-   * 获取指定课程所在单元的前一个单元的最后一课编号
-   */
-  private getLastLessonOfPreviousUnit(lessonNumber: number): number {
-    // 找到当前课程所在的单元
-    let currentUnitIndex = -1
-    for (let i = 0; i < UNITS.length; i++) {
-      const unit = UNITS[i]
-      if (LessonConfig.isLessonInUnit(lessonNumber, unit)) {
-        currentUnitIndex = i
-        break
-      }
-    }
-    
-    // 如果没有找到单元或这是第一个单元，返回0
-    if (currentUnitIndex <= 0) {
-      return 0
-    }
-    
-    // 获取前一个单元
-    const prevUnit = UNITS[currentUnitIndex - 1]
-    const prevUnitEndLesson = LessonConfig.getUnitEndLesson(prevUnit)
-    
-    console.error(`[STORE] getLastLessonOfPreviousUnit: lesson${lessonNumber} is in unit ${UNITS[currentUnitIndex]}, prev unit ${prevUnit} last lesson is ${prevUnitEndLesson}`)
-    
-    return prevUnitEndLesson
-  }
 
   /**
    * 返回每个单元是否解锁（由该单元起始课程是否解锁决定）

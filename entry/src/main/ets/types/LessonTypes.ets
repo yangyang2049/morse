@@ -44,3 +44,17 @@ export interface ButtonStyle {
   textColor: string
   borderColor: string
 }
+
+export interface LearnPageStrings {
+  learn: string
+  loading: string
+  morse_code_basics: string
+  alphabet_lesson: string
+  number_lesson: string
+  punctuation_lesson: string
+  word_lesson: string
+  please_complete_previous_lessons: string
+  chinese_morse_code: string
+  chinese_code_test: string
+  basics_test: string
+}

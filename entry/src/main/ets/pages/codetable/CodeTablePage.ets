@@ -12,6 +12,15 @@ interface Category {
   name: string
 }
 
+// 本地化字符串接口
+interface LocalizedStrings {
+  code_table: string
+  all_codes: string
+  letters: string
+  numbers: string
+  punctuation: string
+}
+
 @Component
 export struct CodeTablePage {
   @State selected: string = 'all'
@@ -20,19 +29,86 @@ export struct CodeTablePage {
   @State refreshTrigger: number = 0
   // 使用 StorageLink 监听语言变化
   @StorageLink('currentLanguage') currentLanguage: string = 'zh-CN'
-  private categories: Category[] = [
-    { key: 'all', name: '' },
-    { key: 'alphabet', name: '' },
-    { key: 'numbers', name: '' },
-    { key: 'punctuation', name: '' },
-  ]
+  // 语言变化计数器，用于强制UI刷新
+  @State langTick: number = 0
+  // 缓存本地化字符串
+  @State strings: LocalizedStrings = {
+    code_table: '',
+    all_codes: '',
+    letters: '',
+    numbers: '',
+    punctuation: ''
+  }
+  private languageChangeListener: ((lang: string) => void) | null = null
+  private categories: Category[] = []
 
   aboutToAppear() {
     // System bar colors are set globally in EntryAbility
     this.checkLanguage()
+    
+    // 添加语言变化监听器
+    this.languageChangeListener = (lang: string) => {
+      console.log(`[CodeTablePage] Language changed to: ${lang}`)
+      // 更新缓存的本地化字符串
+      this.strings = this.computeStrings()
+      // 重新检查语言和构建分类
+      this.checkLanguage()
+      this.buildCategories()
+      // 触发UI强制刷新
+      this.langTick++
+    }
+    
+    // 启动语言变化监听
+    this.startLanguageWatcher()
+    
+    // 初始化本地化字符串和分类
+    this.strings = this.computeStrings()
+    this.buildCategories()
   }
 
   aboutToDisappear() {
+    // 清理语言变化监听器
+    if (this.languageChangeListener) {
+      this.languageChangeListener = null
+    }
+  }
+
+  // 启动语言变化监听器
+  private startLanguageWatcher(): void {
+    let lastLanguage = this.currentLanguage
+    const checkLanguageChange = () => {
+      if (this.currentLanguage !== lastLanguage) {
+        console.log(`[CodeTablePage] Language changed from ${lastLanguage} to ${this.currentLanguage}`)
+        lastLanguage = this.currentLanguage
+        if (this.languageChangeListener) {
+          this.languageChangeListener(this.currentLanguage)
+        }
+      }
+      // 继续监听
+      setTimeout(checkLanguageChange, 100)
+    }
+    checkLanguageChange()
+  }
+
+  // 计算本地化字符串
+  private computeStrings(): LocalizedStrings {
+    return {
+      code_table: i18nService.t('code_table'),
+      all_codes: i18nService.t('all_codes'),
+      letters: i18nService.t('letters'),
+      numbers: i18nService.t('numbers'),
+      punctuation: i18nService.t('punctuation')
+    }
+  }
+
+  // 构建分类列表
+  private buildCategories(): void {
+    this.categories = [
+      { key: 'all', name: this.strings.all_codes },
+      { key: 'alphabet', name: this.strings.letters },
+      { key: 'numbers', name: this.strings.numbers },
+      { key: 'punctuation', name: this.strings.punctuation },
+    ]
   }
 
   private checkLanguage() {
@@ -98,7 +174,13 @@ export struct CodeTablePage {
       Row() {
         Blank().width(40) // Balance the right button
 
-        Text(i18nService.t('code_table'))
+        // 隐藏的langTick触发器
+        Text(this.langTick.toString())
+          .opacity(0)
+          .width(0)
+          .height(0)
+        
+        Text(this.strings.code_table || i18nService.t('code_table'))
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
           .fontColor('#FFFFFF')
@@ -139,7 +221,7 @@ export struct CodeTablePage {
         Scroll() {
           Row() {
             ForEach(this.categories, (cat: Category) => {
-              Button(this.getCategoryLabel(cat.key))
+              Button(cat.name || this.getCategoryLabel(cat.key))
                 .onClick(() => { this.selected = cat.key })
                 .backgroundColor(this.selected === cat.key ? '#FFD700' : '#1A1A1A')
                 .fontColor(this.selected === cat.key ? '#000000' : '#B0B0B0')
@@ -147,7 +229,7 @@ export struct CodeTablePage {
                 .padding({ left: 14, right: 14 })
                 .margin({ right: 8 })
                 .border({ width: 1, color: '#333333' })
-            }, (cat: Category) => cat.key)
+            }, (cat: Category) => `${cat.key}-${this.langTick}`)
           }.padding(12)
         }.scrollable(ScrollDirection.Horizontal)
 
