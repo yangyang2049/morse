@@ -77,13 +77,17 @@ export class LearnViewModel {
         newIntroLessons.push({ key: 'intro_1', title: this.getLessonTitle(2), subtitle: i18nService.t('chinese_morse_code'), unlocked: lesson2Unlocked, unitUnlocked: true, completed: lesson2Completed })
       }
 
-      // 占位填充保持布局
+      // 占位填充保持布局 - 增加更多占位符以匹配其他单元
       newIntroLessons.push({ key: 'intro_p1', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
       newIntroLessons.push({ key: 'intro_p2', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
       newIntroLessons.push({ key: 'intro_p3', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
       newIntroLessons.push({ key: 'intro_p4', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
       newIntroLessons.push({ key: 'intro_p5', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
       newIntroLessons.push({ key: 'intro_p6', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
+      newIntroLessons.push({ key: 'intro_p7', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
+      newIntroLessons.push({ key: 'intro_p8', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
+      newIntroLessons.push({ key: 'intro_p9', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
+      newIntroLessons.push({ key: 'intro_p10', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
 
       this.introLessons.length = 0
       this.introLessons.push(...newIntroLessons)

@@ -16,7 +16,7 @@ export struct TranslatePage {
   private screenHeight: number = 0
   @State private refreshTrigger: number = 0
   // 使用 StorageLink 监听语言变化
-  @StorageLink('currentLanguage') currentLanguage: string = 'zh'
+  @StorageLink('currentLanguage') currentLanguage: string = 'zh-CN'
 
   aboutToAppear() {
     // System bar colors are set globally in EntryAbility

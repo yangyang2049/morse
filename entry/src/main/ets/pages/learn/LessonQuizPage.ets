@@ -5,6 +5,7 @@ import { ExplanationTipsCard } from '../../widgets/ExplanationTipsCard'
 import { LearnViewModel } from '../../viewmodel/LearnViewModel'
 import { QuizViewModel } from '../../viewmodel/QuizViewModel'
 import { QuizNavParams, QuestionItem, ExplanationItem, ButtonStyle } from '../../types/LessonTypes'
+import { i18nService } from '../../services/I18nService'
 
 @Entry
 @Component
@@ -124,7 +125,7 @@ struct LessonQuizPage {
         .fontSize(80)
         .margin({ bottom: 16 })
 
-      Text('你的分数')
+      Text(i18nService.t('your_score'))
         .fontSize(14)
         .fontWeight(FontWeight.Bold)
         .fontColor('#FFFFFFB3')
@@ -137,20 +138,20 @@ struct LessonQuizPage {
         .margin({ bottom: 8 })
 
       Column() {
-        Text(this.quizViewModel.score >= 100 ? '🎉 恭喜通过！' : '继续努力！')
+        Text(this.quizViewModel.score >= 100 ? i18nService.t('congratulations_passed') : i18nService.t('keep_trying'))
           .fontSize(28)
           .fontColor(Color.White)
           .textAlign(TextAlign.Center)
           .margin({ bottom: 8 })
 
         if (this.quizViewModel.score >= 100) {
-          Text('你已经掌握了摩斯密码的基础知识')
+          Text(i18nService.t('you_mastered_basics'))
             .fontSize(16)
             .fontColor(Color.White)
             .textAlign(TextAlign.Center)
             .margin({ bottom: 8 })
         } else {
-          Text('需要100分才能通过测试')
+          Text(i18nService.t('need_100_to_pass'))
             .fontSize(16)
             .fontColor('#FFFFFFB3')
             .fontWeight(FontWeight.Medium)
@@ -161,7 +162,7 @@ struct LessonQuizPage {
 
       Row() {
         Button() {
-          Text('返回')
+          Text(i18nService.t('back'))
             .fontSize(16)
             .fontWeight(FontWeight.Bold)
             .fontColor('#1A1A1A')
@@ -176,7 +177,7 @@ struct LessonQuizPage {
 
         if (this.quizViewModel.score >= 100) {
           Button() {
-            Text('下一课')
+            Text(i18nService.t('next_lesson'))
               .fontSize(16)
               .fontWeight(FontWeight.Bold)
               .fontColor('#1A1A1A')
@@ -191,7 +192,7 @@ struct LessonQuizPage {
           })
         } else {
           Button() {
-            Text('重新测试')
+            Text(i18nService.t('retake_test'))
               .fontSize(16)
               .fontWeight(FontWeight.Bold)
               .fontColor('#1A1A1A')
@@ -427,7 +428,7 @@ struct LessonQuizPage {
   NextButton() {
     if (this.quizViewModel.isAnswered) {
       Button() {
-        Text(this.quizViewModel.currentQuestionIndex < this.quizViewModel.questions.length - 1 ? '下一题' : '查看结果')
+        Text(this.quizViewModel.currentQuestionIndex < this.quizViewModel.questions.length - 1 ? i18nService.t('next_question') : i18nService.t('view_results'))
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
           .fontColor('#1A1A1A')

@@ -15,7 +15,7 @@ export struct LearnPage {
   @State private isInitialized: boolean = false
   @State private refreshTrigger: number = 0
   // 使用 StorageLink 监听语言变化
-  @StorageLink('currentLanguage') currentLanguage: string = 'zh'
+  @StorageLink('currentLanguage') currentLanguage: string = 'zh-CN'
   private lessonCompletedCallback: ((data?: Object) => void) | null = null
 
   aboutToAppear(): void {

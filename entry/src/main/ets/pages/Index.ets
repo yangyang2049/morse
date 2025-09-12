@@ -4,14 +4,16 @@ import { TranslatePage } from './translate/TranslatePage'
 import { CodeTablePage } from './codetable/CodeTablePage'
 import { MePage } from './me/MePage'
 import { audioService } from '../services/AudioService'
-import { languageUtils } from '../utils/LanguageUtils'
 import { Context } from '@kit.AbilityKit'
+import { i18nService } from '../services/I18nService'
 // Window system bar properties are managed globally in EntryAbility
 
 @Entry
 @Component
 struct Index {
   @State currentIndex: number = 0
+  // 监听语言变化，确保UI能及时响应
+  @StorageLink('currentLanguage') currentLanguage: string = 'zh-CN'
 
   aboutToAppear() {
     // System bar colors are set globally in EntryAbility
@@ -32,27 +34,6 @@ struct Index {
     }
   }
 
-  // 同步初始化语言服务
-  private initLanguageServiceSync() {
-    try {
-      // 先设置默认语言到 AppStorage，确保 StorageLink 有初始值
-      AppStorage.setOrCreate('currentLanguage', 'zh')
-      console.log('[INDEX] AppStorage initialized with default language')
-      
-      // 异步加载保存的语言设置
-      setTimeout(async () => {
-        try {
-          const context = getContext(this) as Context
-          await languageUtils.init(context)
-          console.log('[INDEX] LanguageUtils initialized successfully')
-        } catch (error) {
-          console.error('[INDEX] Failed to initialize LanguageUtils:', error)
-        }
-      }, 0)
-    } catch (error) {
-      console.error('[INDEX] Failed to initialize AppStorage:', error)
-    }
-  }
 
   @Builder TabBuilder(targetIndex: number, selectedImg: Resource, normalImg: Resource) {
     Column() {

@@ -2,14 +2,14 @@ import { router } from '@kit.ArkUI'
 // System bar colors are set globally in EntryAbility
 import { KnowledgeLessonViewModel } from '../../viewmodel/KnowledgeLessonViewModel'
 import { LessonNavParams } from '../../types/LessonTypes'
-// 使用$r()函数替代I18n
+import { i18nService } from '../../services/I18nService'
 
 @Entry
 @Component
 struct KnowledgeLessonPage {
   @State viewModel: KnowledgeLessonViewModel = new KnowledgeLessonViewModel()
-  @State title: string = '摩斯密码基础知识'
-  @State content: string = '摩斯密码是一种以"点（·）和划（-）"为基本元素的字符编码系统。通过不同的点划组合来表示字母、数字和符号。'
+  @State title: string = i18nService.t('morse_code_basics')
+  @State content: string = i18nService.t('morse_code_intro')
   @State customSections: string[] = []
 
   aboutToAppear() {
@@ -168,12 +168,12 @@ struct KnowledgeLessonPage {
           }
           .margin({ bottom: 32 })
 
-          Text(`测试你对${this.viewModel.title}的掌握程度`)
+          Text(i18nService.getCurrentLanguage() === 'zh' ? '测试你对本课程的掌握程度' : 'Test your mastery of this lesson')
             .fontSize(16)
             .fontColor('#FF8C00')
             .margin({ bottom: 16 })
 
-          Text('测试内容')
+          Text(i18nService.t('test_content'))
             .fontSize(16)
             .fontWeight(FontWeight.Bold)
             .fontColor('#FF8C00')
@@ -181,9 +181,9 @@ struct KnowledgeLessonPage {
             .alignSelf(ItemAlign.Start)
 
           Column() {
-            Text('• 2道判断题（每题20分）').fontSize(14).fontColor(Color.Black).margin({ bottom: 4 })
-            Text('• 3道选择题（每题20分）').fontSize(14).fontColor(Color.Black).margin({ bottom: 4 })
-            Text('• 需要100分才能通过').fontSize(14).fontColor(Color.Black)
+            Text(i18nService.t('test_format_1')).fontSize(14).fontColor(Color.Black).margin({ bottom: 4 })
+            Text(i18nService.t('test_format_2')).fontSize(14).fontColor(Color.Black).margin({ bottom: 4 })
+            Text(i18nService.t('need_100_to_pass')).fontSize(14).fontColor(Color.Black)
           }
           .margin({ bottom: 16 })
           .alignItems(HorizontalAlign.Start)
@@ -191,7 +191,7 @@ struct KnowledgeLessonPage {
           Blank().layoutWeight(1)
 
           Button() {
-            Text('开始测试')
+            Text(i18nService.t('start_test'))
               .fontSize(16)
               .fontWeight(FontWeight.Bold)
               .fontColor(Color.White)
@@ -274,7 +274,7 @@ struct KnowledgeLessonPage {
   @Builder
   CompleteButton() {
     Button() {
-      Text($r('app.string.learning_completed'))
+      Text(i18nService.t('learning_completed'))
         .fontSize(16)
         .fontWeight(FontWeight.Bold)
         .fontColor('#1A1A1A')

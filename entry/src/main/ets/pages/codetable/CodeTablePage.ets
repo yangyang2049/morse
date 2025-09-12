@@ -19,7 +19,7 @@ export struct CodeTablePage {
   @State isEnglish: boolean = false // 语言检测
   @State refreshTrigger: number = 0
   // 使用 StorageLink 监听语言变化
-  @StorageLink('currentLanguage') currentLanguage: string = 'zh'
+  @StorageLink('currentLanguage') currentLanguage: string = 'zh-CN'
   private categories: Category[] = [
     { key: 'all', name: '' },
     { key: 'alphabet', name: '' },

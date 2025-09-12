@@ -29,7 +29,7 @@ export class I18nService {
   private static instance: I18nService
   
   // 当前语言状态 - 单一数据源
-  private currentLang: string = 'zh'
+  private currentLang: string = 'zh-CN'
   
   // 语言字典
   private dictionaries: LanguageDictionaries = {}
@@ -92,6 +92,7 @@ export class I18nService {
       
       // 学习模块
       'morse_code_basics': '摩斯密码基础',
+      'morse_code_intro': '摩斯密码是一种以"点（·）和划（-）"为基本元素的字符编码系统。通过不同的点划组合来表示字母、数字和符号。',
       'alphabet_lesson': '字母',
       'number_lesson': '数字',
       'punctuation_lesson': '符号',
@@ -101,7 +102,7 @@ export class I18nService {
       'next_lesson': '下一课',
       'start_test': '开始测试',
       'your_score': '你的分数',
-      'congratulations_passed': '🎉 恭喜通过！',
+      'congratulations_passed': '恭喜通过！',
       'keep_trying': '继续努力！',
       
       // 练习模块
@@ -120,6 +121,67 @@ export class I18nService {
       'practice_records': '练习记录',
       'practiced': '已练习',
       'total': '总计',
+      'learning_completed': '完成学习',
+      'you_mastered_basics': '你已经掌握了摩斯密码的基础知识',
+      'need_100_to_pass': '需要100分才能通过测试',
+      'test_your_mastery': '测试你对{title}的掌握程度',
+      'test_your_mastery_text': '测试你对{title}的掌握程度',
+      'test_content': '测试内容',
+      'test_format_1': '• 2道判断题（每题20分）',
+      'test_format_2': '• 3道选择题（每题20分）',
+      'retake_test': '重新测试',
+      'next_question': '下一题',
+      'view_results': '查看结果',
+      'correct': '正确',
+      'wrong': '错误',
+        
+        // 基础测试问题和选项
+        'q1_question': '摩斯密码是以"点（·）和划（-）"为基本元素的字符编码系统。',
+        'q1_options': '正确,错误',
+        'q2_question': 'SOS信号的摩斯密码是 ··· --- ···，各字符之间需要保持正常的字符间隔。',
+        'q2_options': '正确,错误',
+        'q3_question': '摩斯密码的时序规则中，点、划、字符间隔的单位比例是：',
+        'q3_options': '1 : 2 : 5,1 : 3 : 7,1 : 4 : 8,2 : 3 : 6',
+        'q4_question': '摩斯密码是在哪个年代开发的？',
+        'q4_options': '1820 年代,1830-1840 年代,1850 年代,1860 年代',
+        'q5_question': '学习摩斯密码的建议顺序是：',
+        'q5_options': '数字 → 字母 → 符号,符号 → 字母 → 数字,字母 → 数字 → 符号,随机学习',
+        
+        // 中文摩斯密码测试问题和选项
+        'cq1_question': '中文摩尔斯电码是专门为中文汉字设计的摩尔斯电码系统。',
+        'cq1_options': '正确,错误',
+        'cq2_question': '中文摩尔斯电码的编码长度通常比英文摩尔斯电码短。',
+        'cq2_options': '正确,错误',
+        'cq3_question': '中文摩尔斯电码是在哪个年代开始制定的？',
+        'cq3_options': '1900 年代,1920 年代,1950 年代,1980 年代',
+        'cq4_question': '以下哪个不是中文摩尔斯电码的应用场景？',
+        'cq4_options': '军事通信,航空通信,网络聊天,航海通信',
+        'cq5_question': '学习中文摩尔斯电码的建议顺序是：',
+        'cq5_options': '从复杂汉字开始,从基础汉字开始,随机学习,从标点符号开始',
+        
+        // 基础测试解释内容
+        'exp1_title': '摩斯密码基本元素',
+        'exp1_content': '• 摩斯密码以"点（·）和划（-）"为基本元素\n• 通过不同的点划组合表示字母、数字和符号\n• 这是所有摩斯密码的基础，必须熟练掌握',
+        'exp2_title': 'SOS信号的特殊性',
+        'exp2_content': '• SOS是紧急求救信号，需要快速识别\n• 紧凑发送：三个字符（··· --- ···）是紧凑发送的，没有正常的字符间隔\n• 标准间隔规则：正常情况下，摩斯密码字符之间应该有3个单位的间隔\n• SOS例外：但SOS作为紧急信号，会忽略这个规则，紧凑发送以提高识别速度',
+        'exp3_title': '时序规则的重要性',
+        'exp3_content': '• 1:3:7比例是摩斯密码的核心规则\n• 点=1单位，划=3单位，字符间隔=3单位，单词间隔=7单位\n• 这个精确的时序确保了信息传输的准确性和可读性',
+        'exp4_title': '历史背景',
+        'exp4_content': '• 塞缪尔·摩斯与阿尔弗雷德·韦尔在1830-1840 年代合作开发\n• 最初用于电报系统，后来演化为国际摩斯密码\n• 成为全球标准的无线电通信编码系统',
+        'exp5_title': '学习策略',
+        'exp5_content': '• 字母 → 数字 → 符号的学习顺序最科学\n• 先掌握基础字母，再学习数字和符号\n• 循序渐进，避免信息过载，提高学习效率',
+        
+        // 中文摩斯密码测试解释内容
+        'cexp1_title': '中文摩尔斯电码的定义',
+        'cexp1_content': '• 中文摩尔斯电码是专门为中文汉字设计的编码系统\n• 通过点（·）和划（-）的组合表示中文字符\n• 结合了传统摩尔斯电码原理和中文语言特点\n• 为中文通信提供了标准化的编码方案',
+        'cexp2_title': '编码长度的特点',
+        'cexp2_content': '• 中文摩尔斯电码的编码通常比英文更长\n• 这是因为中文字符数量庞大，需要更多点划组合\n• 每个汉字都有唯一的摩尔斯电码表示\n• 编码长度增加是为了确保字符的唯一性',
+        'cexp3_title': '历史发展背景',
+        'cexp3_content': '• 1920 年代：初步制定中文摩尔斯电码标准\n• 当时为了适应中文电报通信的需求\n• 国际电信联盟（ITU）参与制定\n• 经过多次优化形成现代标准',
+        'cexp4_title': '应用场景分析',
+        'cexp4_content': '• 军事通信：部队间的秘密通信\n• 航空通信：飞行员与地面控制塔通信\n• 航海通信：船舶间通信\n• 网络聊天不属于传统应用场景',
+        'cexp5_title': '学习策略建议',
+        'cexp5_content': '• 从基础汉字开始学习最科学\n• 基础汉字使用频率高，容易记忆\n• 循序渐进，避免信息过载\n• 建立学习信心，提高学习效率',
       
       // 翻译模块
       'text_to_morse': '文本 → 电码',
@@ -232,6 +294,7 @@ export class I18nService {
       
       // 学习模块
       'morse_code_basics': 'Morse Code Basics',
+      'morse_code_intro': 'Morse code is a character encoding system based on "dots (·) and dashes (-)". Different combinations of dots and dashes represent letters, numbers, and symbols.',
       'alphabet_lesson': 'Alphabet',
       'number_lesson': 'Number',
       'punctuation_lesson': 'Punctuation',
@@ -241,7 +304,7 @@ export class I18nService {
       'next_lesson': 'Next Lesson',
       'start_test': 'Start Test',
       'your_score': 'Your Score',
-      'congratulations_passed': '🎉 Congratulations! You passed!',
+      'congratulations_passed': 'Congratulations!',
       'keep_trying': 'Keep trying!',
       
       // 练习模块
@@ -257,9 +320,72 @@ export class I18nService {
       'practice_count': 'Practice Count',
       'favorite_added': 'Added to favorites',
       'favorite_removed': 'Removed from favorites',
-      'practice_records': 'Practice Records',
-      'practiced': 'Practiced',
-      'total': 'Total',
+        'practice_records': 'Practice Records',
+        'practiced': 'Practiced',
+        'total': 'Total',
+        'learning_completed': 'Learning Completed',
+        
+        // 测试页面相关
+        'you_mastered_basics': 'You have mastered the basics of Morse code',
+        'need_100_to_pass': 'Need 100 points to pass the test',
+        'test_your_mastery': 'Test your mastery of {title}',
+        'test_your_mastery_text': 'Test your mastery of {title}',
+        'test_content': 'Test Content',
+        'test_format_1': '• 2 True/False questions (20 points each)',
+        'test_format_2': '• 3 Multiple choice questions (20 points each)',
+        'retake_test': 'Retake Test',
+        'next_question': 'Next Question',
+        'view_results': 'View Results',
+        'correct': 'Correct',
+        'wrong': 'Wrong',
+        
+        // 基础测试问题和选项
+        'q1_question': 'Morse code is a character encoding system based on "dots (·) and dashes (-)".',
+        'q1_options': 'Correct,Wrong',
+        'q2_question': 'The SOS signal in Morse code is ··· --- ···, and normal character spacing should be maintained between characters.',
+        'q2_options': 'Correct,Wrong',
+        'q3_question': 'In Morse code timing rules, the unit ratio of dots, dashes, and character spacing is:',
+        'q3_options': '1 : 2 : 5,1 : 3 : 7,1 : 4 : 8,2 : 3 : 6',
+        'q4_question': 'In which era was Morse code developed?',
+        'q4_options': '1820s,1830-1840s,1850s,1860s',
+        'q5_question': 'The recommended learning order for Morse code is:',
+        'q5_options': 'Numbers → Letters → Symbols,Symbols → Letters → Numbers,Letters → Numbers → Symbols,Random learning',
+        
+        // 中文摩斯密码测试问题和选项
+        'cq1_question': 'Chinese Morse code is a Morse code system specifically designed for Chinese characters.',
+        'cq1_options': 'Correct,Wrong',
+        'cq2_question': 'Chinese Morse code encoding is typically shorter than English Morse code.',
+        'cq2_options': 'Correct,Wrong',
+        'cq3_question': 'In which era was Chinese Morse code first established?',
+        'cq3_options': '1900s,1920s,1950s,1980s',
+        'cq4_question': 'Which of the following is NOT an application scenario for Chinese Morse code?',
+        'cq4_options': 'Military communication,Aviation communication,Online chat,Maritime communication',
+        'cq5_question': 'The recommended learning order for Chinese Morse code is:',
+        'cq5_options': 'Start with complex characters,Start with basic characters,Random learning,Start with punctuation',
+        
+        // 基础测试解释内容
+        'exp1_title': 'Basic Elements of Morse Code',
+        'exp1_content': '• Morse code is based on "dots (·) and dashes (-)"\n• Different combinations of dots and dashes represent letters, numbers, and symbols\n• This is the foundation of all Morse code and must be mastered',
+        'exp2_title': 'SOS Signal',
+        'exp2_content': '• SOS is an emergency distress signal that needs quick recognition\n• Compact transmission: The three characters (··· --- ···) are sent compactly without normal character spacing\n• Standard spacing rules: Normally, Morse code characters should have 3-unit spacing between them\n• SOS exception: But SOS, as an emergency signal, ignores this rule and sends compactly for faster recognition',
+        'exp3_title': 'Importance of Timing Rules',
+        'exp3_content': '• The 1:3:7 ratio is the core rule of Morse code\n• Dot = 1 unit, Dash = 3 units, Character spacing = 3 units, Word spacing = 7 units\n• This precise timing ensures accuracy and readability of information transmission',
+        'exp4_title': 'Historical Background',
+        'exp4_content': '• Samuel Morse and Alfred Vail collaborated in the 1830-1840s\n• Initially used for telegraph systems, later evolved into international Morse code\n• Became the global standard for radio communication encoding',
+        'exp5_title': 'Learning Strategy',
+        'exp5_content': '• Letters → Numbers → Symbols is the most scientific learning order\n• Master basic letters first, then learn numbers and symbols\n• Progressive learning to avoid information overload and improve efficiency',
+        
+        // 中文摩斯密码测试解释内容
+        'cexp1_title': 'Definition of Chinese Morse Code',
+        'cexp1_content': '• Chinese Morse code is a coding system specifically designed for Chinese characters\n• Uses combinations of dots (·) and dashes (-) to represent Chinese characters\n• Combines traditional Morse code principles with Chinese language characteristics\n• Provides standardized encoding for Chinese communication',
+        'cexp2_title': 'Characteristics of Encoding Length',
+        'cexp2_content': '• Chinese Morse code encoding is typically longer than English Morse code\n• This is because Chinese characters are numerous and require more dot-dash combinations\n• Each Chinese character has a unique Morse code representation\n• Increased encoding length ensures character uniqueness',
+        'cexp3_title': 'Historical Development Background',
+        'cexp3_content': '• 1920s: Initial establishment of Chinese Morse code standards\n• Developed to meet the needs of Chinese telegraph communication\n• International Telecommunication Union (ITU) participated in development\n• Modern standards formed through multiple optimizations',
+        'cexp4_title': 'Application Scenario Analysis',
+        'cexp4_content': '• Military communication: Secret communication between troops\n• Aviation communication: Communication between pilots and ground control towers\n• Maritime communication: Communication between ships\n• Online chat is not a traditional application scenario',
+        'cexp5_title': 'Learning Strategy Recommendations',
+        'cexp5_content': '• Starting with basic characters is most scientific\n• Basic characters are used frequently and easy to remember\n• Progressive learning to avoid information overload\n• Build learning confidence and improve efficiency',
       
       // 翻译模块
       'text_to_morse': 'Text → Morse',
@@ -392,10 +518,13 @@ export class I18nService {
 
     // 处理模板参数
     if (params) {
-      Object.keys(params).forEach(paramKey => {
+      const paramKeys = Object.keys(params)
+      for (let i = 0; i < paramKeys.length; i++) {
+        const paramKey = paramKeys[i]
         const placeholder = `{${paramKey}}`
-        text = text.replace(new RegExp(placeholder, 'g'), String(params[paramKey]))
-      })
+        const paramValue = params[paramKey]
+        text = text.replace(new RegExp(placeholder, 'g'), String(paramValue))
+      }
     }
 
     return text
@@ -421,6 +550,11 @@ export class I18nService {
       
       // 更新AppStorage，触发UI重新渲染
       AppStorage.setOrCreate('currentLanguage', this.currentLang)
+      
+      // 强制触发UI刷新 - 通过临时改变再恢复的方式
+      const tempKey = 'languageRefreshTrigger'
+      const currentTrigger = AppStorage.get<number>(tempKey) || 0
+      AppStorage.setOrCreate(tempKey, currentTrigger + 1)
       
       // 异步保存到Preferences
       if (this.preferences) {
