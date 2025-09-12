@@ -117,27 +117,40 @@ export class KnowledgeLessonViewModel {
     return this.currentPageIndex + 1
   }
   
+  // 刷新课程内容（语言切换时调用）
+  refreshContent(): void {
+    console.error(`[KnowledgeLessonViewModel] refreshContent: Refreshing lesson content for title=${this.title}`)
+    
+    // 重新加载课程数据以适应新语言
+    this.loadLessonData()
+    
+    // 重置页面索引到第一页
+    this.currentPageIndex = 0
+    
+    console.error(`[KnowledgeLessonViewModel] refreshContent: Content refreshed, sections count=${this.sections.size}`)
+  }
+  
   // 立即标记课程完成
   async markLessonCompletedImmediately(): Promise<void> {
     if (this.lessonCompletedKey && !this.isLessonCompleted && this.context) {
       try {
         // 使用LessonConfig获取正确的课程编号
         const lessonNumber = LessonConfig.getLessonNumber(this.lessonCompletedKey)
-        console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Starting for lessonId=${this.lessonCompletedKey}, lessonNumber=${lessonNumber}`)
+        console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Starting for lessonId=${this.lessonCompletedKey}, lessonNumber=${lessonNumber}`)                                                      
         
         if (lessonNumber > 0) {
           // 使用存储的context立即标记课程完成
           await progressStore.saveLessonCompleted(lessonNumber, this.context)
           this.isLessonCompleted = true
-          console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Completed for lessonNumber=${lessonNumber}`)
+          console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Completed for lessonNumber=${lessonNumber}`)                                                                                        
         } else {
-          console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Invalid lessonId=${this.lessonCompletedKey}`)
+          console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Invalid lessonId=${this.lessonCompletedKey}`)                                                                                       
         }
       } catch (error) {
         console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Error: ${error}`)
       }
     } else {
-      console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Cannot complete - lessonCompletedKey=${this.lessonCompletedKey}, isLessonCompleted=${this.isLessonCompleted}, context=${!!this.context}`)
+      console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Cannot complete - lessonCompletedKey=${this.lessonCompletedKey}, isLessonCompleted=${this.isLessonCompleted}, context=${!!this.context}`)                                                                                                           
     }
   }
 }

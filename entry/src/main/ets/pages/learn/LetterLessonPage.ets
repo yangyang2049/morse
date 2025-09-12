@@ -3,15 +3,43 @@ import { router } from '@kit.ArkUI'
 import { LetterLessonViewModel } from '../../viewmodel/LetterLessonViewModel'
 import { LessonData } from '../../data/LessonData'
 import { audioService } from '../../services/AudioService'
+import { i18nService } from '../../services/I18nService'
 import { Context } from '@kit.AbilityKit'
 // 使用$r()函数替代I18n
 // System bar colors are set globally in EntryAbility
+
+// 本地化字符串接口（避免ArkTS内联对象类型报错）
+interface LetterLessonStrings {
+  settings: string
+  sound: string
+  practice_count: string
+  close: string
+  back: string
+  practice_again: string
+  congratulations_completed: string
+  letters: string
+}
 
 @Entry
 @Component
 struct LetterLessonPage {
   @State viewModel: LetterLessonViewModel = new LetterLessonViewModel()
   private readonly pillRadius: number = 20
+  // 语言热更新状态
+  @StorageLink('currentLanguage') currentLanguage: string = 'zh-CN'
+  @State langTick: number = 0
+  private languageChangeListener: ((lang: string) => void) | null = null
+  // 本地化字符串
+  @State private strings: LetterLessonStrings = {
+    settings: '',
+    sound: '',
+    practice_count: '',
+    close: '',
+    back: '',
+    practice_again: '',
+    congratulations_completed: '',
+    letters: ''
+  }
 
   aboutToAppear() {
     const uiContext = this.getUIContext()
@@ -31,16 +59,33 @@ struct LetterLessonPage {
     if (hostContext) {
       this.viewModel.init(hostContext, lessonId, title, codes)
     }
+
+    // 初始化本地化并监听语言变化
+    this.strings = this.computeStrings()
+    this.languageChangeListener = (lang: string) => {
+      this.strings = this.computeStrings()
+      this.langTick++
+    }
+    this.startLanguageWatcher()
   }
 
   aboutToDisappear() {
     this.viewModel.destroy()
+    if (this.languageChangeListener) {
+      this.languageChangeListener = null
+    }
   }
 
   // 判断是否为单词课程
   private isWordLesson(): boolean {
     const lessonId = this.viewModel.lessonId
-    return lessonId.startsWith('word_lesson_')
+    // lessonId 可能是字符串ID（如 'word_lesson_0'）或数字字符串（如 '19'）
+    if (lessonId.startsWith('word_lesson_')) {
+      return true
+    }
+    // 检查数字编号：单词课程编号为 19-21
+    const lessonNumber = parseInt(lessonId) || 0
+    return lessonNumber >= 19 && lessonNumber <= 21
   }
 
   // 判断是否为数字或符号课程
@@ -122,6 +167,34 @@ struct LetterLessonPage {
     }
   }
 
+  // 语言变化轮询监听
+  private startLanguageWatcher(): void {
+    let last = this.currentLanguage
+    const check = () => {
+      if (this.currentLanguage !== last) {
+        last = this.currentLanguage
+        if (this.languageChangeListener) {
+          this.languageChangeListener(this.currentLanguage)
+        }
+      }
+      setTimeout(check, 100)
+    }
+    check()
+  }
+
+  private computeStrings(): LetterLessonStrings {
+    return {
+      settings: i18nService.t('settings'),
+      sound: i18nService.t('sound'),
+      practice_count: i18nService.t('practice_count'),
+      close: i18nService.t('close'),
+      back: i18nService.t('back'),
+      practice_again: i18nService.t('practice_again'),
+      congratulations_completed: i18nService.t('congratulations_completed'),
+      letters: i18nService.t('letters')
+    }
+  }
+
   @Builder
   private TitleBar() {
     Column() {
@@ -189,13 +262,9 @@ struct LetterLessonPage {
       
       Circle({ width: 200, height: 200 })
         .fill(this.viewModel.getProgressColor())
-        .animation({
-          duration: 300,
-          curve: Curve.EaseInOut
-        })
       
       Text(this.viewModel.codes[this.viewModel.currentIndex]?.character || '')
-        .fontSize(this.isWordLesson() ? 32 : 80)
+        .fontSize(this.isWordLesson() ? 20 : 80)
         .fontWeight(FontWeight.Bold)
         .fontColor('#1A1A1A')
         .textAlign(TextAlign.Center)
@@ -212,17 +281,17 @@ struct LetterLessonPage {
         Row() {
           ForEach((this.viewModel.codes[this.viewModel.currentIndex]?.morse || '').split(''), (char: string, index: number) => {
             if (char === '.') {
-              Circle({ width: this.isWordLesson() ? 4 : 8, height: this.isWordLesson() ? 4 : 8 })
+              Circle({ width: this.isWordLesson() ? 6.4 : 8, height: this.isWordLesson() ? 6.4 : 8 })
                 .fill(Color.White)
-                .margin({ right: this.isWordLesson() ? 4 : 8 })
+                .margin({ right: this.isWordLesson() ? 6.4 : 8 })
             } else if (char === '-') {
-              Rect({ width: this.isWordLesson() ? 8 : 16, height: this.isWordLesson() ? 2 : 4 })
+              Rect({ width: this.isWordLesson() ? 12.8 : 16, height: this.isWordLesson() ? 3.2 : 4 })
                 .fill(Color.White)
-                .margin({ right: this.isWordLesson() ? 4 : 8 })
+                .margin({ right: this.isWordLesson() ? 6.4 : 8 })
             } else if (char === ' ') {
               // 字母间空格 - 单词课程中显示
               if (this.isWordLesson()) {
-                Blank().width(8).height(2)
+                Blank().width(3.2).height(1)
               }
             }
           })
@@ -258,23 +327,23 @@ struct LetterLessonPage {
         Row() {
           ForEach(this.viewModel.userInput.split(''), (char: string, index: number) => {
             if (char === '.') {
-              Circle({ width: this.isWordLesson() ? 4 : 8, height: this.isWordLesson() ? 4 : 8 })
+              Circle({ width: this.isWordLesson() ? 6.4 : 8, height: this.isWordLesson() ? 6.4 : 8 })
                 .fill(
                   this.viewModel.showResult && this.viewModel.isCorrect ? Color.Green :
                   this.viewModel.showResult && !this.viewModel.isCorrect ? Color.Red : '#FFD700'
                 )
-                .margin({ right: this.isWordLesson() ? 4 : 8 })
+                .margin({ right: this.isWordLesson() ? 6.4 : 8 })
             } else if (char === '-') {
-              Rect({ width: this.isWordLesson() ? 8 : 16, height: this.isWordLesson() ? 2 : 4 })
+              Rect({ width: this.isWordLesson() ? 12.8 : 16, height: this.isWordLesson() ? 3.2 : 4 })
                 .fill(
                   this.viewModel.showResult && this.viewModel.isCorrect ? Color.Green :
                   this.viewModel.showResult && !this.viewModel.isCorrect ? Color.Red : '#FFD700'
                 )
-                .margin({ right: this.isWordLesson() ? 4 : 8 })
+                .margin({ right: this.isWordLesson() ? 6.4 : 8 })
             } else if (char === ' ') {
               // 字母间空格
               if (this.isWordLesson()) {
-                Blank().width(8).height(2)
+                Blank().width(3.2).height(1)
               }
             }
           })
@@ -391,6 +460,8 @@ struct LetterLessonPage {
   private CompletionDialog() {
     // 全屏覆盖层，用于居中显示对话框
     Column() {
+      // 隐藏的语言触发器
+      Text(this.langTick.toString()).opacity(0).width(0).height(0)
       Blank().layoutWeight(1)
       
       // 对话框内容
@@ -412,7 +483,7 @@ struct LetterLessonPage {
 
         Blank().height(16)
 
-        Text($r('app.string.congratulations_completed'))
+        Text(this.strings.congratulations_completed || $r('app.string.congratulations_completed'))
           .fontSize(24)
           .fontWeight(FontWeight.Bold)
           .fontColor('#FFFFFF')
@@ -426,7 +497,7 @@ struct LetterLessonPage {
               .fontSize(24)
               .fontWeight(FontWeight.Bold)
               .fontColor(Color.White)
-            Text($r('app.string.letters'))
+            Text(this.strings.letters || $r('app.string.letters'))
               .fontSize(10)
               .fontColor('#B0B0B0')
           }
@@ -441,7 +512,7 @@ struct LetterLessonPage {
               .fontSize(24)
               .fontWeight(FontWeight.Bold)
               .fontColor(Color.White)
-            Text($r('app.string.practice_count'))
+            Text(this.strings.practice_count || $r('app.string.practice_count'))
               .fontSize(10)
               .fontColor('#B0B0B0')
           }
@@ -459,7 +530,7 @@ struct LetterLessonPage {
 
         Row() {
           Button() {
-            Text($r('app.string.back'))
+            Text(this.strings.back || $r('app.string.back'))
               .fontSize(16)
               .fontWeight(FontWeight.Bold)
               .fontColor(Color.White)
@@ -478,7 +549,7 @@ struct LetterLessonPage {
           Blank().width(12)
 
           Button() {
-            Text($r('app.string.practice_again'))
+            Text(this.strings.practice_again || $r('app.string.practice_again'))
               .fontSize(16)
               .fontWeight(FontWeight.Bold)
               .fontColor(Color.White)
@@ -518,7 +589,9 @@ struct LetterLessonPage {
       Blank().layoutWeight(1)
 
       Column() {
-        Text($r('app.string.settings'))
+        // 隐藏的语言触发器
+        Text(this.langTick.toString()).opacity(0).width(0).height(0)
+        Text(this.strings.settings || $r('app.string.settings'))
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
           .fontColor('#FFFFFF')
@@ -528,7 +601,7 @@ struct LetterLessonPage {
 
         // 声音
         Row() {
-          Text($r('app.string.sound'))
+          Text(this.strings.sound || $r('app.string.sound'))
             .fontSize(16)
             .fontColor('#FFFFFF')
           Blank().layoutWeight(1)
@@ -545,7 +618,7 @@ struct LetterLessonPage {
 
         // 练习次数 (3-5) - 单行布局，系统步进器不可用时使用 +/-
         Row() {
-          Text($r('app.string.practice_count'))
+          Text(this.strings.practice_count || $r('app.string.practice_count'))
             .fontSize(16)
             .fontColor('#FFFFFF')
           Blank().layoutWeight(1)
@@ -594,7 +667,7 @@ struct LetterLessonPage {
         Blank().height(16)
 
         Button() {
-          Text($r('app.string.close'))
+          Text(this.strings.close || $r('app.string.close'))
             .fontSize(16)
             .fontWeight(FontWeight.Bold)
             .fontColor(Color.Black)

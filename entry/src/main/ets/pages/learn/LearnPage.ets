@@ -26,12 +26,14 @@ interface LocalizedStrings {
 @Component
 export struct LearnPage {
   private scroller: Scroller = new Scroller()
-  @State @Watch('onViewModelChanged') vm: LearnViewModel = new LearnViewModel()
+  @State vm: LearnViewModel = new LearnViewModel()
   @State private isInitialized: boolean = false
-  @State private refreshTrigger: number = 0
-  @State private forceRefresh: number = 0
-  // 使用 StorageLink 监听语言变化
-  @StorageLink('currentLanguage') currentLanguage: string = 'zh-CN'
+  private languageChangeListener: ((lang: string) => void) | null = null
+  // 移除@State缓存，直接从ViewModel获取最新数据
+  // 使用 StorageLink + Watch 实时监听语言变化（替代轮询）
+  @StorageLink('currentLanguage') @Watch('onLanguageChange') currentLanguage: string = 'zh-CN'
+  // 语言强制刷新触发器（由 i18nService 维护）
+  @StorageLink('languageRefreshTrigger') @Watch('onLanguageRefreshTrigger') languageRefreshTrigger: number = 0
   // 语言变化计数器，用于强制UI刷新
   @State langTick: number = 0
   // 缓存本地化字符串
@@ -49,88 +51,203 @@ export struct LearnPage {
     basics_test: ''
   }
   private lessonCompletedCallback: ((data?: Object) => void) | null = null
-  private languageChangeListener: ((lang: string) => void) | null = null
 
   aboutToAppear(): void {
-    // System bar colors are set globally in EntryAbility
-    const uiContext2 = this.getUIContext()
-    const hostContext2 = uiContext2.getHostContext()
-    if (hostContext2) {
-      // 简化的课程完成监听
-      this.lessonCompletedCallback = (data?: Object) => {
-        console.log('[LearnPage] Lesson completed event received, refreshing UI')
-        this.forceRefreshUI()
-      }
-      eventHub.on(Events.LESSON_COMPLETED, this.lessonCompletedCallback)
+    // 添加语言变化监听器
+    this.languageChangeListener = (lang: string) => {
+      console.log(`[LearnPage] Language changed to: ${lang}`)
       
-      // 启动定时刷新机制 - 确保UI始终是最新的
-      this.startPeriodicRefresh()
-      
-      // 添加语言变化监听器 - 使用定时器检查语言变化
-      this.languageChangeListener = (lang: string) => {
-        console.log(`[LearnPage] Language changed to: ${lang}`)
-        // 同时刷新ViewModel中的课程数据
-        this.vm.refreshLessons()
-      }
-      
-      // 启动语言变化监听
-      this.startLanguageWatcher()
-      
-      this.vm.init(hostContext2).then(() => {
-        // 初始化本地化字符串
-        this.strings = this.computeStrings()
-        this.isInitialized = true
-      })
-
+      // 延迟500ms刷新，确保语言切换完成
+      setTimeout(() => {
+        // 强制同步语言到 i18nService
+        i18nService.setLanguage(lang).then(() => {
+          console.log(`[LearnPage] i18nService language updated to: ${lang}`)
+          // 更新缓存的本地化字符串
+          this.strings = this.computeStrings()
+          // 刷新课程数据
+          this.vm.refreshLessons()
+          this.updateLessonData()
+          
+          // 额外的调试信息
+          console.log(`[LearnPage] After refresh - isChinese: ${i18nService.isChinese()}, intro count: ${this.vm.getIntroLessons().length}`)
+        }).catch((error: Error) => {
+          console.warn(`[LearnPage] Failed to set language: ${error.message}`)
+          // 即使失败也尝试刷新
+          this.strings = this.computeStrings()
+          this.vm.refreshLessons()
+          this.updateLessonData()
+        })
+      }, 500)
     }
-  }
-
-  onPageShow(): void {
-    // 简化：只在页面显示时刷新状态
+    
+    // 由 StorageLink + @Watch 实时监听语言变化，无需轮询
+    
     const uiContext = this.getUIContext()
     const hostContext = uiContext.getHostContext()
     if (hostContext) {
-      this.vm.loadUnlockState(hostContext).then(() => {
-        this.refreshTrigger++
-      }).catch((error: Error) => {
-        // 静默处理错误
+      // 课程完成监听
+      this.lessonCompletedCallback = (data?: Object) => {
+        console.log('[LearnPage] Lesson completed event received, refreshing UI')
+        this.vm.refreshLessons()
+        this.updateLessonData()
+      }
+      eventHub.on(Events.LESSON_COMPLETED, this.lessonCompletedCallback)
+      
+      this.vm.init(hostContext).then(() => {
+        this.strings = this.computeStrings()
+        this.updateLessonData()
+        this.isInitialized = true
       })
     }
   }
 
+  // 语言变化时的处理方法（由 @Watch 触发）
+  onLanguageChange(): void {
+    const lang = this.currentLanguage
+    console.log(`[LearnPage] onLanguageChange -> ${lang}`)
+    if (this.languageChangeListener) {
+      this.languageChangeListener(lang)
+    } else {
+      // 兜底：延迟500ms刷新，确保语言切换完成
+      setTimeout(() => {
+        i18nService.setLanguage(lang).then(() => {
+          this.strings = this.computeStrings()
+          this.vm.refreshLessons()
+          this.updateLessonData()
+        }).catch(() => {
+          this.strings = this.computeStrings()
+          this.vm.refreshLessons()
+          this.updateLessonData()
+        })
+      }, 500)
+    }
+  }
+
+  // 当全局语言刷新触发器变化时，强制刷新内容
+  onLanguageRefreshTrigger(): void {
+    console.log('[LearnPage] onLanguageRefreshTrigger -> force refresh')
+    // 延迟500ms刷新，确保语言切换完成
+    setTimeout(() => {
+      this.strings = this.computeStrings()
+      this.vm.refreshLessons()
+      this.updateLessonData()
+    }, 500)
+  }
+
+  // ViewModel变化时的处理方法
+  onViewModelChange(): void {
+    console.log('[LearnPage] ViewModel changed, triggering UI refresh')
+    this.langTick++
+  }
+
+  // 已由 StorageLink + @Watch 实时监听语言变化，无需轮询
+  private startLanguageWatcher(): void {}
+
+  // 更新课程数据 - 现在只需要触发UI刷新
+  private updateLessonData(): void {
+    // 触发UI刷新，确保标题和副标题重新计算
+    this.langTick++
+    console.log('[LearnPage] Triggering UI refresh, langTick:', this.langTick)
+    console.log('[LearnPage] Current language:', i18nService.getCurrentLanguage(), 'isChinese:', i18nService.isChinese())
+    
+    // 直接从ViewModel获取最新数据进行调试
+    const introLessons = this.vm.getIntroLessons()
+    console.log('[LearnPage] Fresh intro lessons from VM:', introLessons.map(l => `${l.key}:${l.title}`).join(', '))
+  }
+
+  // 处理课程点击事件
+  private handleLessonClick(item: LessonItem): void {
+    // Block navigation for placeholder lessons
+    if (item.title === '占位') { return }
+    
+    if (item.key === 'intro_1') {
+      // Navigate to lesson page for the 2nd intro lesson (Chinese)
+      router.push({
+        url: 'pages/learn/KnowledgeLessonPage',
+        params: {
+          title: this.strings.chinese_morse_code || i18nService.t('chinese_morse_code'),
+          testTitle: this.strings.chinese_code_test || i18nService.t('chinese_code_test'),
+          // Use lesson ID for correct mapping
+          lessonCompletedKey: 'intro_lesson_1'
+        }
+      })
+    } else if (item.key.startsWith('intro_')) {
+      // Navigate to lesson page for the 1st intro lesson (Basics)
+      router.push({
+        url: 'pages/learn/KnowledgeLessonPage',
+        params: {
+          title: this.strings.morse_code_basics || i18nService.t('morse_code_basics'),
+          testTitle: this.strings.basics_test || i18nService.t('basics_test'),
+          lessonCompletedKey: 'intro_lesson_0'
+        }
+      })
+    } else if (item.key.startsWith('alpha_')) {
+      // 字母课程 - 路由到LetterLessonPage
+      const lessonIndex = parseInt(item.key.replace('alpha_', ''))
+      const lessonNumber = LessonConfig.getLessonNumber(`alphabet_lesson_${lessonIndex}`)
+      console.error(`[LEARN] Navigating to alphabet lesson: ${lessonNumber}`)
+      router.push({
+        url: 'pages/learn/LetterLessonPage',
+        params: {
+          lessonId: lessonNumber.toString(),
+          title: item.title
+        }
+      })
+    } else if (item.key.startsWith('number_')) {
+      // 数字课程 - 路由到LetterLessonPage
+      const lessonIndex = parseInt(item.key.replace('number_', ''))
+      const lessonNumber = LessonConfig.getLessonNumber(`number_lesson_${lessonIndex}`)
+      console.error(`[LEARN] Navigating to number lesson: ${lessonNumber}`)
+      router.push({
+        url: 'pages/learn/LetterLessonPage',
+        params: {
+          lessonId: lessonNumber.toString(),
+          title: item.title
+        }
+      })
+    } else if (item.key.startsWith('punctuation_')) {
+      // 符号课程 - 路由到LetterLessonPage
+      const lessonIndex = parseInt(item.key.replace('punctuation_', ''))
+      const lessonNumber = LessonConfig.getLessonNumber(`punctuation_lesson_${lessonIndex}`)
+      console.error(`[LEARN] Navigating to punctuation lesson: ${lessonNumber}`)
+      router.push({
+        url: 'pages/learn/LetterLessonPage',
+        params: {
+          lessonId: lessonNumber.toString(),
+          title: item.title
+        }
+      })
+    } else if (item.key.startsWith('word_')) {
+      // 单词课程 - 路由到LetterLessonPage
+      const lessonIndex = parseInt(item.key.replace('word_', ''))
+      const lessonNumber = LessonConfig.getLessonNumber(`word_lesson_${lessonIndex}`)
+      console.error(`[LEARN] Navigating to word lesson: ${lessonNumber}`)
+      router.push({
+        url: 'pages/learn/LetterLessonPage',
+        params: {
+          lessonId: lessonNumber.toString(),
+          title: item.title
+        }
+      })
+    } else {
+      console.warn(`[LEARN] Unknown lesson type: ${item.key}`)
+    }
+  }
+
+
+
   aboutToDisappear(): void {
+    // 清理语言变化监听器
+    if (this.languageChangeListener) {
+      this.languageChangeListener = null
+    }
     // 清理事件监听
     if (this.lessonCompletedCallback) {
       eventHub.off(Events.LESSON_COMPLETED, this.lessonCompletedCallback)
       this.lessonCompletedCallback = null
     }
-    // 清理语言变化监听器
-    if (this.languageChangeListener) {
-      this.languageChangeListener = null
-    }
   }
 
-  // 启动语言变化监听器
-  private startLanguageWatcher(): void {
-    let lastLanguage = this.currentLanguage
-    const checkLanguageChange = () => {
-      if (this.currentLanguage !== lastLanguage) {
-        console.log(`[LearnPage] Language changed from ${lastLanguage} to ${this.currentLanguage}`)
-        lastLanguage = this.currentLanguage
-        // 立即更新缓存的本地化字符串
-        this.strings = this.computeStrings()
-        // 触发UI强制刷新
-        this.langTick++
-        this.refreshTrigger++
-        if (this.languageChangeListener) {
-          this.languageChangeListener(this.currentLanguage)
-        }
-      }
-      // 继续监听
-      setTimeout(checkLanguageChange, 100)
-    }
-    checkLanguageChange()
-  }
 
   // 计算本地化字符串
   private computeStrings(): LearnPageStrings {
@@ -167,12 +284,9 @@ export struct LearnPage {
     }
   }
 
-  // 动态获取课程标题
+  // 动态获取课程标题 - 强制重新获取最新翻译
   private getDynamicLessonTitle(item: LessonItem): string {
-    // 引用langTick确保响应语言变化
-    const _ = this.langTick
-    
-    // 根据课程key动态获取标题
+    // 根据课程key动态获取标题，每次都重新调用i18nService
     if (item.key.startsWith('intro_')) {
       const lessonNumber = parseInt(item.key.replace('intro_', '')) + 1
       return i18nService.t(`lesson_${lessonNumber}`)
@@ -194,12 +308,9 @@ export struct LearnPage {
     return typeof item.title === 'string' ? item.title : ''
   }
 
-  // 动态获取课程副标题
+  // 动态获取课程副标题 - 强制重新获取最新翻译
   private getDynamicLessonSubtitle(item: LessonItem): string {
-    // 引用langTick确保响应语言变化
-    const _ = this.langTick
-    
-    // 根据课程key动态获取副标题
+    // 根据课程key动态获取副标题，每次都重新调用i18nService
     if (item.key === 'intro_0') {
       return i18nService.t('morse_code_basics')
     } else if (item.key === 'intro_1') {
@@ -248,32 +359,6 @@ export struct LearnPage {
     return (typeof item.subtitle === 'string' ? item.subtitle : '') || ''
   }
 
-  // ViewModel变化监听器
-  onViewModelChanged(): void {
-    console.log('[LearnPage] ViewModel changed, triggering UI refresh')
-    this.refreshTrigger++
-  }
-
-  // 强制刷新UI
-  private forceRefreshUI(): void {
-    console.log('[LearnPage] Force refreshing UI')
-    // 刷新ViewModel数据
-    this.vm.refreshLessons()
-    // 触发UI更新
-    this.refreshTrigger++
-    this.forceRefresh++
-  }
-
-  // 启动定时刷新机制
-  private startPeriodicRefresh(): void {
-    const refreshInterval = () => {
-      // 每2秒检查一次是否需要刷新
-      this.forceRefreshUI()
-      setTimeout(refreshInterval, 2000)
-    }
-    // 延迟1秒后开始定时刷新
-    setTimeout(refreshInterval, 1000)
-  }
 
 
   @Builder
@@ -283,11 +368,8 @@ export struct LearnPage {
       if (item.title !== '占位') {
         // 中间内容：标题/副标题始终居中
         Column() {
-          // 隐藏的langTick触发器确保课程标题响应语言变化
-          Text(this.langTick.toString())
-            .opacity(0)
-            .width(0)
-            .height(0)
+          // 隐藏的langTick触发器引用
+          Text(this.langTick.toString()).opacity(0).width(0).height(0)
           
           Text(this.getDynamicLessonTitle(item))
             .fontSize(18)
@@ -309,7 +391,7 @@ export struct LearnPage {
         .justifyContent(FlexAlign.Center)
         .alignItems(HorizontalAlign.Center)
 
-        // 右侧悬浮图标：✓ 或 右箭头 - 引用refreshTrigger确保响应式更新
+        // 右侧悬浮图标：✓ 或 右箭头
         Row() {
           if (item.completed) {
             Text('✓').fontSize(20).fontColor(Color.Green)
@@ -323,7 +405,6 @@ export struct LearnPage {
         .width('100%')
         .justifyContent(FlexAlign.End)
         .alignItems(VerticalAlign.Center)
-        .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger确保响应式更新
       }
     }
     .width('100%')
@@ -331,90 +412,10 @@ export struct LearnPage {
     .backgroundColor(item.title === '占位' ? Color.Transparent : '#1A1A1A')
     .border({ width: item.title === '占位' ? 0 : 1, color: item.title === '占位' ? Color.Transparent : '#333333' })
     .borderRadius(12)
-    .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger确保响应式更新
-    .onClick(() => {
-      // Block navigation for placeholder lessons
-      if (item.title === '占位') { return }
-      if (item.title !== '占位') {
-        if (item.key === 'intro_1') {
-          // Navigate to lesson page for the 2nd intro lesson (Chinese)
-          router.push({
-            url: 'pages/learn/KnowledgeLessonPage',
-            params: {
-              title: this.strings.chinese_morse_code || i18nService.t('chinese_morse_code'),
-              testTitle: this.strings.chinese_code_test || i18nService.t('chinese_code_test'),
-              // Use lesson ID for correct mapping
-              lessonCompletedKey: 'intro_lesson_1'
-            }
-          })
-        } else if (item.key.startsWith('intro_')) {
-          // Navigate to lesson page for the 1st intro lesson (Basics)
-          router.push({
-            url: 'pages/learn/KnowledgeLessonPage',
-            params: {
-              title: this.strings.morse_code_basics || i18nService.t('morse_code_basics'),
-              testTitle: this.strings.basics_test || i18nService.t('basics_test'),
-              lessonCompletedKey: 'intro_lesson_0'
-            }
-          })
-        } else if (item.key.startsWith('alpha_')) {
-          // 字母课程 - 路由到LetterLessonPage
-          const lessonIndex = parseInt(item.key.replace('alpha_', ''))
-          const lessonNumber = LessonConfig.getLessonNumber(`alphabet_lesson_${lessonIndex}`)
-          console.error(`[LEARN] Navigating to alphabet lesson: ${lessonNumber}`)
-          router.push({
-            url: 'pages/learn/LetterLessonPage',
-            params: {
-              lessonId: lessonNumber.toString(),
-              title: item.title
-            }
-          })
-        } else if (item.key.startsWith('number_')) {
-          // 数字课程 - 路由到LetterLessonPage
-          const lessonIndex = parseInt(item.key.replace('number_', ''))
-          const lessonNumber = LessonConfig.getLessonNumber(`number_lesson_${lessonIndex}`)
-          console.error(`[LEARN] Navigating to number lesson: ${lessonNumber}`)
-          router.push({
-            url: 'pages/learn/LetterLessonPage',
-            params: {
-              lessonId: lessonNumber.toString(),
-              title: item.title
-            }
-          })
-        } else if (item.key.startsWith('punctuation_')) {
-          // 符号课程 - 路由到LetterLessonPage
-          const lessonIndex = parseInt(item.key.replace('punctuation_', ''))
-          const lessonNumber = LessonConfig.getLessonNumber(`punctuation_lesson_${lessonIndex}`)
-          console.error(`[LEARN] Navigating to punctuation lesson: ${lessonNumber}`)
-          router.push({
-            url: 'pages/learn/LetterLessonPage',
-            params: {
-              lessonId: lessonNumber.toString(),
-              title: item.title
-            }
-          })
-        } else if (item.key.startsWith('word_')) {
-          // 单词课程 - 路由到LetterLessonPage
-          const lessonIndex = parseInt(item.key.replace('word_', ''))
-          const lessonNumber = LessonConfig.getLessonNumber(`word_lesson_${lessonIndex}`)
-          console.error(`[LEARN] Navigating to word lesson: ${lessonNumber}`)
-          router.push({
-            url: 'pages/learn/LetterLessonPage',
-            params: {
-              lessonId: lessonNumber.toString(),
-              title: item.title
-            }
-          })
-        } else {
-          // For other lessons, show a placeholder message
-          console.error(`[LEARN] Navigating to other lesson: ${item.key}`)
-        }
-      }
-    })
   }
 
   @Builder
-  private UnitCard(titleKey: string, unitNumber: number, lessons: LessonItem[], isUnlocked: boolean) {
+  private UnitCard(titleKey: string, unitNumber: number, lessons: LessonItem[]) {
     RelativeContainer() {
       // Reference anchor filling the card (use empty Column due to Blank restriction)
       Column() {}
@@ -443,12 +444,6 @@ export struct LearnPage {
         .zIndex(1)
       {
         Row() {
-          // 隐藏的langTick触发器确保标题响应语言变化
-          Text(this.langTick.toString())
-            .opacity(0)
-            .width(0)
-            .height(0)
-          
           Text(this.getLocalizedString(titleKey))
             .fontSize(28)
             .fontWeight(FontWeight.Bold)
@@ -461,14 +456,22 @@ export struct LearnPage {
         // Lessons list (scroll within card); render placeholders with opacity 0 to keep vertical alignment
         Scroll() {
           Column() {
+            // 引用ViewModel的dataVersion来确保响应式更新
+            Text(this.vm.dataVersion.toString()).opacity(0).width(0).height(0)
+            
             ForEach(lessons, (l: LessonItem, idx: number) => {
               Column() {
-                this.LessonCard(l, !isUnlocked) // Pass unit lock status
+                this.LessonCard(l, false) // All lessons are unlocked
                 if (idx < lessons.length - 1) { Blank().height(12) }
               }
               .opacity(l.title === '占位' ? 0.0 : 1.0) // 占位课程不可见但占据空间
-              .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger确保响应式更新
-            }, (l: LessonItem) => `${l.key}-${l.unlocked ? 'u' : 'l'}-${l.completed ? 'c' : 'n'}-${this.refreshTrigger}-${this.forceRefresh}`) // 在key中包含刷新触发器
+              .visibility(l.title === '占位' ? Visibility.Hidden : Visibility.Visible) // 确保占位课程完全隐藏
+              .onClick(() => {
+                if (l.title !== '占位') { // 只有非占位课程才能点击
+                  this.handleLessonClick(l)
+                }
+              })
+            }, (l: LessonItem) => `${l.key}-${l.completed ? 'c' : 'n'}-${this.vm.dataVersion}`)
           }
         }
         .layoutWeight(1)
@@ -493,14 +496,8 @@ export struct LearnPage {
   build() {
     Column() {
       if (this.isInitialized) {
-        // Title bar - 引用langTick和refreshTrigger使其响应式
+        // Title bar
         Row() {
-          // 隐藏的langTick触发器
-          Text(this.langTick.toString())
-            .opacity(0)
-            .width(0)
-            .height(0)
-          
           Text(this.strings.learn || i18nService.t('learn'))
             .fontSize(18)
             .fontWeight(FontWeight.Bold)
@@ -511,45 +508,39 @@ export struct LearnPage {
         .height(52)
         .padding({ left: 16, right: 16 })
         .backgroundColor(Color.Black)
-        .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger
 
-        // Horizontal scroll of unit cards - 让所有课程卡片都引用refreshTrigger和langTick
+        // Horizontal scroll of unit cards
         Scroll(this.scroller) {
           Row() {
-            // Intro unit (2 lessons + padding)
+            // Intro unit (2 lessons + padding) - 直接从ViewModel获取最新数据
             Column() { 
-              this.UnitCard('morse_code_basics', 1, this.vm.introLessons, true) 
+              this.UnitCard('morse_code_basics', 1, this.vm.getIntroLessons()) 
             }
             .width(320).height(500).margin({ right: 16 })
-            .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger
 
-            // Alphabet unit (9)
+            // Alphabet unit (9) - 直接从ViewModel获取最新数据
             Column() { 
-              this.UnitCard('alphabet_lesson', 2, this.vm.alphabetLessons, true) 
+              this.UnitCard('alphabet_lesson', 2, this.vm.getAlphabetLessons()) 
             }
             .width(320).height(500).margin({ right: 16 })
-            .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger
 
-            // Numbers unit (4)
+            // Numbers unit (4) - 直接从ViewModel获取最新数据
             Column() { 
-              this.UnitCard('number_lesson', 3, this.vm.numberLessons, true) 
+              this.UnitCard('number_lesson', 3, this.vm.getNumberLessons()) 
             }
             .width(320).height(500).margin({ right: 16 })
-            .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger
 
-            // Punctuation unit (3 + pad)
+            // Punctuation unit (3 + pad) - 直接从ViewModel获取最新数据
             Column() { 
-              this.UnitCard('punctuation_lesson', 4, this.vm.punctuationLessons, true) 
+              this.UnitCard('punctuation_lesson', 4, this.vm.getPunctuationLessons()) 
             }
             .width(320).height(500).margin({ right: 16 })
-            .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger
 
-            // Words unit (3 + pad)
+            // Words unit (3 + pad) - 直接从ViewModel获取最新数据
             Column() { 
-              this.UnitCard('word_lesson', 5, this.vm.wordLessons, true) 
+              this.UnitCard('word_lesson', 5, this.vm.getWordLessons()) 
             }
             .width(320).height(500)
-            .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger
           }
         }
         .scrollable(ScrollDirection.Horizontal)

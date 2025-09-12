@@ -1,4 +1,3 @@
-import { languageService } from '../services/LanguageService'
 
 export class LessonData {
   // 摩斯密码基础课程数据
@@ -247,11 +246,15 @@ export class LessonData {
 
   // 根据语言获取介绍课程数据
   static getIntroSections(): Map<string, string[]> {
-    return languageService.isEnglish() ? LessonData.introSectionsEn : LessonData.introSections
+    // 使用 AppStorage 获取当前语言
+    const currentLang: string = AppStorage.get<string>('currentLanguage') || 'zh-CN'
+    return currentLang.startsWith('en') ? LessonData.introSectionsEn : LessonData.introSections
   }
 
   // 根据语言获取中文摩尔斯电码课程数据（英文版本不包含）
   static getChineseSections(): Map<string, string[]> | null {
-    return languageService.isEnglish() ? null : LessonData.chineseSections
+    // 使用 AppStorage 获取当前语言
+    const currentLang: string = AppStorage.get<string>('currentLanguage') || 'zh-CN'
+    return currentLang.startsWith('en') ? null : LessonData.chineseSections
   }
 }

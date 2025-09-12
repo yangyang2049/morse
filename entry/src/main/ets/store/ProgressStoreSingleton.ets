@@ -2,7 +2,6 @@ import { preferences } from '@kit.ArkData'
 import Context from '@ohos.app.ability.common'
 import { LessonConfig } from '../data/LessonConfig'
 import { eventHub, Events, LessonCompletedEventData } from '../utils/EventHub'
-import { languageService } from '../services/LanguageService'
 
 export interface ProgressTarget {
   unitIdx: number

@@ -1,5 +1,6 @@
 import { preferences } from '@kit.ArkData'
 import { Context } from '@kit.AbilityKit'
+// 移除对已删除的 LanguageService 的依赖
 
 /**
  * 语言选项接口
@@ -74,12 +75,14 @@ export class I18nService {
       // 通用操作
       'confirm': '确认',
       'cancel': '取消',
-      'close': '关闭',
+      'close': '确定',
       'back': '返回',
       'next': '下一步',
       'loading': '加载中...',
       'copied': '已复制到剪贴板',
       'got_it': '知道了',
+      'settings': '设置',
+      'sound': '声音',
       
       // 语言设置
       'language': '语言',
@@ -116,6 +119,7 @@ export class I18nService {
       'mistakes': '错题本',
       'practice_again': '再次练习',
       'practice_count': '练习次数',
+      'congratulations_completed': '恭喜完成！',
       'favorite_added': '已收藏',
       'favorite_removed': '已取消收藏',
       'practice_records': '练习记录',
@@ -124,7 +128,7 @@ export class I18nService {
       'learning_completed': '完成学习',
       'you_mastered_basics': '你已经掌握了摩斯密码的基础知识',
       'need_100_to_pass': '需要100分才能通过测试',
-      'test_your_mastery': '测试你对{title}的掌握程度',
+      'test_your_mastery': '测试你对本课程的掌握程度',
       'test_your_mastery_text': '测试你对{title}的掌握程度',
       'test_content': '测试内容',
       'test_format_1': '• 2道判断题（每题20分）',
@@ -276,12 +280,14 @@ export class I18nService {
       // 通用操作
       'confirm': 'Confirm',
       'cancel': 'Cancel',
-      'close': 'Close',
+      'close': 'OK',
       'back': 'Back',
       'next': 'Next',
       'loading': 'Loading...',
       'copied': 'Copied to clipboard',
       'got_it': 'Got it',
+      'settings': 'Settings',
+      'sound': 'Sound',
       
       // 语言设置
       'language': 'Language',
@@ -328,8 +334,7 @@ export class I18nService {
         // 测试页面相关
         'you_mastered_basics': 'You have mastered the basics of Morse code',
         'need_100_to_pass': 'Need 100 points to pass the test',
-        'test_your_mastery': 'Test your mastery of {title}',
-        'test_your_mastery_text': 'Test your mastery of {title}',
+        'test_your_mastery': 'Test your mastery of this lesson',
         'test_content': 'Test Content',
         'test_format_1': '• 2 True/False questions (20 points each)',
         'test_format_2': '• 3 Multiple choice questions (20 points each)',
@@ -548,6 +553,8 @@ export class I18nService {
       // 更新当前语言
       this.currentLang = languageCode
       
+      // 语言切换已统一到 I18nService，无需同步其他服务
+      
       // 更新AppStorage，触发UI重新渲染
       AppStorage.setOrCreate('currentLanguage', this.currentLang)
       
@@ -555,7 +562,7 @@ export class I18nService {
       const tempKey = 'languageRefreshTrigger'
       const currentTrigger = AppStorage.get<number>(tempKey) || 0
       AppStorage.setOrCreate(tempKey, currentTrigger + 1)
-      
+
       // 异步保存到Preferences
       if (this.preferences) {
         await this.preferences.put('current_language', languageCode)

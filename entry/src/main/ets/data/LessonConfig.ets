@@ -1,7 +1,22 @@
-import { languageService } from '../services/LanguageService'
 
 // 课程配置和编号系统
 export class LessonConfig {
+  // 缓存英文版本的 Map 对象，避免重复创建
+  private static readonly UNIT_START_LESSONS_EN = new Map<string, number>([
+    ['intro', 1],
+    ['alphabet', 2],
+    ['numbers', 11],
+    ['punctuation', 15],
+    ['words', 18]
+  ])
+
+  private static readonly UNIT_END_LESSONS_EN = new Map<string, number>([
+    ['intro', 1], // 只有摩斯密码基础
+    ['alphabet', 10], // 字母单元2-10
+    ['numbers', 14], // 数字单元11-14
+    ['punctuation', 17], // 符号单元15-17
+    ['words', 20] // 单词单元18-20
+  ])
   // 课程编号映射 - 中文版本使用全局连续编号
   static readonly LESSON_MAPPING = new Map<string, number>([
     // 基础单元 (1-2)
@@ -54,96 +69,41 @@ export class LessonConfig {
     ['words', 21]
   ])
 
-  // 根据语言获取课程映射（英文版本移除中文摩尔斯电码课程）
+  // 检查当前语言是否为英文
+  private static isEnglish(): boolean {
+    const currentLang: string = AppStorage.get<string>('currentLanguage') || 'zh-CN'
+    return currentLang.startsWith('en')
+  }
+
+  // 根据语言获取课程映射（保持中文摩尔斯电码课程在所有语言中可见）
   static getLessonMapping(): Map<string, number> {
-    if (languageService.isEnglish()) {
-      // 英文版本：移除中文摩尔斯电码课程，使用全局连续编号
-      const englishMapping = new Map<string, number>()
-      
-      // 基础单元：只有摩斯密码基础
-      englishMapping.set('intro_lesson_0', 1)
-      
-      // 字母单元：2-10
-      englishMapping.set('alphabet_lesson_0', 2)
-      englishMapping.set('alphabet_lesson_1', 3)
-      englishMapping.set('alphabet_lesson_2', 4)
-      englishMapping.set('alphabet_lesson_3', 5)
-      englishMapping.set('alphabet_lesson_4', 6)
-      englishMapping.set('alphabet_lesson_5', 7)
-      englishMapping.set('alphabet_lesson_6', 8)
-      englishMapping.set('alphabet_lesson_7', 9)
-      englishMapping.set('alphabet_lesson_8', 10)
-      
-      // 数字单元：11-14
-      englishMapping.set('number_lesson_0', 11)
-      englishMapping.set('number_lesson_1', 12)
-      englishMapping.set('number_lesson_2', 13)
-      englishMapping.set('number_lesson_3', 14)
-      
-      // 符号单元：15-17
-      englishMapping.set('punctuation_lesson_0', 15)
-      englishMapping.set('punctuation_lesson_1', 16)
-      englishMapping.set('punctuation_lesson_2', 17)
-      
-      // 单词单元：18-20
-      englishMapping.set('word_lesson_0', 18)
-      englishMapping.set('word_lesson_1', 19)
-      englishMapping.set('word_lesson_2', 20)
-      
-      return englishMapping
-    }
-    
+    // 所有语言都使用相同的课程映射，包含中文摩尔斯电码课程
     return LessonConfig.LESSON_MAPPING
   }
 
   // 根据语言获取单元起始课程编号
   static getUnitStartLessons(): Map<string, number> {
-    if (languageService.isEnglish()) {
-      // 英文版本：使用全局连续编号
-      return new Map([
-        ['intro', 1],
-        ['alphabet', 2],
-        ['numbers', 11],
-        ['punctuation', 15],
-        ['words', 18]
-      ])
-    }
-    
-    return LessonConfig.UNIT_START_LESSONS
+    return LessonConfig.isEnglish() ? LessonConfig.UNIT_START_LESSONS_EN : LessonConfig.UNIT_START_LESSONS
   }
 
   // 根据语言获取单元结束课程编号
   static getUnitEndLessons(): Map<string, number> {
-    if (languageService.isEnglish()) {
-      // 英文版本：使用全局连续编号
-      return new Map([
-        ['intro', 1], // 只有摩斯密码基础
-        ['alphabet', 10], // 字母单元2-10
-        ['numbers', 14], // 数字单元11-14
-        ['punctuation', 17], // 符号单元15-17
-        ['words', 20] // 单词单元18-20
-      ])
-    }
-    
-    return LessonConfig.UNIT_END_LESSONS
+    return LessonConfig.isEnglish() ? LessonConfig.UNIT_END_LESSONS_EN : LessonConfig.UNIT_END_LESSONS
   }
 
   // 根据语言获取课程编号
   static getLessonNumber(lessonId: string): number {
-    const mapping = LessonConfig.getLessonMapping()
-    return mapping.get(lessonId) ?? 0
+    return LessonConfig.LESSON_MAPPING.get(lessonId) ?? 0
   }
 
   // 根据语言获取单元起始课程编号
   static getUnitStartLesson(unitId: string): number {
-    const mapping = LessonConfig.getUnitStartLessons()
-    return mapping.get(unitId) ?? 0
+    return LessonConfig.getUnitStartLessons().get(unitId) ?? 0
   }
 
   // 根据语言获取单元结束课程编号
   static getUnitEndLesson(unitId: string): number {
-    const mapping = LessonConfig.getUnitEndLessons()
-    return mapping.get(unitId) ?? 0
+    return LessonConfig.getUnitEndLessons().get(unitId) ?? 0
   }
 
   // 根据语言检查课程是否在指定单元内
@@ -155,13 +115,11 @@ export class LessonConfig {
 
   // 根据语言获取所有课程ID列表
   static getAllLessonIds(): string[] {
-    const mapping = LessonConfig.getLessonMapping()
-    return Array.from(mapping.keys())
+    return Array.from(LessonConfig.LESSON_MAPPING.keys())
   }
 
   // 根据语言获取总课程数
   static getTotalLessonsForLanguage(): number {
-    const mapping = LessonConfig.getLessonMapping()
-    return mapping.size
+    return LessonConfig.LESSON_MAPPING.size
   }
 }

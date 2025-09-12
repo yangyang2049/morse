@@ -563,91 +563,87 @@ export struct MePage {
   build() {
     Stack() {
       Scroll() {
-      Column() {
-      // 头部 - 应用信息（黑色背景，图标置顶）
-      Column() {
-        Image($r('app.media.startIcon'))
-          .width(80)
-          .height(80)
-          .borderRadius(20)
-          .margin({ bottom: 16 })
-          .shadow({
-            radius: 8,
-            color: 'rgba(255, 255, 255, 0.3)',
-            offsetX: 0,
-            offsetY: 2
-          })
+        Column() {
+          // 头部 - 应用信息（黑色背景，图标置顶）
+          Column() {
+            Image($r('app.media.startIcon'))
+              .width(80)
+              .height(80)
+              .borderRadius(20)
+              .margin({ bottom: 16 })
+              .shadow({
+                radius: 8,
+                color: 'rgba(255, 255, 255, 0.3)',
+                offsetX: 0,
+                offsetY: 2
+              })
 
-        // 隐藏的langTick触发器
-        Text(this.langTick.toString())
-          .opacity(0)
-          .width(0)
-          .height(0)
-        
-        Text(this.strings.app_name || i18nService.t('app_name'))
-          .fontSize(24)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#FFFFFF')
-          .margin({ bottom: 4 })
+            // 隐藏的langTick触发器
+            Text(this.langTick.toString())
+              .opacity(0)
+              .width(0)
+              .height(0)
+            
+            Text(this.strings.app_name || i18nService.t('app_name'))
+              .fontSize(24)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#FFFFFF')
+              .margin({ bottom: 4 })
 
-        Row() {
-          Text(this.strings.version || i18nService.t('version'))
-            .fontSize(14)
-            .fontColor('#B0B0B0')
-          Text(` ${this.appVersion}`)
-            .fontSize(14)
-            .fontColor('#B0B0B0')
-        }
+            Row() {
+              Text(this.strings.version || i18nService.t('version'))
+                .fontSize(14)
+                .fontColor('#B0B0B0')
+              Text(` ${this.appVersion}`)
+                .fontSize(14)
+                .fontColor('#B0B0B0')
+            }
+          }
+          .width('100%')
+          .padding({ top: 60, bottom: 40 })
+          .alignItems(HorizontalAlign.Center)
+
+          // 设置项（黑色背景卡片 + 分割线，无图标）
+          Column() {
+            // 盒子容器
+            Column() {
+              // 语言切换条目
+              this.LanguageSettingsItem()
+              Divider().strokeWidth(1).color('#222222')
+
+              this.InstructionsSettingsItem()
+              Divider().strokeWidth(1).color('#222222')
+
+              this.RatingSettingsItem()
+              Divider().strokeWidth(1).color('#222222')
+
+              this.ShareSettingsItem()
+            }
+            .width('100%')
+            .backgroundColor('#111111')
+            .borderRadius(12)
+            .border({ width: 1, color: '#222222' })
+            .padding({ top: 4, bottom: 4 })
+            .constraintSize({ maxWidth: 400 })
+
+            this.OtherAppsSection()
+          }
+          .width('100%')
+          .padding({ left: 20, right: 20 })
+          .alignItems(HorizontalAlign.Center)
+
+          // 底部版权信息 - 现在在滚动内容的底部
+          Column() {
+            Text(this.strings.copyright || i18nService.t('copyright'))
+              .fontSize(12)
+              .fontColor('#999999')
+          }
+          .width('100%')
+          .padding({ top: 40, bottom: 20 })
+          .alignItems(HorizontalAlign.Center)
         }
         .width('100%')
-        .padding({ top: 60, bottom: 40 })
-        .alignItems(HorizontalAlign.Center)
-
-        // 设置项（黑色背景卡片 + 分割线，无图标）
-        Column() {
-        // 盒子容器
-        Column() {
-          // 语言切换条目
-          this.LanguageSettingsItem()
-          Divider().strokeWidth(1).color('#222222')
-
-          this.InstructionsSettingsItem()
-          Divider().strokeWidth(1).color('#222222')
-
-          this.RatingSettingsItem()
-          Divider().strokeWidth(1).color('#222222')
-
-          this.ShareSettingsItem()
-        }
-        .width('100%')
-        .backgroundColor('#111111')
-        .borderRadius(12)
-        .border({ width: 1, color: '#222222' })
-        .padding({ top: 4, bottom: 4 })
-        .constraintSize({ maxWidth: 400 })
-
-        this.OtherAppsSection()
-      }
-      .width('100%')
-      .padding({ left: 20, right: 20 })
-      .layoutWeight(1)
-      .alignItems(HorizontalAlign.Center)
-
-      // 底部
-      Column() {
-        Text(this.strings.copyright || i18nService.t('copyright'))
-          .fontSize(12)
-          .fontColor('#999999')
-      }
-      .width('100%')
-      .padding({ bottom: 20 })
-      .alignItems(HorizontalAlign.Center)
-      }
-      .width('100%')
-      .height('100%')
-      .backgroundColor('#000000')
-      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
-      .id(`me_page_${this.refreshTrigger}`)
+        .backgroundColor('#000000')
       }
       .width('100%')
       .height('100%')
@@ -655,6 +651,8 @@ export struct MePage {
       .scrollable(ScrollDirection.Vertical)
       .scrollBarColor('#000000')
       .scrollBarWidth(0)
+      .backgroundColor('#000000')
+      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
 
       // 语言选择对话框
       if (this.showLanguageDialog) {

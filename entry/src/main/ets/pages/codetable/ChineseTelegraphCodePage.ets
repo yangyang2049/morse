@@ -3,7 +3,6 @@ import { router, promptAction } from '@kit.ArkUI'
 import util from '@ohos.util'
 import { DialogManager } from '../../widgets/CustomDialog'
 import { CustomDialog } from '../../widgets/CustomDialog'
-import { languageService } from '../../services/LanguageService'
 
 interface ChineseTelegraphCode {
   character: string
@@ -50,8 +49,9 @@ export struct ChineseTelegraphCodePage {
   }
 
   private checkLanguage() {
-    const currentLang = languageService.getCurrentLanguage()
-    this.isEnglish = currentLang === 'en_US'
+    // 使用 AppStorage 获取当前语言
+    const currentLang: string = AppStorage.get<string>('currentLanguage') || 'zh-CN'
+    this.isEnglish = currentLang.startsWith('en')
   }
 
   // 加载第一页数据

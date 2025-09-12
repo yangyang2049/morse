@@ -246,7 +246,7 @@
     },
     {
       "name": "close",
-      "value": "关闭"
+      "value": "确定"
     },
     {
       "name": "test_mastery",
@@ -286,11 +286,11 @@
     },
     {
       "name": "chinese_morse_code",
-      "value": "中文摩尔斯电码"
+      "value": "Chinese Morse Code"
     },
     {
       "name": "chinese_code_test",
-      "value": "中文电码测试"
+      "value": "Chinese Code Test"
     },
     {
       "name": "morse_code_basics",

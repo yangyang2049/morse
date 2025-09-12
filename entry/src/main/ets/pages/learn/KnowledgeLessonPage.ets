@@ -11,6 +11,10 @@ struct KnowledgeLessonPage {
   @State title: string = i18nService.t('morse_code_basics')
   @State content: string = i18nService.t('morse_code_intro')
   @State customSections: string[] = []
+  
+  // 监听语言变化
+  @StorageLink('currentLanguage') @Watch('onLanguageChange') currentLanguage: string = 'zh-CN'
+  @StorageLink('languageRefreshTrigger') @Watch('onLanguageRefreshTrigger') languageRefreshTrigger: number = 0
 
   aboutToAppear() {
     const uiContext = this.getUIContext()
@@ -29,6 +33,34 @@ struct KnowledgeLessonPage {
     } catch (e) {
       console.warn('No params or failed to read params for KnowledgeLessonPage:', e)
     }
+  }
+
+  // 语言变化时的处理方法
+  onLanguageChange(): void {
+    // 同步到 i18nService 的当前语言
+    i18nService.setLanguage(this.currentLanguage)
+      .then(() => {
+        this.refreshContent()
+      })
+      .catch(() => {
+        // 即便失败也尝试更新，以防止 UI 不刷新
+        this.refreshContent()
+      })
+  }
+
+  // 当全局语言刷新触发器变化时，强制刷新内容
+  onLanguageRefreshTrigger(): void {
+    this.refreshContent()
+  }
+
+  // 刷新页面内容
+  private refreshContent(): void {
+    // 重新获取标题和内容
+    this.title = i18nService.t('morse_code_basics')
+    this.content = i18nService.t('morse_code_intro')
+    
+    // 刷新ViewModel的内容
+    this.viewModel.refreshContent()
   }
 
   // Removed onPageShow system bar re-application to avoid flicker
@@ -168,7 +200,7 @@ struct KnowledgeLessonPage {
           }
           .margin({ bottom: 32 })
 
-          Text(i18nService.getCurrentLanguage() === 'zh' ? '测试你对本课程的掌握程度' : 'Test your mastery of this lesson')
+          Text(i18nService.t('test_your_mastery'))
             .fontSize(16)
             .fontColor('#FF8C00')
             .margin({ bottom: 16 })
