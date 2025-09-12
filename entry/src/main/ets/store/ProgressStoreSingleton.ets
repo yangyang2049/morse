@@ -112,7 +112,7 @@ class ProgressStore {
    */
   computeTarget(): ProgressTarget {
     let target = 0
-    const total = LessonConfig.getTotalLessons()
+    const total = LessonConfig.getTotalLessonsForLanguage()
     for (let i = 1; i <= total; i++) {
       if (this.isLessonUnlocked(i) && !this.isLessonCompleted(i)) { target = i; break }
     }

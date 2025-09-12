@@ -4,6 +4,7 @@ import { LetterLessonViewModel } from '../../viewmodel/LetterLessonViewModel'
 import { LessonData } from '../../data/LessonData'
 import { audioService } from '../../services/AudioService'
 import { Context } from '@kit.AbilityKit'
+// 使用$r()函数替代I18n
 // System bar colors are set globally in EntryAbility
 
 @Entry
@@ -18,8 +19,8 @@ struct LetterLessonPage {
 
     // 从路由参数获取课程数据
     const params = router.getParams() as Record<string, Object>
-    const lessonId = params['lessonId'] as string || ''
-    const title = params['title'] as string || '练习课程'
+    const lessonId = (params['lessonId'] as string) || ''
+    const title = (params['title'] as string) || '练习'
     
     console.log(`[LetterLessonPage] Received lessonId: ${lessonId}, title: ${title}`)
     
@@ -38,14 +39,14 @@ struct LetterLessonPage {
 
   // 判断是否为单词课程
   private isWordLesson(): boolean {
-    const lessonNumber = parseInt(this.viewModel.lessonId) || 0
-    return lessonNumber >= 19 && lessonNumber <= 21
+    const lessonId = this.viewModel.lessonId
+    return lessonId.startsWith('word_lesson_')
   }
 
   // 判断是否为数字或符号课程
   private isNumberOrSymbolLesson(): boolean {
-    const lessonNumber = parseInt(this.viewModel.lessonId) || 0
-    return (lessonNumber >= 12 && lessonNumber <= 15) || (lessonNumber >= 16 && lessonNumber <= 18)
+    const lessonId = this.viewModel.lessonId
+    return lessonId.startsWith('number_lesson_') || lessonId.startsWith('punctuation_lesson_')
   }
 
 
@@ -411,7 +412,7 @@ struct LetterLessonPage {
 
         Blank().height(16)
 
-        Text('恭喜完成！')
+        Text($r('app.string.congratulations_completed'))
           .fontSize(24)
           .fontWeight(FontWeight.Bold)
           .fontColor('#FFFFFF')
@@ -425,7 +426,7 @@ struct LetterLessonPage {
               .fontSize(24)
               .fontWeight(FontWeight.Bold)
               .fontColor(Color.White)
-            Text('字母')
+            Text($r('app.string.letters'))
               .fontSize(10)
               .fontColor('#B0B0B0')
           }
@@ -440,7 +441,7 @@ struct LetterLessonPage {
               .fontSize(24)
               .fontWeight(FontWeight.Bold)
               .fontColor(Color.White)
-            Text('练习次数')
+            Text($r('app.string.practice_count'))
               .fontSize(10)
               .fontColor('#B0B0B0')
           }
@@ -458,7 +459,7 @@ struct LetterLessonPage {
 
         Row() {
           Button() {
-            Text('返回')
+            Text($r('app.string.back'))
               .fontSize(16)
               .fontWeight(FontWeight.Bold)
               .fontColor(Color.White)
@@ -477,7 +478,7 @@ struct LetterLessonPage {
           Blank().width(12)
 
           Button() {
-            Text('再次练习')
+            Text($r('app.string.practice_again'))
               .fontSize(16)
               .fontWeight(FontWeight.Bold)
               .fontColor(Color.White)
@@ -517,7 +518,7 @@ struct LetterLessonPage {
       Blank().layoutWeight(1)
 
       Column() {
-        Text('设置')
+        Text($r('app.string.settings'))
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
           .fontColor('#FFFFFF')
@@ -527,7 +528,7 @@ struct LetterLessonPage {
 
         // 声音
         Row() {
-          Text('声音')
+          Text($r('app.string.sound'))
             .fontSize(16)
             .fontColor('#FFFFFF')
           Blank().layoutWeight(1)
@@ -544,7 +545,7 @@ struct LetterLessonPage {
 
         // 练习次数 (3-5) - 单行布局，系统步进器不可用时使用 +/-
         Row() {
-          Text('练习次数')
+          Text($r('app.string.practice_count'))
             .fontSize(16)
             .fontColor('#FFFFFF')
           Blank().layoutWeight(1)
@@ -593,7 +594,7 @@ struct LetterLessonPage {
         Blank().height(16)
 
         Button() {
-          Text('关闭')
+          Text($r('app.string.close'))
             .fontSize(16)
             .fontWeight(FontWeight.Bold)
             .fontColor(Color.Black)

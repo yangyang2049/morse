@@ -3,6 +3,9 @@ import { LessonConfig } from '../data/LessonConfig'
 import { progressStore } from '../store/ProgressStoreSingleton'
 import { LessonItem } from '../types/LessonTypes'
 import Context from '@ohos.app.ability.common'
+import { i18nService } from '../services/I18nService'
+// 统一改为 i18nService
+import { eventHub, Events } from '../utils/EventHub'
 
 @Observed
 export class LearnViewModel {
@@ -15,7 +18,12 @@ export class LearnViewModel {
   @Track numberLessons: LessonItem[] = []
   @Track punctuationLessons: LessonItem[] = []
   @Track wordLessons: LessonItem[] = []
-  
+
+  // 获取课程标题（基于字典）
+  private getLessonTitle(lessonNumber: number): string {
+    const key = `lesson_${lessonNumber}`
+    return i18nService.t(key)
+  }
   
   // 重新加载解锁状态
   private reloadUnlockState(): void {
@@ -52,44 +60,50 @@ export class LearnViewModel {
     // 强制重新计算所有课程状态 - 确保实时响应性
     this.forceRecalculateAllLessons()
     
-    // Intro lessons - 重新计算状态
+    // Intro lessons - 使用 LessonConfig 映射，英文版仅显示1课
     {
-      const lesson1Completed = progressStore.isLessonCompleted(1)
-      const lesson2Completed = progressStore.isLessonCompleted(2)
-      const lesson1Unlocked = progressStore.isLessonUnlocked(1)
-      const lesson2Unlocked = progressStore.isLessonUnlocked(2)
-      
-      console.error(`[VM] rebuildLessons: lesson1 completed=${lesson1Completed} unlocked=${lesson1Unlocked}`)
-      console.error(`[VM] rebuildLessons: lesson2 completed=${lesson2Completed} unlocked=${lesson2Unlocked}`)
-      
-      // 完全重新创建数组以确保响应式更新
-      const newIntroLessons: LessonItem[] = [
-        { key: 'intro_0', title: '第 1 课', subtitle: '摩斯密码基础', unlocked: lesson1Unlocked, unitUnlocked: true, completed: lesson1Completed },
-        { key: 'intro_1', title: '第 2 课', subtitle: '中文摩斯密码基础', unlocked: lesson2Unlocked, unitUnlocked: true, completed: lesson2Completed },
-        { key: 'intro_p1', title: '占位', unlocked: true, unitUnlocked: true, completed: true },
-        { key: 'intro_p2', title: '占位', unlocked: true, unitUnlocked: true, completed: true },
-        { key: 'intro_p3', title: '占位', unlocked: true, unitUnlocked: true, completed: true },
-        { key: 'intro_p4', title: '占位', unlocked: true, unitUnlocked: true, completed: true },
-        { key: 'intro_p5', title: '占位', unlocked: true, unitUnlocked: true, completed: true },
-        { key: 'intro_p6', title: '占位', unlocked: true, unitUnlocked: true, completed: true }
-      ]
-      
-      // 强制触发响应式更新
-      this.introLessons.length = 0  // 清空现有数组
-      this.introLessons.push(...newIntroLessons)  // 添加新数据
-      
-      console.error(`[VM] rebuildLessons: introLessons updated, lesson2 unlocked=${lesson2Unlocked}, array length=${this.introLessons.length}`)
+      const intro1 = this.getLessonNumber('intro_lesson_0')
+      const intro2 = this.getLessonNumber('intro_lesson_1') // 若英文映射中不存在则为0
+
+      const lesson1Completed = progressStore.isLessonCompleted(intro1)
+      const lesson1Unlocked = progressStore.isLessonUnlocked(intro1)
+
+      const newIntroLessons: LessonItem[] = []
+      newIntroLessons.push({ key: 'intro_0', title: this.getLessonTitle(1), subtitle: i18nService.t('morse_code_basics'), unlocked: lesson1Unlocked, unitUnlocked: true, completed: lesson1Completed })
+
+      if (intro2 > 0) {
+        const lesson2Completed = progressStore.isLessonCompleted(intro2)
+        const lesson2Unlocked = progressStore.isLessonUnlocked(intro2)
+        newIntroLessons.push({ key: 'intro_1', title: this.getLessonTitle(2), subtitle: i18nService.t('chinese_morse_code'), unlocked: lesson2Unlocked, unitUnlocked: true, completed: lesson2Completed })
+      }
+
+      // 占位填充保持布局
+      newIntroLessons.push({ key: 'intro_p1', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
+      newIntroLessons.push({ key: 'intro_p2', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
+      newIntroLessons.push({ key: 'intro_p3', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
+      newIntroLessons.push({ key: 'intro_p4', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
+      newIntroLessons.push({ key: 'intro_p5', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
+      newIntroLessons.push({ key: 'intro_p6', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
+
+      this.introLessons.length = 0
+      this.introLessons.push(...newIntroLessons)
+      console.error(`[VM] rebuildLessons: introLessons updated (intro2=${intro2})`)
     }
     
     // Alphabet lessons
     {
       const items: LessonItem[] = []
-      const subtitles: string[] = ['A B C', 'D E F', 'G H I J', '复习：A - J', 'K L M N', 'O P Q R', 'S T U V', 'W X Y Z', '复习：K - Z']
+      const subtitles: string[] = [
+        i18nService.t('alphabet_abc'), i18nService.t('alphabet_def'), i18nService.t('alphabet_ghij'), 
+        i18nService.t('alphabet_review_aj'), i18nService.t('alphabet_klmn'), i18nService.t('alphabet_opqr'), 
+        i18nService.t('alphabet_stuv'), i18nService.t('alphabet_wxyz'), i18nService.t('alphabet_review_kz')
+      ]
       for (let i = 0; i < 9; i++) {
-        const lessonNumber = 3 + i
+        const lessonNumber = this.getLessonNumber(`alphabet_lesson_${i}`)
+        if (lessonNumber <= 0) { continue }
         const completed = progressStore.isLessonCompleted(lessonNumber)
         const unlocked = progressStore.isLessonUnlocked(lessonNumber)
-        items.push({ key: `alpha_${i}`, title: `第 ${i + 1} 课`, subtitle: subtitles[i], unlocked, unitUnlocked: true, completed })
+        items.push({ key: `alpha_${i}`, title: this.getLessonTitle(i + 1), subtitle: subtitles[i], unlocked, unitUnlocked: true, completed })
       }
       items.push({ key: 'alpha_p1', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
       items.push({ key: 'alpha_p2', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
@@ -103,12 +117,13 @@ export class LearnViewModel {
     // Number lessons
     {
       const items: LessonItem[] = []
-      const subtitles: string[] = ['0 1 2', '3 4 5', '6 7 8 9', '复习：0 - 9']
+      const subtitles: string[] = [i18nService.t('numbers_123'), i18nService.t('numbers_456'), i18nService.t('numbers_7890'), i18nService.t('numbers_review')]
       for (let i = 0; i < 4; i++) {
-        const lessonNumber = 12 + i
+        const lessonNumber = this.getLessonNumber(`number_lesson_${i}`)
+        if (lessonNumber <= 0) { continue }
         const completed = progressStore.isLessonCompleted(lessonNumber)
         const unlocked = progressStore.isLessonUnlocked(lessonNumber)
-        items.push({ key: `number_${i}`, title: `第 ${i + 1} 课`, subtitle: subtitles[i], unlocked, unitUnlocked: true, completed })
+        items.push({ key: `number_${i}`, title: this.getLessonTitle(i + 1), subtitle: subtitles[i], unlocked, unitUnlocked: true, completed })
       }
       items.push({ key: 'number_p1', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
       items.push({ key: 'number_p2', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
@@ -122,12 +137,13 @@ export class LearnViewModel {
     // Punctuation lessons
     {
       const items: LessonItem[] = []
-      const subtitles: string[] = ['. , ? !', '- ( ) "', '复习：标点符号']
+      const subtitles: string[] = [i18nService.t('punctuation_basic'), i18nService.t('punctuation_advanced'), i18nService.t('punctuation_review')]
       for (let i = 0; i < 3; i++) {
-        const lessonNumber = 16 + i
+        const lessonNumber = this.getLessonNumber(`punctuation_lesson_${i}`)
+        if (lessonNumber <= 0) { continue }
         const completed = progressStore.isLessonCompleted(lessonNumber)
         const unlocked = progressStore.isLessonUnlocked(lessonNumber)
-        items.push({ key: `punctuation_${i}`, title: `第 ${i + 1} 课`, subtitle: subtitles[i], unlocked, unitUnlocked: true, completed })
+        items.push({ key: `punctuation_${i}`, title: this.getLessonTitle(i + 1), subtitle: subtitles[i], unlocked, unitUnlocked: true, completed })
       }
       items.push({ key: 'punctuation_p1', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
       items.push({ key: 'punctuation_p2', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
@@ -142,12 +158,13 @@ export class LearnViewModel {
     // Word lessons
     {
       const items: LessonItem[] = []
-      const subtitles: string[] = ['3字母单词', '4字母单词', '5字母单词']
+      const subtitles: string[] = [i18nService.t('words_3letter'), i18nService.t('words_4letter'), i18nService.t('words_5letter')]
       for (let i = 0; i < 3; i++) {
-        const lessonNumber = 19 + i
+        const lessonNumber = this.getLessonNumber(`word_lesson_${i}`)
+        if (lessonNumber <= 0) { continue }
         const completed = progressStore.isLessonCompleted(lessonNumber)
         const unlocked = progressStore.isLessonUnlocked(lessonNumber)
-        items.push({ key: `word_${i}`, title: `第 ${i + 1} 课`, subtitle: subtitles[i], unlocked, unitUnlocked: true, completed })
+        items.push({ key: `word_${i}`, title: this.getLessonTitle(i + 1), subtitle: subtitles[i], unlocked, unitUnlocked: true, completed })
       }
       items.push({ key: 'word_p1', title: '占位', unlocked: true, unitUnlocked: true, completed: true })
       items.push({ key: 'word_p2', title: '占位', unlocked: true, unitUnlocked: true, completed: true })

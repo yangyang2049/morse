@@ -5,6 +5,8 @@ import { PracticeRecordDialog } from '../../widgets/PracticeRecordDialog'
 import { FavoritesStore } from '../../store/FavoritesStore'
 import { audioService } from '../../services/AudioService'
 import { Context } from '@kit.AbilityKit'
+import { i18nService } from '../../services/I18nService'
+// 使用$r()函数替代I18n
 // Removed per-page window system bar handling; EntryAbility sets it globally
 
 @Entry
@@ -27,7 +29,7 @@ export struct PracticePage {
     alignment: DialogAlignment.Center,
     customStyle: false
   })
-  private difficulty: string = '简单'
+  private difficulty: Resource | string = '简单'
   private lastCharacterChangeId: number = -1
   private animationTimer: number | null = null
   private readonly pillRadius: number = 20
@@ -35,25 +37,53 @@ export struct PracticePage {
   aboutToAppear(): void {
     // 从路由参数获取难度和字符列表（容错处理，避免无参数时崩溃）
     try {
-      const params = (router.getParams?.() as Record<string, Object>) ?? {}
-      const diff = params['difficulty'] as string
-      const characters = params['characters'] as string[]
-      this.difficulty = diff && typeof diff === 'string' ? diff : '简单'
+      const params: Record<string, Object> = (router.getParams?.() as Record<string, Object>) ?? {}
+      const diff = (params['difficulty'] as string) || ''
+      const characters = (params['characters'] as string[]) || []
+      this.difficulty = diff && typeof diff === 'string' ? diff : i18nService.t('easy')
       
       // 如果是收藏或错题本模式，使用指定的字符列表
-      if ((this.difficulty === '收藏' || this.difficulty === '错题本') && characters && Array.isArray(characters)) {
+      if ((this.difficulty === 'favorites' || this.difficulty === 'mistakes') && characters && Array.isArray(characters)) {
         this.vm.initWithCharacters(this.difficulty, characters)
       } else {
-        this.vm.init(this.difficulty)
+        this.vm.init(this.difficulty as string)
       }
     } catch {
-      this.difficulty = '简单'
-      this.vm.init(this.difficulty)
+      this.difficulty = i18nService.t('easy')
+      this.vm.init(this.difficulty as string)
     }
     console.error(`[PracticePage] aboutToAppear: difficulty=${this.difficulty}`)
     this.displayCharacter = this.vm.getCurrentCharacter() // 初始化显示字符
     this.lastCharacterChangeId = this.vm.getCharacterChangeId()
     this.startAnimationCheck()
+  }
+
+  // 获取格式化的标题显示
+  private getFormattedTitle(): string {
+    if (typeof this.difficulty === 'string') {
+      // 处理特殊模式
+      if (this.difficulty === 'favorites') {
+        return i18nService.t('favorites')
+      }
+      if (this.difficulty === 'mistakes') {
+        return i18nService.t('mistakes')
+      }
+      
+      // 处理难度级别 - 使用国际化服务
+      if (this.difficulty === 'easy' || this.difficulty === '简单') {
+        return i18nService.t('easy')
+      }
+      if (this.difficulty === 'medium' || this.difficulty === '中等') {
+        return i18nService.t('medium')
+      }
+      if (this.difficulty === 'hard' || this.difficulty === '困难') {
+        return i18nService.t('hard')
+      }
+      
+      // 如果是已经本地化的字符串，直接返回
+      return this.difficulty
+    }
+    return String(this.difficulty)
   }
 
   aboutToDisappear(): void {
@@ -123,7 +153,7 @@ export struct PracticePage {
         router.back()
       })
 
-      Text(this.difficulty)
+      Text(this.getFormattedTitle())
         .fontSize(18)
         .fontWeight(FontWeight.Bold)
         .fontColor(Color.White)
@@ -309,7 +339,7 @@ export struct PracticePage {
           
           // 显示toast提示
           promptAction.showToast({
-            message: wasFavorite ? `已取消收藏` : `已收藏`,
+            message: wasFavorite ? i18nService.t('favorite_removed') : i18nService.t('favorite_added'),
             duration: 1500,
             bottom: '80%'
           })

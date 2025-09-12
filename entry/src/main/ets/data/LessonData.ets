@@ -1,3 +1,5 @@
+import { languageService } from '../services/LanguageService'
+
 export class LessonData {
   // 摩斯密码基础课程数据
   static readonly introSections: Map<string, string[]> = new Map([
@@ -56,6 +58,60 @@ export class LessonData {
       '5）节拍器/固定WPM：用稳定节奏训练，提高一致性。',
       '6）听抄优先：少依赖"看图表"，以耳朵建立模式。',
       '7）短时高频：每天 10–20 分钟，高频次比长时间更有效。'
+    ]]
+  ])
+
+  // 英文摩斯密码课程数据
+  static readonly introSectionsEn: Map<string, string[]> = new Map([
+    ['What is Morse Code?', [
+      'Morse code is a character encoding system using "dots (·) and dashes (-)" as basic elements for transmitting text information. It represents letters, numbers, and punctuation marks with standardized sequences of long and short signals, making it one of the early forms of digital communication.',
+    ]],
+    ['History and Origin', [
+      'In the 1830s-1840s, Samuel Morse and Alfred Vail collaborated to develop the telegraph system and designed the original Morse code for it. Later, to meet the needs of radio communication, this encoding gradually evolved into International Morse Code, becoming a global standard.',
+      '',
+      'International Mode',
+      'Based on strict dot-dash and interval units, suitable for audio/carrier on-off (Continuous Wave) and other radio communication methods.',
+      '',
+      'American Mode',
+      'Early telegraph code with irregular character lengths and intervals, now rarely used.'
+    ]],
+    ['Timing and Intervals (Unit System)', [
+      'Dot (·) = 1 unit; Dash (-) = 3 units.',
+      'Interval between dots/dashes = 1 unit; between characters = 3 units; between words = 7 units.',
+      'This precise 1:3:7 timing rule is the core of Morse code, ensuring accuracy in information transmission.'
+    ]],
+    ['Character Formation Rules', [
+      '• Letter formation rules: Common patterns like A = ·-, N = -·, S = ···, O = ---, etc., formed by different combinations of dots and dashes.',
+      '• Number formation rules: 1-5 gradually increase dots followed by dashes, 6-0 gradually increase dashes followed by dots (e.g., 1 = ·----, 0 = -----).',
+      '• Punctuation formation rules: Represented by longer dot-dash sequences (e.g., , = --··--, ? = ··--··) for higher distinction.'
+    ]],
+    ['Common Signals and Communication Etiquette', [
+      '• SOS: ··· --- ···, globally recognized emergency distress signal, sent compactly with three dots, three dashes, three dots, no character intervals.',
+      '• Prosigns (Communication indicators): Like AR (·-·-·, end of message), SK (···-·-, end of communication), etc., commonly used in amateur radio communication etiquette.'
+    ]],
+    ['Application Scenarios', [
+      'Radio Communication: Still accessible and interference-resistant under low signal-to-noise ratio and long-distance conditions, commonly used in CW (Continuous Wave).',
+      '',
+      'Maritime/Aviation: Historically used for light signals and radio station calls, still serves as supplementary means in modern systems.',
+      '',
+      'Emergency and Rescue: Quickly convey distress information through rhythmic methods like light, sound, tapping (e.g., SOS).'
+    ]],
+    ['Learning Sequence (Recommended)', [
+      '1) Understand the rhythm of dots/dashes and interval units.',
+      '2) Letter unit: Learn in lesson order, do "simple practice" after each lesson.',
+      '3) Number unit: Learn numbers after completing letters, consolidate in "medium practice".',
+      '4) Symbol unit: Finally learn common punctuation and symbols, combined with "difficult practice".',
+      '5) Translation practice: Practice text⇄code bidirectional conversion in "Translate", alternating consolidation.',
+      '6) Comprehensive reinforcement: Regularly review learned lessons, intersperse with full code table browsing for deeper impression.'
+    ]],
+    ['Practical Tips', [
+      '1) "Listen to shape" before "remember shape": Develop rhythm sense, don\'t count dots and dashes one by one.',
+      '2) Koch method: Maintain high character speed (e.g., 20 WPM), increase character intervals for beginners.',
+      '3) Farnsworth spacing: Increase character spacing at high character speed to reduce beginner pressure.',
+      '4) Chunked and interval review: Small batch high-frequency practice, review every other day to resist forgetting.',
+      '5) Metronome/fixed WPM: Train with stable rhythm for consistency.',
+      '6) Listening priority: Less reliance on "looking at charts", build patterns with ears.',
+      '7) Short frequent sessions: 10-20 minutes daily, high frequency is more effective than long sessions.'
     ]]
   ])
 
@@ -187,5 +243,15 @@ export class LessonData {
       words.filter(word => word.length === 4), // 4字母单词
       words.filter(word => word.length === 5)  // 5字母单词
     ]
+  }
+
+  // 根据语言获取介绍课程数据
+  static getIntroSections(): Map<string, string[]> {
+    return languageService.isEnglish() ? LessonData.introSectionsEn : LessonData.introSections
+  }
+
+  // 根据语言获取中文摩尔斯电码课程数据（英文版本不包含）
+  static getChineseSections(): Map<string, string[]> | null {
+    return languageService.isEnglish() ? null : LessonData.chineseSections
   }
 }

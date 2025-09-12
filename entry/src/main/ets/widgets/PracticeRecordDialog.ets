@@ -1,5 +1,6 @@
 import { PracticeViewModel } from '../viewmodel/PracticeViewModel'
 import { MorseCode } from '../models/MorseCode'
+import { i18nService } from '../services/I18nService'
 
 @CustomDialog
 export struct PracticeRecordDialog {
@@ -44,7 +45,7 @@ export struct PracticeRecordDialog {
     Column() {
       // 标题栏
       Row() {
-        Text('练习记录')
+        Text(i18nService.t('practice_records'))
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
           .fontColor(Color.White)
@@ -122,7 +123,7 @@ export struct PracticeRecordDialog {
             .fontWeight(FontWeight.Bold)
             .fontColor('#4CAF50')
           
-          Text('已练习')
+          Text(i18nService.t('practiced'))
             .fontSize(12)
             .fontColor('rgba(255, 255, 255, 0.7)')
         }
@@ -144,7 +145,7 @@ export struct PracticeRecordDialog {
             .fontWeight(FontWeight.Bold)
             .fontColor('#FFD700')
           
-          Text('总数')
+          Text(i18nService.t('total'))
             .fontSize(12)
             .fontColor('rgba(255, 255, 255, 0.7)')
         }

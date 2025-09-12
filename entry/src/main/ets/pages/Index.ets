@@ -4,6 +4,7 @@ import { TranslatePage } from './translate/TranslatePage'
 import { CodeTablePage } from './codetable/CodeTablePage'
 import { MePage } from './me/MePage'
 import { audioService } from '../services/AudioService'
+import { languageUtils } from '../utils/LanguageUtils'
 import { Context } from '@kit.AbilityKit'
 // Window system bar properties are managed globally in EntryAbility
 
@@ -31,13 +32,35 @@ struct Index {
     }
   }
 
+  // 同步初始化语言服务
+  private initLanguageServiceSync() {
+    try {
+      // 先设置默认语言到 AppStorage，确保 StorageLink 有初始值
+      AppStorage.setOrCreate('currentLanguage', 'zh')
+      console.log('[INDEX] AppStorage initialized with default language')
+      
+      // 异步加载保存的语言设置
+      setTimeout(async () => {
+        try {
+          const context = getContext(this) as Context
+          await languageUtils.init(context)
+          console.log('[INDEX] LanguageUtils initialized successfully')
+        } catch (error) {
+          console.error('[INDEX] Failed to initialize LanguageUtils:', error)
+        }
+      }, 0)
+    } catch (error) {
+      console.error('[INDEX] Failed to initialize AppStorage:', error)
+    }
+  }
+
   @Builder TabBuilder(targetIndex: number, selectedImg: Resource, normalImg: Resource) {
     Column() {
       Image(this.currentIndex === targetIndex ? selectedImg : normalImg)
-        .size({ width: 24, height: 24 })
+        .size({ width: 28, height: 28 })
     }
     .width('100%')
-    .height(50)
+    .height(56)
     .justifyContent(FlexAlign.Center)
     .alignItems(HorizontalAlign.Center)
   }

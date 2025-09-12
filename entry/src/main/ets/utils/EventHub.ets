@@ -8,7 +8,7 @@ export interface LessonCompletedEventData {
 // 事件中心 - 用于解耦的事件通知
 export class EventHub {
   private static instance: EventHub
-  private listeners: Map<string, Function[]> = new Map()
+  private listeners: Map<string, Array<(data?: Object) => void>> = new Map()
 
   private constructor() {}
 
@@ -20,7 +20,7 @@ export class EventHub {
   }
 
   // 订阅事件
-  on(eventName: string, callback: Function): void {
+  on(eventName: string, callback: (data?: Object) => void): void {
     if (!this.listeners.has(eventName)) {
       this.listeners.set(eventName, [])
     }
@@ -29,7 +29,7 @@ export class EventHub {
   }
 
   // 取消订阅
-  off(eventName: string, callback: Function): void {
+  off(eventName: string, callback: (data?: Object) => void): void {
     const callbacks = this.listeners.get(eventName)
     if (callbacks) {
       const index = callbacks.indexOf(callback)
@@ -70,4 +70,5 @@ export const eventHub = EventHub.getInstance()
 // 事件名称常量
 export class Events {
   static readonly LESSON_COMPLETED = 'lesson_completed'
+  static readonly LANGUAGE_CHANGED = 'language_changed'
 }

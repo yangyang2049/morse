@@ -1,6 +1,9 @@
 import { router, promptAction } from '@kit.ArkUI'
 // System bar colors are set globally in EntryAbility
 import util from '@ohos.util'
+import { DialogManager } from '../../widgets/CustomDialog'
+import { CustomDialog } from '../../widgets/CustomDialog'
+import { languageService } from '../../services/LanguageService'
 
 interface ChineseTelegraphCode {
   character: string
@@ -26,6 +29,9 @@ export struct ChineseTelegraphCodePage {
   @State searchResults: ChineseTelegraphCode[] = []
   @State isSearchMode: boolean = false
   
+  // 语言检测
+  @State isEnglish: boolean = false
+  
   // 数据缓存
   private static allDataCache: ChineseTelegraphCode[] | null = null
   private static isDataLoaded: boolean = false
@@ -33,11 +39,19 @@ export struct ChineseTelegraphCodePage {
   aboutToAppear() {
     console.log('ChineseTelegraphCodePage aboutToAppear called')
     
+    // 检查语言设置
+    this.checkLanguage()
+    
     // 延迟加载数据，让页面先显示
     setTimeout(() => {
       console.log('Starting to load Chinese telegraph codes...')
       this.loadFirstPage()
     }, 100)
+  }
+
+  private checkLanguage() {
+    const currentLang = languageService.getCurrentLanguage()
+    this.isEnglish = currentLang === 'en_US'
   }
 
   // 加载第一页数据
@@ -229,27 +243,34 @@ export struct ChineseTelegraphCodePage {
         .layoutWeight(1)
         .textAlign(TextAlign.Center)
 
-      // Info entrance at top-right (question mark)
-      Button() {
-        Text('?')
-          .fontSize(20)
-          .fontColor(Color.White)
-          .textAlign(TextAlign.Center)
-          .width('100%')
-      }
-      .width(40)
-      .height(40)
-      .backgroundColor(Color.Transparent)
-      .onClick(() => {
-        // Use system dialog via promptAction
-        promptAction.showDialog({
-          title: '标准中文电码表说明',
-          message: '中文电码表（又称"汉字电报码"）是为了在电报传输时代能够准确、快速地发送和接收汉字而设计的编码系统。\n\n• 起源与标准化\n最早由清末盛宣怀主持制定，后来经过民国与新中国的多次修订，形成了较为统一的国家标准。常见的版本是《标准电码本》，收录 7000 余个常用汉字。\n\n• 编码方式\n每个汉字对应一个四位数字编码，范围一般是 0001–9999。\n例如：\n• "中" = 0029\n• "国" = 0049\n• "电" = 0168\n• "码" = 0203\n\n• 使用方式\n在电报传输中，发送方只需要发送对应的四位数字，接收方就能根据电码本查回原来的汉字。这样既能保证传输准确，也方便跨语言通信（数字是国际通用的）。\n\n本页面可按"汉字"或"电码"搜索，方便快速定位目标。',
-          buttons: [
-            { text: '知道了', color: '#0A59F7' }
-          ]
+      // Info entrance at top-right (question mark) - 中文显示按钮，英文显示占位符
+      if (!this.isEnglish) {
+        Button() {
+          Text('?')
+            .fontSize(20)
+            .fontColor(Color.White)
+            .textAlign(TextAlign.Center)
+            .width('100%')
+        }
+        .width(40)
+        .height(40)
+        .backgroundColor(Color.Transparent)
+        .onClick(() => {
+          // Use custom dialog to support proper line breaks
+          DialogManager.show({
+            title: '标准中文电码',
+            message: '中文电码表（又称"汉字电报码"）是为了在电报传输时代能够准确、快速地发送和接收汉字而设计的编码系统。\n\n• 起源与标准化\n最早由清末盛宣怀主持制定，后来经过民国与新中国的多次修订，形成了较为统一的国家标准。常见的版本是《标准电码本》，收录 7000 余个常用汉字。\n\n• 编码方式\n每个汉字对应一个四位数字编码，范围一般是 0001–9999。\n例如：\n• "中" = 0029\n• "国" = 0049\n• "电" = 0168\n• "码" = 0203\n\n• 使用方式\n在电报传输中，发送方只需要发送对应的四位数字，接收方就能根据电码本查回原来的汉字。这样既能保证传输准确，也方便跨语言通信（数字是国际通用的）。\n\n本页面可按"汉字"或"电码"搜索，方便快速定位目标。',
+            confirmText: '知道了',
+            showCancel: false,
+            showClose: true
+          })
         })
-      })
+      } else {
+        // 英文环境下显示占位符，保持布局平衡
+        Column()
+          .width(40)
+          .height(40)
+      }
     }
     .width('100%')
     .height(56)
@@ -404,68 +425,73 @@ export struct ChineseTelegraphCodePage {
   }
 
   build() {
-    Column() {
-      this.TitleBar()
-      
-      // 内容区域 - 响应式宽度，最大480vp
+    Stack() {
       Column() {
-        // 加载中：只显示加载指示器，不显示搜索与表头
-        if (this.isLoading) {
-          this.LoadingIndicator()
-        } else {
-          // 加载完成后再显示搜索与表头
-          this.SearchBar()
-          this.TableHeader()
-
-          if (this.filteredCodes.length === 0) {
-            // 空数据提示
-            Column() {
-              Text('暂无数据')
-                .fontSize(14)
-                .fontColor('#888888')
-                .textAlign(TextAlign.Center)
-            }
-            .layoutWeight(1)
-            .width('100%')
-            .justifyContent(FlexAlign.Center)
-            .alignItems(HorizontalAlign.Center)
+        this.TitleBar()
+        
+        // 内容区域 - 响应式宽度，最大480vp
+        Column() {
+          // 加载中：只显示加载指示器，不显示搜索与表头
+          if (this.isLoading) {
+            this.LoadingIndicator()
           } else {
-            List() {
-              ForEach(this.filteredCodes, (code: ChineseTelegraphCode, index: number) => {
-                ListItem() {
-                  this.TableRow(code, index)
-                }
-              }, (code: ChineseTelegraphCode) => code.character + code.code)
-              
-              // 加载更多按钮（仅在分页模式且还有更多数据时显示）
-              if (!this.isSearchMode && this.hasMoreData) {
-                ListItem() {
-                  this.LoadMoreButton()
+            // 加载完成后再显示搜索与表头
+            this.SearchBar()
+            this.TableHeader()
+
+            if (this.filteredCodes.length === 0) {
+              // 空数据提示
+              Column() {
+                Text('暂无数据')
+                  .fontSize(14)
+                  .fontColor('#888888')
+                  .textAlign(TextAlign.Center)
+              }
+              .layoutWeight(1)
+              .width('100%')
+              .justifyContent(FlexAlign.Center)
+              .alignItems(HorizontalAlign.Center)
+            } else {
+              List() {
+                ForEach(this.filteredCodes, (code: ChineseTelegraphCode, index: number) => {
+                  ListItem() {
+                    this.TableRow(code, index)
+                  }
+                }, (code: ChineseTelegraphCode) => code.character + code.code)
+                
+                // 加载更多按钮（仅在分页模式且还有更多数据时显示）
+                if (!this.isSearchMode && this.hasMoreData) {
+                  ListItem() {
+                    this.LoadMoreButton()
+                  }
                 }
               }
+              .layoutWeight(1)
+              .divider({ strokeWidth: 0 })
+              .scrollBar(BarState.Auto)
+              .onReachEnd(() => {
+                // 滚动到底部时自动加载更多
+                if (!this.isSearchMode && this.hasMoreData && !this.isLoadingMore) {
+                  this.loadMoreData()
+                }
+              })
             }
-            .layoutWeight(1)
-            .divider({ strokeWidth: 0 })
-            .scrollBar(BarState.Auto)
-            .onReachEnd(() => {
-              // 滚动到底部时自动加载更多
-              if (!this.isSearchMode && this.hasMoreData && !this.isLoadingMore) {
-                this.loadMoreData()
-              }
-            })
           }
         }
+        .width('100%')
+        .constraintSize({ maxWidth: 480 })
+        .padding({ left: 20, right: 20 })
+        .layoutWeight(1)
+        .justifyContent(FlexAlign.Center)
+        .alignItems(HorizontalAlign.Center)
       }
       .width('100%')
-      .constraintSize({ maxWidth: 480 })
-      .padding({ left: 20, right: 20 })
-      .layoutWeight(1)
-      .justifyContent(FlexAlign.Center)
-      .alignItems(HorizontalAlign.Center)
+      .height('100%')
+      .backgroundColor(Color.Black)
+      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+
+      // 自定义对话框
+      CustomDialog()
     }
-    .width('100%')
-    .height('100%')
-    .backgroundColor(Color.Black)
-    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }

@@ -1,6 +1,8 @@
 import { MorseCode, MorseCodeData } from '../models/MorseCode'
 import { promptAction } from '@kit.ArkUI'
+import { i18nService } from '../services/I18nService'
 import { FavoritesStore } from '../store/FavoritesStore'
+// 使用$r()函数替代I18n
 
 @Observed
 export class PracticeViewModel {
@@ -99,24 +101,30 @@ export class PracticeViewModel {
 
   // Load codes based on difficulty
   private loadCodes(): void {
-    switch (this.difficulty) {
-      case '简单':
-        this.currentCodes = MorseCodeData.englishAlphabet
-        break
-      case '中等':
-        this.currentCodes = [
-          ...MorseCodeData.englishAlphabet,
-          ...MorseCodeData.numbers
-        ]
-        break
-      case '困难':
-        // Exclude Chinese characters; include only English letters, numbers, and common symbols
-        this.currentCodes = [
-          ...MorseCodeData.englishAlphabet,
-          ...MorseCodeData.numbers,
-          ...MorseCodeData.punctuation,
-        ]
-        break
+    const d = (this.difficulty || '').toLowerCase()
+    // Normalize difficulty: support zh/en labels and code keys
+    const isEasy = d === 'easy' || d === '简单'
+      || d === 'easy'.toLowerCase()
+    const isMedium = d === 'medium' || d === '中等'
+    const isHard = d === 'hard' || d === '困难'
+
+    if (isEasy) {
+      this.currentCodes = MorseCodeData.englishAlphabet
+    } else if (isMedium) {
+      this.currentCodes = [
+        ...MorseCodeData.englishAlphabet,
+        ...MorseCodeData.numbers
+      ]
+    } else if (isHard) {
+      // Exclude Chinese characters; include only English letters, numbers, and common symbols
+      this.currentCodes = [
+        ...MorseCodeData.englishAlphabet,
+        ...MorseCodeData.numbers,
+        ...MorseCodeData.punctuation,
+      ]
+    } else {
+      // Default fallback
+      this.currentCodes = MorseCodeData.englishAlphabet
     }
     // Reset session completion tracking when loading new code set
     this.completionCount = new Map()
@@ -209,7 +217,7 @@ export class PracticeViewModel {
           this.isCurrentCharacterInMistakes = false
           // 显示移除提示
           promptAction.showToast({
-            message: `🎉 ${this.currentCharacter} 已从错题本移除！`,
+            message: `🎉 ${this.currentCharacter} ${i18nService.t('removed_from_mistakes')}`,
             duration: 2000,
             bottom: '70%'
           })
@@ -240,7 +248,7 @@ export class PracticeViewModel {
     } else {
       // Wrong answer, show system toast at top of screen
       promptAction.showToast({
-        message: '再试一次',
+        message: i18nService.isChinese() ? '再试一次' : 'Try again',
         duration: 1500,
         bottom: '80%'
       })

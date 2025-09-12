@@ -1,6 +1,7 @@
 import { LessonData } from '../data/LessonData'
 import { LessonNavParams } from '../types/LessonTypes'
 import { progressStore } from '../store/ProgressStoreSingleton'
+import { LessonConfig } from '../data/LessonConfig'
 import Context from '@ohos.app.ability.common'
 
 @Observed
@@ -44,14 +45,18 @@ export class KnowledgeLessonViewModel {
     
     // 根据课程标题判断课程类型
     if (this.title.includes('中文') || this.title.includes('Chinese')) {
-      this.sections = LessonData.chineseSections
+      const chineseSections = LessonData.getChineseSections()
+      this.sections = chineseSections || new Map()
       console.error(`[KnowledgeLessonViewModel] loadLessonData: Loaded chinese sections`)
-    } else if (this.title.includes('基础') || this.title.includes('intro') || this.title.includes('Intro')) {
-      this.sections = LessonData.introSections
-      console.error(`[KnowledgeLessonViewModel] loadLessonData: Loaded intro sections`)
+    } else if (this.title.includes('基础') || this.title.includes('intro') || this.title.includes('Intro') || this.title.includes('Basics') || this.title.includes('Morse Code Basics')) {
+      this.sections = LessonData.getIntroSections()
+      console.error(`[KnowledgeLessonViewModel] loadLessonData: Loaded intro sections, sections count=${this.sections.size}`)
+      // 调试：打印章节标题
+      const titles = Array.from(this.sections.keys())
+      console.error(`[KnowledgeLessonViewModel] loadLessonData: Section titles=${titles.join(', ')}`)
     } else {
       console.error(`[KnowledgeLessonViewModel] loadLessonData: Unknown title=${this.title}, using default intro sections`)
-      this.sections = LessonData.introSections
+      this.sections = LessonData.getIntroSections()
     }
   }
   
@@ -116,13 +121,18 @@ export class KnowledgeLessonViewModel {
   async markLessonCompletedImmediately(): Promise<void> {
     if (this.lessonCompletedKey && !this.isLessonCompleted && this.context) {
       try {
-        const lessonNumber = parseInt(this.lessonCompletedKey) || 0
-        console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Starting for lessonNumber=${lessonNumber}`)
+        // 使用LessonConfig获取正确的课程编号
+        const lessonNumber = LessonConfig.getLessonNumber(this.lessonCompletedKey)
+        console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Starting for lessonId=${this.lessonCompletedKey}, lessonNumber=${lessonNumber}`)
         
-        // 使用存储的context立即标记课程完成
-        await progressStore.saveLessonCompleted(lessonNumber, this.context)
-        this.isLessonCompleted = true
-        console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Completed for lessonNumber=${lessonNumber}`)
+        if (lessonNumber > 0) {
+          // 使用存储的context立即标记课程完成
+          await progressStore.saveLessonCompleted(lessonNumber, this.context)
+          this.isLessonCompleted = true
+          console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Completed for lessonNumber=${lessonNumber}`)
+        } else {
+          console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Invalid lessonId=${this.lessonCompletedKey}`)
+        }
       } catch (error) {
         console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Error: ${error}`)
       }

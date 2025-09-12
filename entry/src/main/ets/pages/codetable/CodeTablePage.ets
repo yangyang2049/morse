@@ -2,6 +2,9 @@ import { MorseCode, MorseCodeData } from '../../models/MorseCode'
 // System bar colors are set globally in EntryAbility
 import { router } from '@kit.ArkUI'
 import { audioService } from '../../services/AudioService'
+import { i18nService } from '../../services/I18nService'
+import { eventHub, Events } from '../../utils/EventHub'
+// 使用$r()函数替代I18n
 import { Context } from '@kit.AbilityKit'
 
 interface Category {
@@ -13,15 +16,43 @@ interface Category {
 export struct CodeTablePage {
   @State selected: string = 'all'
   @State playingCode: string = '' // 跟踪当前播放的摩尔斯码
+  @State isEnglish: boolean = false // 语言检测
+  @State refreshTrigger: number = 0
+  // 使用 StorageLink 监听语言变化
+  @StorageLink('currentLanguage') currentLanguage: string = 'zh'
   private categories: Category[] = [
-    { key: 'all', name: '所有码' },
-    { key: 'alphabet', name: '字母' },
-    { key: 'numbers', name: '数字' },
-    { key: 'punctuation', name: '标点' },
+    { key: 'all', name: '' },
+    { key: 'alphabet', name: '' },
+    { key: 'numbers', name: '' },
+    { key: 'punctuation', name: '' },
   ]
 
   aboutToAppear() {
     // System bar colors are set globally in EntryAbility
+    this.checkLanguage()
+  }
+
+  aboutToDisappear() {
+  }
+
+  private checkLanguage() {
+    const currentLang = i18nService.getCurrentLanguage()
+    this.isEnglish = currentLang.startsWith('en')
+  }
+
+  private getCategoryLabel(key: string): Resource | string {
+    switch (key) {
+      case 'all':
+        return i18nService.t('all_codes')
+      case 'alphabet':
+        return i18nService.t('letters')
+      case 'numbers':
+        return i18nService.t('numbers')
+      case 'punctuation':
+        return i18nService.t('punctuation')
+      default:
+        return i18nService.t('all_codes')
+    }
   }
 
   private getFiltered(): MorseCode[] {
@@ -67,27 +98,35 @@ export struct CodeTablePage {
       Row() {
         Blank().width(40) // Balance the right button
 
-        Text('码表')
+        Text(i18nService.t('code_table'))
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
           .fontColor('#FFFFFF')
           .layoutWeight(1)
           .textAlign(TextAlign.Center)
 
-        Button() {
-          Text('中')
-            .fontSize(18)
-            .fontWeight(FontWeight.Bold)
-            .fontColor('#FFFFFF')
-        }
-        .width(40)
-        .height(40)
-        .backgroundColor(Color.Transparent)
-        .onClick(() => {
-          router.push({
-            url: 'pages/codetable/ChineseTelegraphCodePage'
+        // 中按钮 - 只在中文环境下显示
+        if (!this.isEnglish) {
+          Button() {
+            Text('中')
+              .fontSize(18)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#FFFFFF')
+          }
+          .width(40)
+          .height(40)
+          .backgroundColor(Color.Transparent)
+          .onClick(() => {
+            router.push({
+              url: 'pages/codetable/ChineseTelegraphCodePage'
+            })
           })
-        })
+        } else {
+          // 英文环境下显示占位符，保持布局平衡
+          Column()
+            .width(40)
+            .height(40)
+        }
       }
       .height(52)
       .width('100%')
@@ -100,7 +139,7 @@ export struct CodeTablePage {
         Scroll() {
           Row() {
             ForEach(this.categories, (cat: Category) => {
-              Button(cat.name)
+              Button(this.getCategoryLabel(cat.key))
                 .onClick(() => { this.selected = cat.key })
                 .backgroundColor(this.selected === cat.key ? '#FFD700' : '#1A1A1A')
                 .fontColor(this.selected === cat.key ? '#000000' : '#B0B0B0')

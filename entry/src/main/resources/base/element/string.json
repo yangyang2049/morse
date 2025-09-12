@@ -10,7 +10,587 @@
     },
     {
       "name": "EntryAbility_label",
-      "value": "摩斯密码2025"
+      "value": "摩斯密码"
+    },
+    {
+      "name": "app_name",
+      "value": "摩斯密码"
+    },
+    {
+      "name": "learn",
+      "value": "学习"
+    },
+    {
+      "name": "practice",
+      "value": "练习"
+    },
+    {
+      "name": "translate",
+      "value": "翻译"
+    },
+    {
+      "name": "code_table",
+      "value": "码表"
+    },
+    {
+      "name": "me",
+      "value": "我"
+    },
+    {
+      "name": "instructions",
+      "value": "使用说明"
+    },
+    {
+      "name": "rating_feedback",
+      "value": "评分和反馈"
+    },
+    {
+      "name": "share_app",
+      "value": "分享应用"
+    },
+    {
+      "name": "other_apps",
+      "value": "其他应用"
+    },
+    {
+      "name": "periodic_table_app",
+      "value": "掌上元素周期表"
+    },
+    {
+      "name": "language",
+      "value": "语言"
+    },
+    {
+      "name": "chinese",
+      "value": "中文"
+    },
+    {
+      "name": "english",
+      "value": "English"
+    },
+    {
+      "name": "instructions_title",
+      "value": "使用说明"
+    },
+    {
+      "name": "instructions_content",
+      "value": "1. 学习：从基础课程开始，逐步掌握摩斯密码\n2. 练习：通过不同难度的练习巩固学习成果\n3. 翻译：将文字转换为摩斯密码或反向转换\n4. 码表：查看完整的摩斯密码对照表\n\n点击播放按钮可以听到摩斯密码的声音"
+    },
+    {
+      "name": "got_it",
+      "value": "知道了"
+    },
+    {
+      "name": "share_text",
+      "value": "推荐一款学习摩尔斯密码的应用：\n《摩斯密码 2025》📡\n\n• 从零学习摩尔斯电码\n• 跟读练习与听力训练\n• 文本与摩斯互相翻译\n\n立即下载：\nhttps://appgallery.huawei.com/app/detail?id=com.douhua.morsecode"
+    },
+    {
+      "name": "share_copied",
+      "value": "分享内容已复制到剪贴板"
+    },
+    {
+      "name": "copy_failed",
+      "value": "复制失败，请稍后重试"
+    },
+    {
+      "name": "opening_app_gallery",
+      "value": "正在打开应用市场…"
+    },
+    {
+      "name": "opened_via_browser",
+      "value": "已通过浏览器打开应用市场"
+    },
+    {
+      "name": "cannot_open_app_gallery",
+      "value": "无法打开应用市场，请稍后重试"
+    },
+    {
+      "name": "version",
+      "value": "版本"
+    },
+    {
+      "name": "tagline",
+      "value": "让学习摩斯密码简单又有趣"
+    },
+    {
+      "name": "copyright",
+      "value": "© 2025 重庆豆花科技有限公司"
+    },
+    {
+      "name": "language_selection_title",
+      "value": "选择语言"
+    },
+    {
+      "name": "language_selection_content",
+      "value": "选择您偏好的应用界面语言"
+    },
+    {
+      "name": "cancel",
+      "value": "取消"
+    },
+    {
+      "name": "confirm",
+      "value": "确认"
+    },
+    {
+      "name": "language_switched_chinese",
+      "value": "语言已切换为中文"
+    },
+    {
+      "name": "language_switched_english",
+      "value": "Language switched to English"
+    },
+    {
+      "name": "language_switch_failed",
+      "value": "语言切换失败，请稍后重试"
+    },
+    {
+      "name": "favorite_added",
+      "value": "已收藏"
+    },
+    {
+      "name": "favorite_removed",
+      "value": "已取消收藏"
+    },
+    {
+      "name": "loading",
+      "value": "加载中..."
+    },
+    {
+      "name": "your_score",
+      "value": "你的分数"
+    },
+    {
+      "name": "congratulations_passed",
+      "value": "🎉 恭喜通过！"
+    },
+    {
+      "name": "keep_trying",
+      "value": "继续努力！"
+    },
+    {
+      "name": "mastered_basics",
+      "value": "你已经掌握了摩斯密码的基础知识"
+    },
+    {
+      "name": "need_100_points",
+      "value": "需要100分才能通过测试"
+    },
+    {
+      "name": "back",
+      "value": "返回"
+    },
+    {
+      "name": "next_lesson",
+      "value": "下一课"
+    },
+    {
+      "name": "retake_test",
+      "value": "重新测试"
+    },
+    {
+      "name": "next_question",
+      "value": "下一题"
+    },
+    {
+      "name": "view_results",
+      "value": "查看结果"
+    },
+    {
+      "name": "standard_chinese_telegraph_code",
+      "value": "标准中文电码"
+    },
+    {
+      "name": "searching",
+      "value": "搜索中..."
+    },
+    {
+      "name": "chinese_characters",
+      "value": "汉字"
+    },
+    {
+      "name": "telegraph_code",
+      "value": "电码"
+    },
+    {
+      "name": "load_more",
+      "value": "加载更多"
+    },
+    {
+      "name": "no_data",
+      "value": "暂无数据"
+    },
+    {
+      "name": "congratulations_completed",
+      "value": "恭喜完成！"
+    },
+    {
+      "name": "letters",
+      "value": "字母"
+    },
+    {
+      "name": "practice_count",
+      "value": "练习次数"
+    },
+    {
+      "name": "practice_again",
+      "value": "再次练习"
+    },
+    {
+      "name": "settings",
+      "value": "设置"
+    },
+    {
+      "name": "sound",
+      "value": "声音"
+    },
+    {
+      "name": "close",
+      "value": "关闭"
+    },
+    {
+      "name": "test_mastery",
+      "value": "测试你对{title}的掌握程度"
+    },
+    {
+      "name": "test_content",
+      "value": "测试内容"
+    },
+    {
+      "name": "true_false_questions",
+      "value": "• 2道判断题（每题20分）"
+    },
+    {
+      "name": "multiple_choice_questions",
+      "value": "• 3道选择题（每题20分）"
+    },
+    {
+      "name": "need_100_to_pass",
+      "value": "• 需要100分才能通过"
+    },
+    {
+      "name": "start_test",
+      "value": "开始测试"
+    },
+    {
+      "name": "learning_completed",
+      "value": "完成学习"
+    },
+    {
+      "name": "please_complete_previous_lessons",
+      "value": "请先完成前面的课程"
+    },
+    {
+      "name": "lesson_unlocked",
+      "value": "课程已解锁，可以开始学习"
+    },
+    {
+      "name": "chinese_morse_code",
+      "value": "中文摩尔斯电码"
+    },
+    {
+      "name": "chinese_code_test",
+      "value": "中文电码测试"
+    },
+    {
+      "name": "morse_code_basics",
+      "value": "摩斯密码基础"
+    },
+    {
+      "name": "basics_test",
+      "value": "基础测试"
+    },
+    {
+      "name": "alphabet_lesson",
+      "value": "字母课程"
+    },
+    {
+      "name": "number_lesson",
+      "value": "数字课程"
+    },
+    {
+      "name": "punctuation_lesson",
+      "value": "符号课程"
+    },
+    {
+      "name": "word_lesson",
+      "value": "单词课程"
+    },
+    {
+      "name": "review_lesson",
+      "value": "复习课程"
+    },
+    {
+      "name": "placeholder",
+      "value": "占位"
+    },
+    {
+      "name": "favorites",
+      "value": "收藏"
+    },
+    {
+      "name": "practice_favorites",
+      "value": "练习收藏的字母"
+    },
+    {
+      "name": "favorites_empty",
+      "value": "收藏夹为空，先去练习一些字母吧！"
+    },
+    {
+      "name": "telegraph_code_description",
+      "value": "中文电码表（又称\"汉字电报码\"）是为了在电报传输时代能够准确、快速地发送和接收汉字而设计的编码系统。\\n\\n• 起源与标准化\\n最早由清末盛宣怀主持制定，后来经过民国与新中国的多次修订，形成了较为统一的国家标准。常见的版本是《标准电码本》，收录 7000 余个常用汉字。\\n\\n• 编码方式\\n每个汉字对应一个四位数字编码，范围一般是 0001–9999。\\n例如：\\n• \"中\" = 0029\\n• \"国\" = 0049\\n• \"电\" = 0168\\n• \"码\" = 0203\\n\\n• 使用方式\\n在电报传输中，发送方只需要发送对应的四位数字，接收方就能根据电码本查回原来的汉字。这样既能保证传输准确，也方便跨语言通信（数字是国际通用的）。\\n\\n本页面可按\"汉字\"或\"电码\"搜索，方便快速定位目标。"
+    },
+    {
+      "name": "easy",
+      "value": "EASY"
+    },
+    {
+      "name": "easy_desc",
+      "value": "Letters Only"
+    },
+    {
+      "name": "medium",
+      "value": "MEDIUM"
+    },
+    {
+      "name": "medium_desc",
+      "value": "Letters + Numbers"
+    },
+    {
+      "name": "hard",
+      "value": "HARD"
+    },
+    {
+      "name": "hard_desc",
+      "value": "All Characters"
+    },
+    {
+      "name": "mistakes_empty",
+      "value": "错题本为空，还没有错题哦！"
+    },
+    {
+      "name": "mistakes",
+      "value": "错题本"
+    },
+    {
+      "name": "mistakes_desc",
+      "value": "复习做错的字母"
+    },
+    {
+      "name": "all_codes",
+      "value": "所有码"
+    },
+    {
+      "name": "text_to_morse",
+      "value": "文本 → 电码"
+    },
+    {
+      "name": "morse_to_text",
+      "value": "电码 → 文本"
+    },
+    {
+      "name": "input_text_placeholder",
+      "value": "在此输入文本，如: Hello World"
+    },
+    {
+      "name": "input_morse_placeholder",
+      "value": "在此输入电码，如: ··· --- ···"
+    },
+    {
+      "name": "output_text_placeholder",
+      "value": "电码将在此显示"
+    },
+    {
+      "name": "output_morse_placeholder",
+      "value": "文本将在此显示，中文电码基于拼音转换"
+    },
+    {
+      "name": "copied",
+      "value": "已复制到剪贴板"
+    },
+    {
+      "name": "removed_from_mistakes",
+      "value": "已从错题本移除！"
+    },
+    {
+      "name": "practice_records",
+      "value": "Practice Records"
+    },
+    {
+      "name": "practiced",
+      "value": "Practiced"
+    },
+    {
+      "name": "total",
+      "value": "Total"
+    },
+    {
+      "name": "lesson_1",
+      "value": "第 1 课"
+    },
+    {
+      "name": "lesson_2",
+      "value": "第 2 课"
+    },
+    {
+      "name": "lesson_3",
+      "value": "第 3 课"
+    },
+    {
+      "name": "lesson_4",
+      "value": "第 4 课"
+    },
+    {
+      "name": "lesson_5",
+      "value": "第 5 课"
+    },
+    {
+      "name": "lesson_6",
+      "value": "第 6 课"
+    },
+    {
+      "name": "lesson_7",
+      "value": "第 7 课"
+    },
+    {
+      "name": "lesson_8",
+      "value": "第 8 课"
+    },
+    {
+      "name": "lesson_9",
+      "value": "第 9 课"
+    },
+    {
+      "name": "lesson_10",
+      "value": "第 10 课"
+    },
+    {
+      "name": "lesson_11",
+      "value": "第 11 课"
+    },
+    {
+      "name": "lesson_12",
+      "value": "第 12 课"
+    },
+    {
+      "name": "lesson_13",
+      "value": "第 13 课"
+    },
+    {
+      "name": "lesson_14",
+      "value": "第 14 课"
+    },
+    {
+      "name": "lesson_15",
+      "value": "第 15 课"
+    },
+    {
+      "name": "lesson_16",
+      "value": "第 16 课"
+    },
+    {
+      "name": "lesson_17",
+      "value": "第 17 课"
+    },
+    {
+      "name": "lesson_18",
+      "value": "第 18 课"
+    },
+    {
+      "name": "lesson_19",
+      "value": "第 19 课"
+    },
+    {
+      "name": "lesson_20",
+      "value": "第 20 课"
+    },
+    {
+      "name": "lesson_21",
+      "value": "第 21 课"
+    },
+    {
+      "name": "alphabet_abc",
+      "value": "ABC"
+    },
+    {
+      "name": "alphabet_def",
+      "value": "DEF"
+    },
+    {
+      "name": "alphabet_ghij",
+      "value": "GHIJ"
+    },
+    {
+      "name": "alphabet_review_aj",
+      "value": "复习：A-J"
+    },
+    {
+      "name": "alphabet_klmn",
+      "value": "KLMN"
+    },
+    {
+      "name": "alphabet_opqr",
+      "value": "OPQR"
+    },
+    {
+      "name": "alphabet_stuv",
+      "value": "STUV"
+    },
+    {
+      "name": "alphabet_wxyz",
+      "value": "WXYZ"
+    },
+    {
+      "name": "alphabet_review_kz",
+      "value": "复习：K-Z"
+    },
+    {
+      "name": "numbers_123",
+      "value": "1 2 3"
+    },
+    {
+      "name": "numbers_456",
+      "value": "4 5 6"
+    },
+    {
+      "name": "numbers_7890",
+      "value": "7 8 9 0"
+    },
+    {
+      "name": "numbers_review",
+      "value": "复习：0-9"
+    },
+    {
+      "name": "punctuation_basic",
+      "value": ". , ? ! : ;"
+    },
+    {
+      "name": "punctuation_advanced",
+      "value": "= + - _ \" ' ( ) / @"
+    },
+    {
+      "name": "punctuation_review",
+      "value": "复习"
+    },
+    {
+      "name": "words_3letter",
+      "value": "3字母单词"
+    },
+    {
+      "name": "words_4letter",
+      "value": "4字母单词"
+    },
+    {
+      "name": "words_5letter",
+      "value": "5字母单词"
+    },
+    {
+      "name": "numbers",
+      "value": "数字"
+    },
+    {
+      "name": "punctuation",
+      "value": "标点符号"
     }
   ]
 }

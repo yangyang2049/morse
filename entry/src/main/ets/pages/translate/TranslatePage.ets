@@ -2,6 +2,9 @@ import { MorseCodeData } from '../../models/MorseCode'
 import { PinyinService } from '../../services/PinyinService'
 // System bar colors are set globally in EntryAbility
 import { promptAction } from '@kit.ArkUI'
+import { i18nService } from '../../services/I18nService'
+import { eventHub, Events } from '../../utils/EventHub'
+// 使用$r()函数替代I18n
 
 @Component
 export struct TranslatePage {
@@ -11,6 +14,9 @@ export struct TranslatePage {
   private readonly boxFontSize: number = 16
   private readonly pillRadius: number = 20
   private screenHeight: number = 0
+  @State private refreshTrigger: number = 0
+  // 使用 StorageLink 监听语言变化
+  @StorageLink('currentLanguage') currentLanguage: string = 'zh'
 
   aboutToAppear() {
     // System bar colors are set globally in EntryAbility
@@ -20,14 +26,19 @@ export struct TranslatePage {
     if (hostContext) {
       PinyinService.load(hostContext)
     }
+
   }
+
+  aboutToDisappear() {
+  }
+
 
   private getOutput(): string {
     if (this.isTextToMorse) {
       return MorseCodeData.textToMorse(this.textInput, (char: string) => {
         // 显示中文字符不在拼音表中的提示
         promptAction.showToast({
-          message: `"${char}" 不在拼音表中`,
+          message: i18nService.isChinese() ? `"${char}" 不在拼音表中` : `"${char}" not in pinyin table`,
           duration: 2000,
           bottom: '80%'
         })
@@ -77,7 +88,7 @@ export struct TranslatePage {
   @Builder
   private TitleBar() {
     Row() {
-      Text('翻译')
+      Text(i18nService.t('translate'))
         .fontSize(20)
         .fontWeight(FontWeight.Bold)
         .fontColor('#FFFFFF')
@@ -92,7 +103,7 @@ export struct TranslatePage {
   private ModeToggle() {
     Row() {
       // 文本 → 电码
-      Button('文本 → 电码')
+      Button(i18nService.t('text_to_morse'))
         .onClick(() => { this.isTextToMorse = true })
         .backgroundColor(this.isTextToMorse ? '#FFD700' : '#1A1A1A')
         .fontColor(this.isTextToMorse ? '#000000' : '#B0B0B0')
@@ -102,7 +113,7 @@ export struct TranslatePage {
         .border({ width: 1, color: '#333333' })
 
       // 电码 → 文本
-      Button('电码 → 文本')
+      Button(i18nService.t('morse_to_text'))
         .onClick(() => { this.isTextToMorse = false })
         .backgroundColor(!this.isTextToMorse ? '#FFD700' : '#1A1A1A')
         .fontColor(!this.isTextToMorse ? '#000000' : '#B0B0B0')
@@ -119,7 +130,7 @@ export struct TranslatePage {
     RelativeContainer() {
       // 输入框
       if (this.isTextToMorse) {
-        TextArea({ text: this.textInput, placeholder: '在此输入文本，如: Hello World' })
+        TextArea({ text: this.textInput, placeholder: i18nService.t('input_text_placeholder') })
           .layoutWeight(1)
           .fontSize(this.boxFontSize)
           .fontColor(Color.White)
@@ -130,7 +141,7 @@ export struct TranslatePage {
           .onChange((v: string) => { this.textInput = v })
           .id('text_input_area')
       } else {
-        TextArea({ text: this.morseInput, placeholder: '在此输入电码，如: ··· --- ···' })
+        TextArea({ text: this.morseInput, placeholder: i18nService.t('input_morse_placeholder') })
           .layoutWeight(1)
           .fontSize(this.boxFontSize)
           .fontColor(Color.White)
@@ -181,13 +192,12 @@ export struct TranslatePage {
     RelativeContainer() {
       // 输出框
       TextArea({ text: this.getOutput().length > 0 ? this.getOutput() : 
-        (this.isTextToMorse ? '电码将在此显示' : '文本将在此显示，中文电码基于拼音转换') })
+        (this.isTextToMorse ? i18nService.t('output_text_placeholder') : i18nService.t('output_morse_placeholder')) })
         .layoutWeight(1)
         .fontSize(this.boxFontSize)
         .margin(12)
         .backgroundColor(Color.Transparent)
         .fontColor('#FFFFFF')
-        .fontFamily(this.isTextToMorse ? 'monospace' : '')
         .enabled(false)
         .maxLines(6)
         .id('output_area')
@@ -211,7 +221,7 @@ export struct TranslatePage {
         .onClick(() => {
           // 复制到剪贴板
           promptAction.showToast({
-            message: '已复制到剪贴板',
+            message: i18nService.t('copied'),
             duration: 1500,
             bottom: '80%'
           })

@@ -2,8 +2,8 @@
 
 export interface LessonItem {
   key: string
-  title: string
-  subtitle?: string
+  title: Resource | string
+  subtitle?: Resource | string
   unlocked: boolean
   unitUnlocked: boolean
   completed: boolean

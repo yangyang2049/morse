@@ -1,8 +1,11 @@
 import { LearnViewModel } from '../../viewmodel/LearnViewModel'
+import { LessonConfig } from '../../data/LessonConfig'
 import { LessonItem } from '../../types/LessonTypes'
 import { router } from '@kit.ArkUI'
 import { eventHub, Events } from '../../utils/EventHub'
 import { promptAction } from '@kit.ArkUI'
+import { i18nService } from '../../services/I18nService'
+// 使用$r()函数替代I18n
 // System bar colors are set globally in EntryAbility
 
 @Component
@@ -11,7 +14,9 @@ export struct LearnPage {
   @State vm: LearnViewModel = new LearnViewModel()
   @State private isInitialized: boolean = false
   @State private refreshTrigger: number = 0
-  private lessonCompletedCallback: ((data: Object) => void) | null = null
+  // 使用 StorageLink 监听语言变化
+  @StorageLink('currentLanguage') currentLanguage: string = 'zh'
+  private lessonCompletedCallback: ((data?: Object) => void) | null = null
 
   aboutToAppear(): void {
     // System bar colors are set globally in EntryAbility
@@ -19,7 +24,7 @@ export struct LearnPage {
     const hostContext2 = uiContext2.getHostContext()
     if (hostContext2) {
       // 直接监听课程完成事件 - 确保实时更新
-      this.lessonCompletedCallback = (data: Object) => {
+      this.lessonCompletedCallback = (data?: Object) => {
         // 刷新 ViewModel 数据
         this.vm.refreshLessons()
         
@@ -31,6 +36,7 @@ export struct LearnPage {
       this.vm.init(hostContext2).then(() => {
         this.isInitialized = true
       })
+
     }
   }
 
@@ -83,7 +89,7 @@ export struct LearnPage {
         .justifyContent(FlexAlign.Center)
         .alignItems(HorizontalAlign.Center)
 
-        // 右侧悬浮图标：✓ / 锁定图标 / › - 引用refreshTrigger确保响应式更新
+        // 右侧悬浮图标：✓ / 锁定图标 / 右箭头 - 引用refreshTrigger确保响应式更新
         Row() {
           if (item.completed) {
             Text('✓').fontSize(20).fontColor(Color.Green)
@@ -92,7 +98,10 @@ export struct LearnPage {
               .width(16)
               .height(16)
           } else {
-            Text('›').fontSize(16).fontColor(Color.White)
+            Image($rawfile('ic_arrow_right.svg'))
+              .width(16)
+              .height(16)
+              .fillColor(Color.White)
           }
         }
         .width('100%')
@@ -109,14 +118,14 @@ export struct LearnPage {
     .opacity(item.unlocked ? 1.0 : 0.6)
     .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger确保响应式更新
     .onClick(() => {
-      // Show toast for locked lessons
-      if (!item.unlocked && item.title !== '占位') {
-        promptAction.showToast({
-          message: '请先完成前面的课程',
-          duration: 2000
-        })
-        return
-      }
+        // Show toast for locked lessons
+        if (!item.unlocked && item.title !== '占位') {
+          promptAction.showToast({
+            message: i18nService.t('please_complete_previous_lessons'),
+            duration: 2000
+          })
+          return
+        }
       // Block navigation for placeholder lessons
       if (item.title === '占位') { return }
       if (item.title !== '占位') {
@@ -125,9 +134,10 @@ export struct LearnPage {
           router.push({
             url: 'pages/learn/KnowledgeLessonPage',
             params: {
-              title: '中文摩尔斯电码',
-              testTitle: '中文电码测试',
-              lessonCompletedKey: '2'
+              title: i18nService.t('chinese_morse_code'),
+              testTitle: i18nService.t('chinese_code_test'),
+              // Use lesson ID for correct mapping
+              lessonCompletedKey: 'intro_lesson_1'
             }
           })
         } else if (item.key.startsWith('intro_')) {
@@ -135,15 +145,15 @@ export struct LearnPage {
           router.push({
             url: 'pages/learn/KnowledgeLessonPage',
             params: {
-              title: '摩斯密码基础知识',
-              testTitle: '基础知识测试',
-              lessonCompletedKey: '1'
+              title: i18nService.t('morse_code_basics'),
+              testTitle: i18nService.t('basics_test'),
+              lessonCompletedKey: 'intro_lesson_0'
             }
           })
         } else if (item.key.startsWith('alpha_')) {
           // 字母课程 - 路由到LetterLessonPage
           const lessonIndex = parseInt(item.key.replace('alpha_', ''))
-          const lessonNumber = 3 + lessonIndex // 字母课程从第3课开始
+          const lessonNumber = LessonConfig.getLessonNumber(`alphabet_lesson_${lessonIndex}`)
           console.error(`[LEARN] Navigating to alphabet lesson: ${lessonNumber}`)
           router.push({
             url: 'pages/learn/LetterLessonPage',
@@ -155,7 +165,7 @@ export struct LearnPage {
         } else if (item.key.startsWith('number_')) {
           // 数字课程 - 路由到LetterLessonPage
           const lessonIndex = parseInt(item.key.replace('number_', ''))
-          const lessonNumber = 12 + lessonIndex // 数字课程从第12课开始
+          const lessonNumber = LessonConfig.getLessonNumber(`number_lesson_${lessonIndex}`)
           console.error(`[LEARN] Navigating to number lesson: ${lessonNumber}`)
           router.push({
             url: 'pages/learn/LetterLessonPage',
@@ -167,7 +177,7 @@ export struct LearnPage {
         } else if (item.key.startsWith('punctuation_')) {
           // 符号课程 - 路由到LetterLessonPage
           const lessonIndex = parseInt(item.key.replace('punctuation_', ''))
-          const lessonNumber = 16 + lessonIndex // 符号课程从第16课开始
+          const lessonNumber = LessonConfig.getLessonNumber(`punctuation_lesson_${lessonIndex}`)
           console.error(`[LEARN] Navigating to punctuation lesson: ${lessonNumber}`)
           router.push({
             url: 'pages/learn/LetterLessonPage',
@@ -179,7 +189,7 @@ export struct LearnPage {
         } else if (item.key.startsWith('word_')) {
           // 单词课程 - 路由到LetterLessonPage
           const lessonIndex = parseInt(item.key.replace('word_', ''))
-          const lessonNumber = 19 + lessonIndex // 单词课程从第19课开始
+          const lessonNumber = LessonConfig.getLessonNumber(`word_lesson_${lessonIndex}`)
           console.error(`[LEARN] Navigating to word lesson: ${lessonNumber}`)
           router.push({
             url: 'pages/learn/LetterLessonPage',
@@ -197,7 +207,7 @@ export struct LearnPage {
   }
 
   @Builder
-  private UnitCard(title: string, unitNumber: number, lessons: LessonItem[], isUnlocked: boolean) {
+  private UnitCard(title: Resource | string, unitNumber: number, lessons: LessonItem[], isUnlocked: boolean) {
     RelativeContainer() {
       // Reference anchor filling the card (use empty Column due to Blank restriction)
       Column() {}
@@ -272,7 +282,7 @@ export struct LearnPage {
       if (this.isInitialized) {
         // Title bar - 引用refreshTrigger使其响应式
         Row() {
-          Text('学习')
+          Text(i18nService.t('learn'))
             .fontSize(18)
             .fontWeight(FontWeight.Bold)
             .fontColor(Color.White)
@@ -289,35 +299,35 @@ export struct LearnPage {
           Row() {
             // Intro unit (2 lessons + padding)
             Column() { 
-              this.UnitCard('摩斯密码基础', 1, this.vm.introLessons, true) 
+              this.UnitCard(i18nService.t('morse_code_basics'), 1, this.vm.introLessons, true) 
             }
             .width(320).height(500).margin({ right: 16 })
             .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger
 
             // Alphabet unit (9)
             Column() { 
-              this.UnitCard('字母', 2, this.vm.alphabetLessons, true) 
+              this.UnitCard(i18nService.t('alphabet_lesson'), 2, this.vm.alphabetLessons, true) 
             }
             .width(320).height(500).margin({ right: 16 })
             .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger
 
             // Numbers unit (4)
             Column() { 
-              this.UnitCard('数字', 3, this.vm.numberLessons, true) 
+              this.UnitCard(i18nService.t('number_lesson'), 3, this.vm.numberLessons, true) 
             }
             .width(320).height(500).margin({ right: 16 })
             .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger
 
             // Punctuation unit (3 + pad)
             Column() { 
-              this.UnitCard('符号', 4, this.vm.punctuationLessons, true) 
+              this.UnitCard(i18nService.t('punctuation_lesson'), 4, this.vm.punctuationLessons, true) 
             }
             .width(320).height(500).margin({ right: 16 })
             .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger
 
             // Words unit (3 + pad)
             Column() { 
-              this.UnitCard('单词', 5, this.vm.wordLessons, true) 
+              this.UnitCard(i18nService.t('word_lesson'), 5, this.vm.wordLessons, true) 
             }
             .width(320).height(500)
             .opacity(this.refreshTrigger >= 0 ? 1 : 1) // 引用refreshTrigger
@@ -331,7 +341,7 @@ export struct LearnPage {
       } else {
         // Loading state
         Column() {
-          Text('加载中...')
+          Text(i18nService.t('loading'))
             .fontSize(16)
             .fontColor(Color.White)
             .margin({ top: 200 })

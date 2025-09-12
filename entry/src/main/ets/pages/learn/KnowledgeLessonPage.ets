@@ -2,6 +2,7 @@ import { router } from '@kit.ArkUI'
 // System bar colors are set globally in EntryAbility
 import { KnowledgeLessonViewModel } from '../../viewmodel/KnowledgeLessonViewModel'
 import { LessonNavParams } from '../../types/LessonTypes'
+// 使用$r()函数替代I18n
 
 @Entry
 @Component
@@ -17,7 +18,7 @@ struct KnowledgeLessonPage {
     
     // Read navigation params and initialize ViewModel
     try {
-      const params: LessonNavParams = (router.getParams() as Record<string, Object>) ?? {}
+      const params: LessonNavParams = (router.getParams() as Record<string, Object>) as LessonNavParams ?? {} as LessonNavParams
       console.error(`[KNOWLEDGE_LESSON] aboutToAppear: Raw params=`, JSON.stringify(params))
       this.viewModel.init(params, hostContext)
       
@@ -273,7 +274,7 @@ struct KnowledgeLessonPage {
   @Builder
   CompleteButton() {
     Button() {
-      Text('完成学习')
+      Text($r('app.string.learning_completed'))
         .fontSize(16)
         .fontWeight(FontWeight.Bold)
         .fontColor('#1A1A1A')
