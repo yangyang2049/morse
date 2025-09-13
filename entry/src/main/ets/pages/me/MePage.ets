@@ -365,7 +365,7 @@ export struct MePage {
     .backgroundColor('#2A2A2A')
     .borderRadius(12)
     .width('90%')
-    .constraintSize({ maxWidth: 480, maxHeight: '60%' })
+    .constraintSize({ maxWidth: 400, maxHeight: '60%' })
   }
 
   @Builder LanguageSettingsItem() {

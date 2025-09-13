@@ -244,7 +244,7 @@ export struct CustomDialog {
     .backgroundColor('#1A1A1A')
     .borderRadius(12)
     .width('85%')
-    .constraintSize({ maxWidth: 480, maxHeight: '90%' })
+    .constraintSize({ maxWidth: 400, maxHeight: '90%' })
   }
 
   build() {

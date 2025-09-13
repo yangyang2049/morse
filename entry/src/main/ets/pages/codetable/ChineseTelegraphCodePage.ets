@@ -479,7 +479,7 @@ export struct ChineseTelegraphCodePage {
           }
         }
         .width('100%')
-        .constraintSize({ maxWidth: 480 })
+        .constraintSize({ maxWidth: 400 })
         .padding({ left: 20, right: 20 })
         .layoutWeight(1)
         .justifyContent(FlexAlign.Center)
