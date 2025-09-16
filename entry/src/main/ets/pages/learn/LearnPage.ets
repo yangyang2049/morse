@@ -101,6 +101,24 @@ export struct LearnPage {
     }
   }
 
+  // 根据单元键实时获取课程列表，避免快照导致的过期数据
+  private getLessonsForUnit(unitKey: string): LessonItem[] {
+    switch (unitKey) {
+      case 'intro':
+        return this.vm.getIntroLessons()
+      case 'alphabet':
+        return this.vm.getAlphabetLessons()
+      case 'numbers':
+        return this.vm.getNumberLessons()
+      case 'punctuation':
+        return this.vm.getPunctuationLessons()
+      case 'words':
+        return this.vm.getWordLessons()
+      default:
+        return []
+    }
+  }
+
   // 语言变化时的处理方法（由 @Watch 触发）
   onLanguageChange(): void {
     const lang = this.currentLanguage
@@ -415,7 +433,7 @@ export struct LearnPage {
   }
 
   @Builder
-  private UnitCard(titleKey: string, unitNumber: number, lessons: LessonItem[]) {
+  private UnitCard(titleKey: string, unitNumber: number, unitKey: string) {
     RelativeContainer() {
       // Reference anchor filling the card (use empty Column due to Blank restriction)
       Column() {}
@@ -456,18 +474,19 @@ export struct LearnPage {
         // Lessons list (scroll within card); render placeholders with opacity 0 to keep vertical alignment
         Scroll() {
           Column() {
-            // 引用ViewModel的dataVersion来确保响应式更新
+            // 引用ViewModel的dataVersion和语言变化来确保响应式更新
             Text(this.vm.dataVersion.toString()).opacity(0).width(0).height(0)
+            Text(this.currentLanguage).opacity(0).width(0).height(0)
+            Text(this.langTick.toString()).opacity(0).width(0).height(0)
             
-            ForEach(lessons, (l: LessonItem, idx: number) => {
+            ForEach(this.getLessonsForUnit(unitKey), (l: LessonItem, idx: number) => {
               Column() {
                 this.LessonCard(l, false) // All lessons are unlocked
-                if (idx < lessons.length - 1) { Blank().height(12) }
+                if (idx < this.getLessonsForUnit(unitKey).length - 1) { Blank().height(12) }
               }
-              .opacity(l.title === '占位' ? 0.0 : 1.0) // 占位课程不可见但占据空间
-              .visibility(l.title === '占位' ? Visibility.Hidden : Visibility.Visible) // 确保占位课程完全隐藏
+              .opacity(l.title === '占位' ? 0.0 : 1.0)
               .onClick(() => {
-                if (l.title !== '占位') { // 只有非占位课程才能点击
+                if (l.title !== '占位') {
                   this.handleLessonClick(l)
                 }
               })
@@ -514,31 +533,31 @@ export struct LearnPage {
           Row() {
             // Intro unit (2 lessons + padding) - 直接从ViewModel获取最新数据
             Column() { 
-              this.UnitCard('morse_code_basics', 1, this.vm.getIntroLessons()) 
+              this.UnitCard('morse_code_basics', 1, 'intro') 
             }
             .width(320).height(500).margin({ right: 16 })
 
             // Alphabet unit (9) - 直接从ViewModel获取最新数据
             Column() { 
-              this.UnitCard('alphabet_lesson', 2, this.vm.getAlphabetLessons()) 
+              this.UnitCard('alphabet_lesson', 2, 'alphabet') 
             }
             .width(320).height(500).margin({ right: 16 })
 
             // Numbers unit (4) - 直接从ViewModel获取最新数据
             Column() { 
-              this.UnitCard('number_lesson', 3, this.vm.getNumberLessons()) 
+              this.UnitCard('number_lesson', 3, 'numbers') 
             }
             .width(320).height(500).margin({ right: 16 })
 
             // Punctuation unit (3 + pad) - 直接从ViewModel获取最新数据
             Column() { 
-              this.UnitCard('punctuation_lesson', 4, this.vm.getPunctuationLessons()) 
+              this.UnitCard('punctuation_lesson', 4, 'punctuation') 
             }
             .width(320).height(500).margin({ right: 16 })
 
             // Words unit (3 + pad) - 直接从ViewModel获取最新数据
             Column() { 
-              this.UnitCard('word_lesson', 5, this.vm.getWordLessons()) 
+              this.UnitCard('word_lesson', 5, 'words') 
             }
             .width(320).height(500)
           }

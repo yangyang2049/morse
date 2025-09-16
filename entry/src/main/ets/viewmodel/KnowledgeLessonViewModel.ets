@@ -7,7 +7,7 @@ import Context from '@ohos.app.ability.common'
 @Observed
 export class KnowledgeLessonViewModel {
   // 课程基本信息
-  title: string = '摩斯密码基础'
+  title: string = '摩斯电码基础'
   testTitle: string = '基础知识测试'
   lessonCompletedKey: string = 'intro_lesson_0'
   

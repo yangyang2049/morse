@@ -8,14 +8,11 @@ interface LocalizedStrings {
   app_name: string
   version: string
   language: string
-  instructions: string
   rating_feedback: string
   share_app: string
   other_apps: string
   periodic_table_app: string
   copyright: string
-  instructions_title: string
-  instructions_content: string
   got_it: string
   share_text: string
   share_copied: string
@@ -37,14 +34,11 @@ export struct MePage {
     app_name: '',
     version: '',
     language: '',
-    instructions: '',
     rating_feedback: '',
     share_app: '',
     other_apps: '',
     periodic_table_app: '',
     copyright: '',
-    instructions_title: '',
-    instructions_content: '',
     got_it: '',
     share_text: '',
     share_copied: '',
@@ -103,14 +97,11 @@ export struct MePage {
       app_name: i18nService.t('app_name'),
       version: i18nService.t('version'),
       language: i18nService.t('language'),
-      instructions: i18nService.t('instructions'),
       rating_feedback: i18nService.t('rating_feedback'),
       share_app: i18nService.t('share_app'),
       other_apps: i18nService.t('other_apps'),
       periodic_table_app: i18nService.t('periodic_table_app'),
       copyright: i18nService.t('copyright'),
-      instructions_title: i18nService.t('instructions_title'),
-      instructions_content: i18nService.t('instructions_content'),
       got_it: i18nService.t('got_it'),
       share_text: i18nService.t('share_text'),
       share_copied: i18nService.t('share_copied'),
@@ -124,24 +115,6 @@ export struct MePage {
     this.appVersion = '1.0.1'
   }
 
-  // 使用说明
-  private showInstructions() {
-    // 引用langTick确保对话框内容也会更新
-    const _ = this.langTick
-    promptAction.showDialog({
-      title: this.strings.instructions_title || i18nService.t('instructions_title'),
-      message: this.strings.instructions_content || i18nService.t('instructions_content'),
-      buttons: [
-        {
-          text: this.strings.got_it || i18nService.t('got_it'),
-          color: '#0A59F7'
-        }
-      ],
-      alignment: DialogAlignment.Center
-    }).then((result) => {
-      console.log('用户确认了使用说明')
-    })
-  }
 
   // 评分和反馈
   private showRating() {
@@ -402,39 +375,6 @@ export struct MePage {
     })
   }
 
-  @Builder InstructionsSettingsItem() {
-    Row() {
-      // 隐藏的langTick触发器
-      Text(this.langTick.toString())
-        .opacity(0)
-        .width(0)
-        .height(0)
-      
-      Column() {
-        Text(this.strings.instructions || i18nService.t('instructions'))
-          .fontSize(16)
-          .fontWeight(FontWeight.Medium)
-          .fontColor('#FFFFFF')
-          .textAlign(TextAlign.Start)
-          .width('100%')
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-      }
-      .layoutWeight(1)
-      .alignItems(HorizontalAlign.Start)
-
-      Image($rawfile('ic_arrow_right.svg'))
-        .width(16)
-        .height(16)
-        .fillColor('#666666')
-    }
-    .width('100%')
-    .height(52)
-    .padding({ left: 16, right: 16 })
-    .onClick(() => {
-      this.showInstructions()
-    })
-  }
 
   @Builder RatingSettingsItem() {
     Row() {
@@ -611,8 +551,6 @@ export struct MePage {
               this.LanguageSettingsItem()
               Divider().strokeWidth(1).color('#222222')
 
-              this.InstructionsSettingsItem()
-              Divider().strokeWidth(1).color('#222222')
 
               this.RatingSettingsItem()
               Divider().strokeWidth(1).color('#222222')

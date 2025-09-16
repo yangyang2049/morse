@@ -35,7 +35,7 @@ export class LearnViewModel {
     {
       const newIntroLessons: LessonItem[] = []
       
-      // 第1课：摩斯密码基础
+      // 第1课：摩斯电码基础
       const intro1 = this.getLessonNumber('intro_lesson_0')
       const lesson1Completed = progressStore.isLessonCompleted(intro1)
       newIntroLessons.push({ 
@@ -47,7 +47,7 @@ export class LearnViewModel {
         completed: lesson1Completed 
       })
 
-      // 第2课：中文摩尔斯电码 - 中文时显示真实课程，英文时显示占位
+      // 第2课：中文摩尔斯电码 - 只在中文时显示
       if (isChinese) {
         const intro2 = this.getLessonNumber('intro_lesson_1')
         const lesson2Completed = progressStore.isLessonCompleted(intro2)
@@ -60,23 +60,18 @@ export class LearnViewModel {
           completed: lesson2Completed 
         })
         console.log('[LearnViewModel] Added real lesson 2 for Chinese')
+        
+        // 中文版本：添加9个占位符
+        for (let i = 1; i <= 9; i++) {
+          newIntroLessons.push({ key: `intro_p${i}`, title: '占位', unlocked: true, unitUnlocked: true, completed: true })
+        }
       } else {
-        // 英文版本：在第2课位置放置占位课程
-        newIntroLessons.push({ 
-          key: 'intro_p_lesson2', 
-          title: '占位', 
-          subtitle: '', 
-          unlocked: true, 
-          unitUnlocked: true, 
-          completed: true 
-        })
-        console.log('[LearnViewModel] Added placeholder lesson 2 for English')
-      }
-
-      // 占位填充保持布局
-      const placeholderCount = isChinese ? 9 : 9
-      for (let i = 1; i <= placeholderCount; i++) {
-        newIntroLessons.push({ key: `intro_p${i}`, title: '占位', unlocked: true, unitUnlocked: true, completed: true })
+        console.log('[LearnViewModel] Skipped lesson 2 for English')
+        
+        // 英文版本：添加10个占位符（比中文版本多1个，因为少了第2课）
+        for (let i = 1; i <= 10; i++) {
+          newIntroLessons.push({ key: `intro_p${i}`, title: '占位', unlocked: true, unitUnlocked: true, completed: true })
+        }
       }
 
       this.introLessons = newIntroLessons
@@ -164,15 +159,26 @@ export class LearnViewModel {
   public refreshLessons(): void {
     console.log('[LearnViewModel] Refreshing lessons due to language change')
     
-    // 强制重新读取当前语言设置
-    const currentLang = AppStorage.get<string>('currentLanguage') || 'zh-CN'
-    console.log(`[LearnViewModel] Current language from AppStorage: ${currentLang}`)
+    // 直接从 i18nService 获取当前语言状态，确保同步
+    const currentLang = i18nService.getCurrentLanguage()
+    const isChinese = i18nService.isChinese()
+    console.log(`[LearnViewModel] Current language from i18nService: ${currentLang}, isChinese: ${isChinese}`)
+    console.log(`[LearnViewModel] AppStorage language: ${AppStorage.get<string>('currentLanguage')}`)
     
     this.rebuildLessons()
     
     // 更新版本号来强制触发UI更新
     this.dataVersion++
     console.log('[LearnViewModel] Lessons refreshed, intro count:', this.introLessons.length, 'dataVersion:', this.dataVersion)
+    
+    // 输出第一个和第二个课程的详细信息进行调试
+    const introLessons = this.getIntroLessons()
+    if (introLessons.length > 0) {
+      console.log(`[LearnViewModel] First lesson: ${introLessons[0].key} - ${introLessons[0].title}`)
+    }
+    if (introLessons.length > 1) {
+      console.log(`[LearnViewModel] Second lesson: ${introLessons[1].key} - ${introLessons[1].title}`)
+    }
   }
 
   // 根据课程ID获取课程编号

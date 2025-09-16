@@ -1,9 +1,9 @@
 
 export class LessonData {
-  // 摩斯密码基础课程数据
+  // 摩斯电码基础课程数据
   static readonly introSections: Map<string, string[]> = new Map([
-    ['什么是摩斯密码？', [
-      '摩斯密码是一种以"点（·）和划（-）"为基本元素的字符编码系统，用于传输文本信息。它将字母、数字及标点符号用标准化的长短信号序列来表示，是早期数字通信形式之一。',
+    ['什么是摩斯电码？', [
+      '摩斯电码是一种以"点（·）和划（-）"为基本元素的字符编码系统，用于传输文本信息。它将字母、数字及标点符号用标准化的长短信号序列来表示，是早期数字通信形式之一。',
       '',
       '官方名称说明',
       '• Morse Code - 英文原名',
@@ -12,7 +12,7 @@ export class LessonData {
       '• 莫尔斯电码 - 港台地区译名'
     ]],
     ['历史与起源', [
-      '19世纪30–40 年代，塞缪尔·摩斯与阿尔弗雷德·韦尔合作开发了电报系统，并为此设计了最初的摩斯密码。此后，为适应无线电通信需求，该编码逐步演化为国际摩斯密码，成为全球标准。',
+      '19世纪30–40 年代，塞缪尔·摩斯与阿尔弗雷德·韦尔合作开发了电报系统，并为此设计了最初的摩斯电码。此后，为适应无线电通信需求，该编码逐步演化为国际摩斯电码，成为全球标准。',
       '',
       '国际模式',
       '以严格的点划与间隔单位为核心，适合音频/载波开断（Continuous Wave，连续波）等无线电通信方式。',
@@ -23,7 +23,7 @@ export class LessonData {
     ['时序与间隔（单位制）', [
       '点（·）= 1 单位；划（-）= 3 单位。',
       '点/划之间间隔 = 1 单位；字符之间 = 3 单位；单词之间 = 7 单位。',
-      '这个精确的1:3:7时序规则是摩斯密码的核心，确保了信息传输的准确性。'
+      '这个精确的1:3:7时序规则是摩斯电码的核心，确保了信息传输的准确性。'
     ]],
     ['字符构成规律', [
       '• 字母构成规律：常见如 A = ·-，N = -·，S = ···，O = --- 等，按照点与划的不同组合形成字符。',
@@ -60,7 +60,7 @@ export class LessonData {
     ]]
   ])
 
-  // 英文摩斯密码课程数据
+  // 英文摩斯电码课程数据
   static readonly introSectionsEn: Map<string, string[]> = new Map([
     ['What is Morse Code?', [
       'Morse code is a character encoding system using "dots (·) and dashes (-)" as basic elements for transmitting text information. It represents letters, numbers, and punctuation marks with standardized sequences of long and short signals, making it one of the early forms of digital communication.',
@@ -114,7 +114,7 @@ export class LessonData {
     ]]
   ])
 
-  // 中文摩斯密码课程数据
+  // 中文摩斯电码课程数据
   static readonly chineseSections: Map<string, string[]> = new Map([
     ['什么是中文摩尔斯电码？', [
       '中文摩尔斯电码并不是国际标准摩尔斯电码的一部分，因为标准摩尔斯电码只收录了26个英文字母、0-9数字和少量标点符号。汉字数量庞大（几千上万），无法逐一分配独立的摩尔斯电码。'

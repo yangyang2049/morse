@@ -11,7 +11,7 @@ export class LessonConfig {
   ])
 
   private static readonly UNIT_END_LESSONS_EN = new Map<string, number>([
-    ['intro', 1], // 只有摩斯密码基础
+    ['intro', 1], // 只有摩斯电码基础
     ['alphabet', 10], // 字母单元2-10
     ['numbers', 14], // 数字单元11-14
     ['punctuation', 17], // 符号单元15-17
@@ -20,7 +20,7 @@ export class LessonConfig {
   // 课程编号映射 - 中文版本使用全局连续编号
   static readonly LESSON_MAPPING = new Map<string, number>([
     // 基础单元 (1-2)
-    ['intro_lesson_0', 1], // 摩斯密码基础
+    ['intro_lesson_0', 1], // 摩斯电码基础
     ['intro_lesson_1', 2], // 中文摩尔斯电码
     
     // 字母单元 (3-11)

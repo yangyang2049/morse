@@ -99,7 +99,7 @@ export class QuizViewModel {
         },
       ]
     } else {
-      // 中文摩斯密码测试
+      // 中文摩斯电码测试
       this.questions = [
         {
           type: 'true_false',

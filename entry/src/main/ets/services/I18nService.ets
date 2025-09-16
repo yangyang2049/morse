@@ -62,8 +62,8 @@ export class I18nService {
     // 中文字典
     this.dictionaries['zh-CN'] = {
       // 应用基础
-      'app_name': '摩斯密码',
-      'app_tagline': '让学习摩斯密码简单又有趣',
+      'app_name': '摩斯电码通',
+      'app_tagline': '让学习摩斯电码简单又有趣',
       
       // 主导航
       'learn': '学习',
@@ -94,8 +94,8 @@ export class I18nService {
       'language_switch_failed': '语言切换失败，请稍后重试',
       
       // 学习模块
-      'morse_code_basics': '摩斯密码基础',
-      'morse_code_intro': '摩斯密码是一种以"点（·）和划（-）"为基本元素的字符编码系统。通过不同的点划组合来表示字母、数字和符号。',
+      'morse_code_basics': '摩斯电码基础',
+      'morse_code_intro': '摩斯电码是一种以"点（·）和划（-）"为基本元素的字符编码系统。通过不同的点划组合来表示字母、数字和符号。',
       'alphabet_lesson': '字母',
       'number_lesson': '数字',
       'punctuation_lesson': '符号',
@@ -126,7 +126,7 @@ export class I18nService {
       'practiced': '已练习',
       'total': '总计',
       'learning_completed': '完成学习',
-      'you_mastered_basics': '你已经掌握了摩斯密码的基础知识',
+      'you_mastered_basics': '你已经掌握了摩斯电码的基础知识',
       'need_100_to_pass': '需要100分才能通过测试',
       'test_your_mastery': '测试你对本课程的掌握程度',
       'test_your_mastery_text': '测试你对{title}的掌握程度',
@@ -140,18 +140,18 @@ export class I18nService {
       'wrong': '错误',
         
         // 基础测试问题和选项
-        'q1_question': '摩斯密码是以"点（·）和划（-）"为基本元素的字符编码系统。',
+        'q1_question': '摩斯电码是以"点（·）和划（-）"为基本元素的字符编码系统。',
         'q1_options': '正确,错误',
-        'q2_question': 'SOS信号的摩斯密码是 ··· --- ···，各字符之间需要保持正常的字符间隔。',
+        'q2_question': 'SOS信号的摩斯电码是 ··· --- ···，各字符之间需要保持正常的字符间隔。',
         'q2_options': '正确,错误',
-        'q3_question': '摩斯密码的时序规则中，点、划、字符间隔的单位比例是：',
+        'q3_question': '摩斯电码的时序规则中，点、划、字符间隔的单位比例是：',
         'q3_options': '1 : 2 : 5,1 : 3 : 7,1 : 4 : 8,2 : 3 : 6',
-        'q4_question': '摩斯密码是在哪个年代开发的？',
+        'q4_question': '摩斯电码是在哪个年代开发的？',
         'q4_options': '1820 年代,1830-1840 年代,1850 年代,1860 年代',
-        'q5_question': '学习摩斯密码的建议顺序是：',
+        'q5_question': '学习摩斯电码的建议顺序是：',
         'q5_options': '数字 → 字母 → 符号,符号 → 字母 → 数字,字母 → 数字 → 符号,随机学习',
         
-        // 中文摩斯密码测试问题和选项
+        // 中文摩斯电码测试问题和选项
         'cq1_question': '中文摩尔斯电码是专门为中文汉字设计的摩尔斯电码系统。',
         'cq1_options': '正确,错误',
         'cq2_question': '中文摩尔斯电码的编码长度通常比英文摩尔斯电码短。',
@@ -164,18 +164,18 @@ export class I18nService {
         'cq5_options': '从复杂汉字开始,从基础汉字开始,随机学习,从标点符号开始',
         
         // 基础测试解释内容
-        'exp1_title': '摩斯密码基本元素',
-        'exp1_content': '• 摩斯密码以"点（·）和划（-）"为基本元素\n• 通过不同的点划组合表示字母、数字和符号\n• 这是所有摩斯密码的基础，必须熟练掌握',
+        'exp1_title': '摩斯电码基本元素',
+        'exp1_content': '• 摩斯电码以"点（·）和划（-）"为基本元素\n• 通过不同的点划组合表示字母、数字和符号\n• 这是所有摩斯电码的基础，必须熟练掌握',
         'exp2_title': 'SOS信号的特殊性',
-        'exp2_content': '• SOS是紧急求救信号，需要快速识别\n• 紧凑发送：三个字符（··· --- ···）是紧凑发送的，没有正常的字符间隔\n• 标准间隔规则：正常情况下，摩斯密码字符之间应该有3个单位的间隔\n• SOS例外：但SOS作为紧急信号，会忽略这个规则，紧凑发送以提高识别速度',
+        'exp2_content': '• SOS是紧急求救信号，需要快速识别\n• 紧凑发送：三个字符（··· --- ···）是紧凑发送的，没有正常的字符间隔\n• 标准间隔规则：正常情况下，摩斯电码字符之间应该有3个单位的间隔\n• SOS例外：但SOS作为紧急信号，会忽略这个规则，紧凑发送以提高识别速度',
         'exp3_title': '时序规则的重要性',
-        'exp3_content': '• 1:3:7比例是摩斯密码的核心规则\n• 点=1单位，划=3单位，字符间隔=3单位，单词间隔=7单位\n• 这个精确的时序确保了信息传输的准确性和可读性',
+        'exp3_content': '• 1:3:7比例是摩斯电码的核心规则\n• 点=1单位，划=3单位，字符间隔=3单位，单词间隔=7单位\n• 这个精确的时序确保了信息传输的准确性和可读性',
         'exp4_title': '历史背景',
-        'exp4_content': '• 塞缪尔·摩斯与阿尔弗雷德·韦尔在1830-1840 年代合作开发\n• 最初用于电报系统，后来演化为国际摩斯密码\n• 成为全球标准的无线电通信编码系统',
+        'exp4_content': '• 塞缪尔·摩斯与阿尔弗雷德·韦尔在1830-1840 年代合作开发\n• 最初用于电报系统，后来演化为国际摩斯电码\n• 成为全球标准的无线电通信编码系统',
         'exp5_title': '学习策略',
         'exp5_content': '• 字母 → 数字 → 符号的学习顺序最科学\n• 先掌握基础字母，再学习数字和符号\n• 循序渐进，避免信息过载，提高学习效率',
         
-        // 中文摩斯密码测试解释内容
+        // 中文摩斯电码测试解释内容
         'cexp1_title': '中文摩尔斯电码的定义',
         'cexp1_content': '• 中文摩尔斯电码是专门为中文汉字设计的编码系统\n• 通过点（·）和划（-）的组合表示中文字符\n• 结合了传统摩尔斯电码原理和中文语言特点\n• 为中文通信提供了标准化的编码方案',
         'cexp2_title': '编码长度的特点',
@@ -203,19 +203,15 @@ export class I18nService {
       'no_data': '暂无数据',
       
       // 个人中心
-      'instructions': '使用说明',
       'rating_feedback': '评分和反馈',
       'share_app': '分享应用',
       'other_apps': '其他应用',
       'version': '版本',
       'copyright': '© 2025 重庆豆花科技有限公司',
       
-      // 使用说明
-      'instructions_title': '使用说明',
-      'instructions_content': '1. 学习：从基础课程开始，逐步掌握摩斯密码\n2. 练习：通过不同难度的练习巩固学习成果\n3. 翻译：将文字转换为摩斯密码或反向转换\n4. 码表：查看完整的摩斯密码对照表\n\n点击播放按钮可以听到摩斯密码的声音',
       
       // 分享内容
-      'share_text': '推荐一款学习摩尔斯密码的应用：\n《摩斯密码 2025》📡\n\n• 从零学习摩尔斯电码\n• 跟读练习与听力训练\n• 文本与摩斯互相翻译\n\n立即下载：\nhttps://appgallery.huawei.com/app/detail?id=com.douhua.morsecode',
+      'share_text': '推荐一款学习摩尔斯电码的应用：\n《摩斯电码通》📡\n\n• 从零学习摩尔斯电码\n• 跟读练习与听力训练\n• 文本与摩斯互相翻译\n\n立即下载：\nhttps://appgallery.huawei.com/app/detail?id=com.douhua.morsecode',
       'share_copied': '分享内容已复制到剪贴板',
       
       // 课程标题 - 每个单元内部编号
@@ -356,7 +352,7 @@ export class I18nService {
         'q5_question': 'The recommended learning order for Morse code is:',
         'q5_options': 'Numbers → Letters → Symbols,Symbols → Letters → Numbers,Letters → Numbers → Symbols,Random learning',
         
-        // 中文摩斯密码测试问题和选项
+        // 中文摩斯电码测试问题和选项
         'cq1_question': 'Chinese Morse code is a Morse code system specifically designed for Chinese characters.',
         'cq1_options': 'Correct,Wrong',
         'cq2_question': 'Chinese Morse code encoding is typically shorter than English Morse code.',
@@ -380,7 +376,7 @@ export class I18nService {
         'exp5_title': 'Learning Strategy',
         'exp5_content': '• Letters → Numbers → Symbols is the most scientific learning order\n• Master basic letters first, then learn numbers and symbols\n• Progressive learning to avoid information overload and improve efficiency',
         
-        // 中文摩斯密码测试解释内容
+        // 中文摩斯电码测试解释内容
         'cexp1_title': 'Definition of Chinese Morse Code',
         'cexp1_content': '• Chinese Morse code is a coding system specifically designed for Chinese characters\n• Uses combinations of dots (·) and dashes (-) to represent Chinese characters\n• Combines traditional Morse code principles with Chinese language characteristics\n• Provides standardized encoding for Chinese communication',
         'cexp2_title': 'Characteristics of Encoding Length',
@@ -408,19 +404,15 @@ export class I18nService {
       'no_data': 'No Data',
       
       // 个人中心
-      'instructions': 'Instructions',
       'rating_feedback': 'Rating & Feedback',
       'share_app': 'Share App',
       'other_apps': 'Other Apps',
       'version': 'Version',
       'copyright': '© 2025 Douhua Technology Co., Ltd.',
       
-      // 使用说明
-      'instructions_title': 'Instructions',
-      'instructions_content': '1. Learn: Start with basic courses to master Morse code\n2. Practice: Consolidate learning through different difficulty levels\n3. Translate: Convert text to Morse code or vice versa\n4. Code Table: View the complete Morse code reference table\n\nClick the play button to hear the Morse code sound',
       
       // 分享内容
-      'share_text': 'Recommend a Morse code learning app:\n《Morse Code 2025》📡\n\n• Learn Morse code from scratch\n• Follow-along practice and listening training\n• Text and Morse code translation\n\nDownload now:\nhttps://appgallery.huawei.com/app/detail?id=com.douhua.morsecode',
+      'share_text': 'Recommend a Morse code learning app:\n《Morse Code Master》📡\n\n• Learn Morse code from scratch\n• Follow-along practice and listening training\n• Text and Morse code translation\n\nDownload now:\nhttps://appgallery.huawei.com/app/detail?id=com.douhua.morsecode',
       'share_copied': 'Share content copied to clipboard',
       
       // 课程标题 - 每个单元内部编号
