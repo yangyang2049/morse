@@ -58,7 +58,7 @@ struct LetterLessonPage {
 
     // 初始化本地化并监听语言变化
     this.strings = this.computeStrings()
-    this.languageChangeListener = (lang: string) => {
+    this.languageChangeListener = () => {
       this.strings = this.computeStrings()
       this.langTick++
     }
@@ -266,7 +266,7 @@ struct LetterLessonPage {
         // 用图形化方式显示摩尔斯码
         // 用图形化方式显示摩尔斯码
         Row() {
-          ForEach((this.viewModel.codes[this.viewModel.currentIndex]?.morse || '').split(''), (char: string, index: number) => {
+          ForEach((this.viewModel.codes[this.viewModel.currentIndex]?.morse || '').split(''), (char: string) => {
             if (char === '.') {
               Circle({ width: this.isWordLesson() ? 6.4 : 8, height: this.isWordLesson() ? 6.4 : 8 })
                 .fill(Color.White)
@@ -312,7 +312,7 @@ struct LetterLessonPage {
         // 用图形化方式显示用户输入
         // 用图形化方式显示用户输入
         Row() {
-          ForEach(this.viewModel.userInput.split(''), (char: string, index: number) => {
+          ForEach(this.viewModel.userInput.split(''), (char: string) => {
             if (char === '.') {
               Circle({ width: this.isWordLesson() ? 6.4 : 8, height: this.isWordLesson() ? 6.4 : 8 })
                 .fill(
@@ -454,19 +454,19 @@ struct LetterLessonPage {
       // 对话框内容
       Column() {
         Column()
-          .width(80)
-          .height(80)
-          .backgroundColor(Color.Green)
-          .borderRadius(40)
-          .alignItems(HorizontalAlign.Center)
-          .justifyContent(FlexAlign.Center)
-          .shadow({ radius: 20, color: 'rgba(0, 255, 0, 0.3)', offsetX: 0, offsetY: 8 })
+
         {
           Text('✓')
             .fontSize(40)
             .fontWeight(FontWeight.Bold)
             .fontColor(Color.White)
-        }
+        }.width(80)
+        .height(80)
+        .backgroundColor(Color.Green)
+        .borderRadius(40)
+        .alignItems(HorizontalAlign.Center)
+        .justifyContent(FlexAlign.Center)
+        .shadow({ radius: 20, color: 'rgba(0, 255, 0, 0.3)', offsetX: 0, offsetY: 8 })
 
         Blank().height(24)
 

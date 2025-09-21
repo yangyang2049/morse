@@ -452,11 +452,7 @@ export struct LearnPage {
         .zIndex(0)
 
       Column()
-        .alignRules({
-          top:  { anchor: 'card', align: VerticalAlign.Top },
-          left: { anchor: 'card', align: HorizontalAlign.Start }
-        })
-        .zIndex(1)
+
       {
         Row() {
           Text(this.getLocalizedString(titleKey))
@@ -503,10 +499,7 @@ export struct LearnPage {
     .backgroundColor('#1A1A1A')
     .border({ width: 1, color: '#333333' })
     .borderRadius(12)
-    .onClick(() => {
-      // 所有单元都已解锁，无需特殊处理
-      console.info(`单元 ${unitNumber} 已解锁`)
-    })
+
   }
 
   build() {
