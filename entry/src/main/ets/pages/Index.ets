@@ -135,7 +135,6 @@ struct Index {
     .animationDuration(400)
     .onChange((index: number) => {
       this.currentIndex = index
-      console.error(`[INDEX] Tab changed to index: ${index}`)
     })
     .width('100%')
     .height('100%')
