@@ -19,6 +19,7 @@ interface LocalizedStrings {
   copy_failed: string
   opening_app_gallery: string
   language_selection_title: string
+  settings: string
 }
 
 @Component
@@ -44,7 +45,8 @@ export struct MePage {
     share_copied: '',
     copy_failed: '',
     opening_app_gallery: '',
-    language_selection_title: ''
+    language_selection_title: '',
+    settings: ''
   }
   private languageChangeListener: ((lang: string) => void) | null = null
 
@@ -107,7 +109,8 @@ export struct MePage {
       share_copied: i18nService.t('share_copied'),
       copy_failed: i18nService.t('copy_failed'),
       opening_app_gallery: i18nService.t('opening_app_gallery'),
-      language_selection_title: i18nService.t('language_selection_title')
+      language_selection_title: i18nService.t('language_selection_title'),
+      settings: i18nService.t('settings')
     }
   }
 
@@ -115,17 +118,10 @@ export struct MePage {
     this.appVersion = '1.0.1'
   }
 
-
-  // 评分和反馈
-  private showRating() {
-    this.openAppGallery()
-  }
-
   // 分享应用
   private shareApp(): void {
     try {
       // 引用langTick确保toast消息也会更新
-      const _ = this.langTick
       const shareText = this.strings.share_text || i18nService.t('share_text')
 
       const sysPB = pasteboard.getSystemPasteboard()
@@ -137,7 +133,6 @@ export struct MePage {
         duration: 2000
       })
     } catch (error) {
-      console.error('复制到剪贴板失败:', error)
       promptAction.showToast({
         message: this.strings.copy_failed || i18nService.t('copy_failed'),
         duration: 2000
@@ -159,7 +154,6 @@ export struct MePage {
 
       context.startAbility(want).then(() => {
         // 引用langTick确保toast消息也会更新
-        const _ = this.langTick
         promptAction.showToast({
           message: this.strings.opening_app_gallery || i18nService.t('opening_app_gallery'),
           duration: 1500
@@ -341,6 +335,26 @@ export struct MePage {
     .constraintSize({ maxWidth: 400, maxHeight: '60%' })
   }
 
+  @Builder
+  private TitleBar() {
+    Row() {
+      // 隐藏的langTick触发器
+      Text(this.langTick.toString())
+        .opacity(0)
+        .width(0)
+        .height(0)
+      
+      Text(this.strings.settings)
+        .fontSize(20)
+        .fontWeight(FontWeight.Bold)
+        .fontColor('#FFFFFF')
+    }
+    .height(56)
+    .width('100%')
+    .justifyContent(FlexAlign.Center)
+    .backgroundColor('#000000')
+  }
+
   @Builder LanguageSettingsItem() {
     Row() {
       // 隐藏的langTick触发器
@@ -368,7 +382,7 @@ export struct MePage {
         .fillColor('#666666')
     }
     .width('100%')
-    .height(52)
+    .height(56)
     .padding({ left: 16, right: 16 })
     .onClick(() => {
       this.showLanguageDialog = true
@@ -403,7 +417,7 @@ export struct MePage {
         .fillColor('#666666')
     }
     .width('100%')
-    .height(52)
+    .height(56)
     .padding({ left: 16, right: 16 })
     .onClick(() => {
       this.openAppGallery()
@@ -437,7 +451,7 @@ export struct MePage {
         .fillColor('#666666')
     }
     .width('100%')
-    .height(52)
+    .height(56)
     .padding({ left: 16, right: 16 })
     .onClick(() => {
       this.shareApp()
@@ -501,123 +515,130 @@ export struct MePage {
   }
 
   build() {
-    Stack() {
-      Scroll() {
-        Column() {
-          // 头部 - 应用信息（黑色背景，图标置顶）
+    Column() {
+      this.TitleBar()
+      
+      Stack() {
+        Scroll() {
           Column() {
-            Image($r('app.media.startIcon'))
-              .width(80)
-              .height(80)
-              .borderRadius(20)
-              .margin({ bottom: 16 })
-              .shadow({
-                radius: 8,
-                color: 'rgba(255, 255, 255, 0.3)',
-                offsetX: 0,
-                offsetY: 2
-              })
-
-            // 隐藏的langTick触发器
-            Text(this.langTick.toString())
-              .opacity(0)
-              .width(0)
-              .height(0)
-            
-            Text(this.strings.app_name || i18nService.t('app_name'))
-              .fontSize(24)
-              .fontWeight(FontWeight.Bold)
-              .fontColor('#FFFFFF')
-              .margin({ bottom: 4 })
-
-            Row() {
-              Text(this.strings.version || i18nService.t('version'))
-                .fontSize(14)
-                .fontColor('#B0B0B0')
-              Text(` ${this.appVersion}`)
-                .fontSize(14)
-                .fontColor('#B0B0B0')
-            }
-          }
-          .width('100%')
-          .padding({ top: 60, bottom: 40 })
-          .alignItems(HorizontalAlign.Center)
-
-          // 设置项（黑色背景卡片 + 分割线，无图标）
-          Column() {
-            // 盒子容器
+            // 头部 - 应用信息（黑色背景，图标置顶）
             Column() {
-              // 语言切换条目
-              this.LanguageSettingsItem()
-              Divider().strokeWidth(1).color('#222222')
+              Image($r('app.media.startIcon'))
+                .width(80)
+                .height(80)
+                .borderRadius(20)
+                .margin({ bottom: 16 })
+                .shadow({
+                  radius: 8,
+                  color: 'rgba(255, 255, 255, 0.3)',
+                  offsetX: 0,
+                  offsetY: 2
+                })
 
+              // 隐藏的langTick触发器
+              Text(this.langTick.toString())
+                .opacity(0)
+                .width(0)
+                .height(0)
+              
+              Text(this.strings.app_name || i18nService.t('app_name'))
+                .fontSize(24)
+                .fontWeight(FontWeight.Bold)
+                .fontColor('#FFFFFF')
+                .margin({ bottom: 4 })
 
-              this.RatingSettingsItem()
-              Divider().strokeWidth(1).color('#222222')
-
-              this.ShareSettingsItem()
+              Row() {
+                Text(this.strings.version || i18nService.t('version'))
+                  .fontSize(14)
+                  .fontColor('#B0B0B0')
+                Text(` ${this.appVersion}`)
+                  .fontSize(14)
+                  .fontColor('#B0B0B0')
+              }
             }
             .width('100%')
-            .backgroundColor('#111111')
-            .borderRadius(12)
-            .border({ width: 1, color: '#222222' })
-            .padding({ top: 4, bottom: 4 })
-            .constraintSize({ maxWidth: 400 })
+            .padding({ top: 20, bottom: 40 })
+            .alignItems(HorizontalAlign.Center)
 
-            this.OtherAppsSection()
-          }
-          .width('100%')
-          .padding({ left: 20, right: 20 })
-          .alignItems(HorizontalAlign.Center)
+            // 设置项（黑色背景卡片 + 分割线，无图标）
+            Column() {
+              // 盒子容器
+              Column() {
+                // 语言切换条目
+                this.LanguageSettingsItem()
+                Divider().strokeWidth(1).color('#222222')
 
-          // 底部版权信息 - 现在在滚动内容的底部
-          Column() {
-            Text(this.strings.copyright || i18nService.t('copyright'))
-              .fontSize(12)
-              .fontColor('#999999')
-          }
-          .width('100%')
-          .padding({ top: 40, bottom: 20 })
-          .alignItems(HorizontalAlign.Center)
-        }
-        .width('100%')
-        .backgroundColor('#000000')
-      }
-      .width('100%')
-      .height('100%')
-      .scrollBar(BarState.Off)
-      .scrollable(ScrollDirection.Vertical)
-      .scrollBarColor('#000000')
-      .scrollBarWidth(0)
-      .backgroundColor('#000000')
-      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+                this.RatingSettingsItem()
+                Divider().strokeWidth(1).color('#222222')
 
-      // 语言选择对话框
-      if (this.showLanguageDialog) {
-        Stack() {
-          // 半透明背景
-          Column()
+                this.ShareSettingsItem()
+              }
+              .width('100%')
+              .backgroundColor('#111111')
+              .borderRadius(12)
+              .border({ width: 1, color: '#222222' })
+              .padding({ top: 4, bottom: 4 })
+              .constraintSize({ maxWidth: 400 })
+
+              this.OtherAppsSection()
+            }
             .width('100%')
-            .height('100%')
-            .backgroundColor('rgba(0, 0, 0, 0.5)')
-            .onClick(() => {
-              this.showLanguageDialog = false
-            })
-          
-          // 对话框内容 - 使用Column居中
-          Column() {
-            this.LanguageSelectorDialog()
+            .padding({ left: 20, right: 20 })
+            .alignItems(HorizontalAlign.Center)
+
+            // 底部版权信息 - 现在在滚动内容的底部
+            Column() {
+              Text(this.strings.copyright || i18nService.t('copyright'))
+                .fontSize(12)
+                .fontColor('#999999')
+            }
+            .width('100%')
+            .padding({ top: 40, bottom: 20 })
+            .alignItems(HorizontalAlign.Center)
           }
           .width('100%')
-          .height('100%')
-          .justifyContent(FlexAlign.Center)
-          .alignItems(HorizontalAlign.Center)
+          .backgroundColor('#000000')
         }
         .width('100%')
         .height('100%')
+        .scrollBar(BarState.Off)
+        .scrollable(ScrollDirection.Vertical)
+        .scrollBarColor('#000000')
+        .scrollBarWidth(0)
+        .backgroundColor('#000000')
+
+        // 语言选择对话框
+        if (this.showLanguageDialog) {
+          Stack() {
+            // 半透明背景
+            Column()
+              .width('100%')
+              .height('100%')
+              .backgroundColor('rgba(0, 0, 0, 0.5)')
+              .onClick(() => {
+                this.showLanguageDialog = false
+              })
+            
+            // 对话框内容 - 使用Column居中
+            Column() {
+              this.LanguageSelectorDialog()
+            }
+            .width('100%')
+            .height('100%')
+            .justifyContent(FlexAlign.Center)
+            .alignItems(HorizontalAlign.Center)
+          }
+          .width('100%')
+          .height('100%')
+        }
       }
+      .width('100%')
+      .height('100%')
+      .layoutWeight(1)
     }
     .width('100%')
     .height('100%')
+    .backgroundColor('#000000')
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }

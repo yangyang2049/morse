@@ -1,8 +1,8 @@
-import { router, promptAction } from '@kit.ArkUI'
-// System bar colors are set globally in EntryAbility
+
 import util from '@ohos.util'
 import { DialogManager } from '../../widgets/CustomDialog'
 import { CustomDialog } from '../../widgets/CustomDialog'
+import { router } from '@kit.ArkUI'
 
 interface ChineseTelegraphCode {
   character: string
@@ -74,7 +74,7 @@ export struct ChineseTelegraphCodePage {
         .then((data: ArrayBuffer) => {
           const decoder = new util.TextDecoder('utf-8')
           const uint8Array = new Uint8Array(data)
-          const jsonString = decoder.decode(uint8Array)
+          const jsonString = decoder.decodeToString(uint8Array)
           const allData = JSON.parse(jsonString) as ChineseTelegraphCode[]
           
           // 缓存数据
@@ -183,7 +183,7 @@ export struct ChineseTelegraphCodePage {
         .then((data: ArrayBuffer) => {
           const decoder = new util.TextDecoder('utf-8')
           const uint8Array = new Uint8Array(data)
-          const jsonString = decoder.decode(uint8Array)
+          const jsonString = decoder.decodeToString(uint8Array)
           const allData = JSON.parse(jsonString) as ChineseTelegraphCode[]
           
           // 缓存数据
@@ -237,7 +237,7 @@ export struct ChineseTelegraphCodePage {
       })
 
       Text('标准中文电码')
-        .fontSize(18)
+        .fontSize(20)
         .fontWeight(FontWeight.Bold)
         .fontColor(Color.White)
         .layoutWeight(1)

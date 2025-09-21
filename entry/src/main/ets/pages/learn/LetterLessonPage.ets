@@ -4,10 +4,6 @@ import { LetterLessonViewModel } from '../../viewmodel/LetterLessonViewModel'
 import { LessonData } from '../../data/LessonData'
 import { audioService } from '../../services/AudioService'
 import { i18nService } from '../../services/I18nService'
-import { Context } from '@kit.AbilityKit'
-// 使用$r()函数替代I18n
-// System bar colors are set globally in EntryAbility
-
 // 本地化字符串接口（避免ArkTS内联对象类型报错）
 interface LetterLessonStrings {
   settings: string
@@ -87,15 +83,6 @@ struct LetterLessonPage {
     const lessonNumber = parseInt(lessonId) || 0
     return lessonNumber >= 19 && lessonNumber <= 21
   }
-
-  // 判断是否为数字或符号课程
-  private isNumberOrSymbolLesson(): boolean {
-    const lessonId = this.viewModel.lessonId
-    return lessonId.startsWith('number_lesson_') || lessonId.startsWith('punctuation_lesson_')
-  }
-
-
-  // Removed onPageShow system bar re-application to avoid flicker
 
   private setupLessonData(lessonId: string): MorseCode[] {
     console.log(`[LetterLessonPage] setupLessonData: lessonId=${lessonId}`)
@@ -236,7 +223,7 @@ struct LetterLessonPage {
           this.viewModel.showSettingsDialog = true
         })
       }
-      .height(52)
+      .height(56)
       .padding({ left: 16, right: 16 })
     }
     .width('100%')
@@ -481,7 +468,7 @@ struct LetterLessonPage {
             .fontColor(Color.White)
         }
 
-        Blank().height(16)
+        Blank().height(24)
 
         Text(this.strings.congratulations_completed || $r('app.string.congratulations_completed'))
           .fontSize(24)
@@ -489,7 +476,7 @@ struct LetterLessonPage {
           .fontColor('#FFFFFF')
           .textAlign(TextAlign.Center)
 
-        Blank().height(20)
+        Blank().height(24)
 
         Row() {
           Column() {
@@ -521,12 +508,12 @@ struct LetterLessonPage {
           .justifyContent(FlexAlign.Center)
         }
         .width('100%')
-        .padding(16)
+        .padding(20)
         .backgroundColor('#1A1A1A')
         .border({ width: 1, color: '#333333' })
         .borderRadius(12)
 
-        Blank().height(20)
+        Blank().height(24)
 
         Row() {
           Button() {
@@ -584,7 +571,7 @@ struct LetterLessonPage {
 
   @Builder
   private SettingsDialog() {
-    // 设置对话框：声音开关与练习次数步进器
+
     Column() {
       Blank().layoutWeight(1)
 
@@ -597,7 +584,7 @@ struct LetterLessonPage {
           .fontColor('#FFFFFF')
           .textAlign(TextAlign.Center)
 
-        Blank().height(12)
+        Blank().height(16)
 
         // 声音
         Row() {
@@ -614,7 +601,7 @@ struct LetterLessonPage {
         .height(44)
         .padding({ left: 4, right: 4 })
 
-        Blank().height(8)
+        Blank().height(12)
 
         // 练习次数 (3-5) - 单行布局，系统步进器不可用时使用 +/-
         Row() {
@@ -664,7 +651,7 @@ struct LetterLessonPage {
         .height(44)
         .alignItems(VerticalAlign.Center)
 
-        Blank().height(16)
+        Blank().height(20)
 
         Button() {
           Text(this.strings.close || $r('app.string.close'))
@@ -695,50 +682,61 @@ struct LetterLessonPage {
 
   @Builder
   private OverlayCover() {
-    if (this.viewModel.showCompletionDialog) {
-      this.CompletionDialog()
-    } else if (this.viewModel.showSettingsDialog) {
-      this.SettingsDialog()
+    Stack() {
+      // 半透明遮罩，阻止穿透点击
+      Column()
+        .width('100%')
+        .height('100%')
+        .backgroundColor('rgba(0, 0, 0, 0.5)')
+
+      if (this.viewModel.showCompletionDialog) {
+        this.CompletionDialog()
+      } else if (this.viewModel.showSettingsDialog) {
+        this.SettingsDialog()
+      }
     }
+    .width('100%')
+    .height('100%')
   }
 
   build() {
-    Column() {
-      this.TitleBar()
-
-      // 内容区域 - 响应式宽度，最大480vp
+    Stack() {
       Column() {
-        Blank().height(20)
+        this.TitleBar()
 
+        // 内容区域 - 响应式宽度，最大480vp
         Column() {
-          this.ProgressCircle()
-          Blank().height(60)
-          this.MorseDisplay()
           Blank().height(20)
-          this.InputDisplay()
-        }
-        .layoutWeight(1)
-        .justifyContent(FlexAlign.Center)
 
-        this.BottomKeys()
+          Column() {
+            this.ProgressCircle()
+            Blank().height(60)
+            this.MorseDisplay()
+            Blank().height(20)
+            this.InputDisplay()
+          }
+          .layoutWeight(1)
+          .justifyContent(FlexAlign.Center)
+
+          this.BottomKeys()
+        }
+        .width('100%')
+        .constraintSize({ maxWidth: 480 })
+        .padding({ left: 20, right: 20 })
+        .height('100%')
+        .justifyContent(FlexAlign.Center)
+        .alignItems(HorizontalAlign.Center)
       }
       .width('100%')
-      .constraintSize({ maxWidth: 480 })
-      .padding({ left: 20, right: 20 })
       .height('100%')
-      .justifyContent(FlexAlign.Center)
-      .alignItems(HorizontalAlign.Center)
+
+      if (this.viewModel.showCompletionDialog || this.viewModel.showSettingsDialog) {
+        this.OverlayCover()
+      }
     }
     .width('100%')
     .height('100%')
     .backgroundColor(Color.Black)
     .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
-    .bindContentCover(this.viewModel.showCompletionDialog || this.viewModel.showSettingsDialog, this.OverlayCover(), {
-      modalTransition: ModalTransition.NONE,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      onWillAppear: () => {
-        console.log('Overlay will appear')
-      }
-    })
   }
 }

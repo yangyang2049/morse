@@ -94,7 +94,7 @@ struct KnowledgeLessonPage {
         .backgroundColor(Color.Transparent)
         .enabled(false)
     }
-    .height(52)
+    .height(56)
     .padding({ left: 16, right: 16 })
   }
 

@@ -3,23 +3,7 @@ import { LessonConfig } from '../../data/LessonConfig'
 import { LessonItem, LearnPageStrings } from '../../types/LessonTypes'
 import { router } from '@kit.ArkUI'
 import { eventHub, Events } from '../../utils/EventHub'
-import { promptAction } from '@kit.ArkUI'
 import { i18nService } from '../../services/I18nService'
-
-// 本地化字符串接口
-interface LocalizedStrings {
-  learn: string
-  loading: string
-  morse_code_basics: string
-  alphabet_lesson: string
-  number_lesson: string
-  punctuation_lesson: string
-  word_lesson: string
-  please_complete_previous_lessons: string
-  chinese_morse_code: string
-  chinese_code_test: string
-  basics_test: string
-}
 
 @Component
 export struct LearnPage {
@@ -153,9 +137,6 @@ export struct LearnPage {
     console.log('[LearnPage] ViewModel changed, triggering UI refresh')
     this.langTick++
   }
-
-  // 已由 StorageLink + @Watch 实时监听语言变化，无需轮询
-  private startLanguageWatcher(): void {}
 
   // 更新课程数据 - 现在只需要触发UI刷新
   private updateLessonData(): void {
@@ -429,6 +410,26 @@ export struct LearnPage {
   }
 
   @Builder
+  private TitleBar() {
+    Row() {
+      // 隐藏的langTick触发器
+      Text(this.langTick.toString())
+        .opacity(0)
+        .width(0)
+        .height(0)
+      
+      Text(this.strings.learn || i18nService.t('learn'))
+        .fontSize(20)
+        .fontWeight(FontWeight.Bold)
+        .fontColor('#FFFFFF')
+    }
+    .height(56)
+    .width('100%')
+    .justifyContent(FlexAlign.Center)
+    .backgroundColor('#000000')
+  }
+
+  @Builder
   private UnitCard(titleKey: string, unitNumber: number, unitKey: string) {
     RelativeContainer() {
       // Reference anchor filling the card (use empty Column due to Blank restriction)
@@ -511,18 +512,7 @@ export struct LearnPage {
   build() {
     Column() {
       if (this.isInitialized) {
-        // Title bar
-        Row() {
-          Text(this.strings.learn || i18nService.t('learn'))
-            .fontSize(18)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(Color.White)
-            .layoutWeight(1)
-            .textAlign(TextAlign.Center)
-        }
-        .height(52)
-        .padding({ left: 16, right: 16 })
-        .backgroundColor(Color.Black)
+        this.TitleBar()
 
         // Horizontal scroll of unit cards
         Scroll(this.scroller) {

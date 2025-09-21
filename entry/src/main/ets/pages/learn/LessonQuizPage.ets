@@ -1,10 +1,8 @@
 import { router } from '@kit.ArkUI'
-import preferences from '@ohos.data.preferences'
-// System bar colors are set globally in EntryAbility
 import { ExplanationTipsCard } from '../../widgets/ExplanationTipsCard'
 import { LearnViewModel } from '../../viewmodel/LearnViewModel'
 import { QuizViewModel } from '../../viewmodel/QuizViewModel'
-import { QuizNavParams, QuestionItem, ExplanationItem, ButtonStyle } from '../../types/LessonTypes'
+import { QuizNavParams } from '../../types/LessonTypes'
 import { i18nService } from '../../services/I18nService'
 
 @Entry
@@ -101,7 +99,7 @@ struct LessonQuizPage {
       })
 
       Text(this.quizViewModel.pageTitle)
-        .fontSize(18)
+        .fontSize(20)
         .fontWeight(FontWeight.Bold)
         .fontColor(Color.White)
         .layoutWeight(1)
@@ -113,7 +111,7 @@ struct LessonQuizPage {
         .fontColor(Color.White)
         .margin({ right: 16 })
     }
-    .height(52)
+    .height(56)
     .padding({ left: 16, right: 16 })
     .backgroundColor(Color.Transparent)
   }

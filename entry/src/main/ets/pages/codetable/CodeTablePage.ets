@@ -1,11 +1,7 @@
 import { MorseCode, MorseCodeData } from '../../models/MorseCode'
-// System bar colors are set globally in EntryAbility
 import { router } from '@kit.ArkUI'
 import { audioService } from '../../services/AudioService'
 import { i18nService } from '../../services/I18nService'
-import { eventHub, Events } from '../../utils/EventHub'
-// 使用$r()函数替代I18n
-import { Context } from '@kit.AbilityKit'
 
 interface Category {
   key: string
@@ -150,6 +146,53 @@ export struct CodeTablePage {
     return m.split('.').join('·')
   }
 
+  @Builder
+  private TitleBar() {
+    Row() {
+      Blank().width(40) // Balance the right button
+
+      // 隐藏的langTick触发器
+      Text(this.langTick.toString())
+        .opacity(0)
+        .width(0)
+        .height(0)
+      
+      Text(this.strings.code_table || i18nService.t('code_table'))
+        .fontSize(20)
+        .fontWeight(FontWeight.Bold)
+        .fontColor('#FFFFFF')
+        .layoutWeight(1)
+        .textAlign(TextAlign.Center)
+
+      // 中按钮 - 只在中文环境下显示
+      if (!this.isEnglish) {
+        Button() {
+          Text('中')
+            .fontSize(18)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#FFFFFF')
+        }
+        .width(40)
+        .height(40)
+        .backgroundColor(Color.Transparent)
+        .onClick(() => {
+          router.push({
+            url: 'pages/codetable/ChineseTelegraphCodePage'
+          })
+        })
+      } else {
+        // 英文环境下显示占位符，保持布局平衡
+        Column()
+          .width(40)
+          .height(40)
+      }
+    }
+    .height(56)
+    .width('100%')
+    .padding({ left: 16, right: 16 })
+    .backgroundColor('#000000')
+  }
+
   // 播放摩尔斯码
   private async playMorseCode(morseCode: string): Promise<void> {
     this.playingCode = morseCode
@@ -170,50 +213,7 @@ export struct CodeTablePage {
     // primary/background: #000000, surface: #1A1A1A, text: #FFFFFF,
     // textSecondary: #B0B0B0, border: #333333, accent: #FFD700
     Column() {
-      // Title bar
-      Row() {
-        Blank().width(40) // Balance the right button
-
-        // 隐藏的langTick触发器
-        Text(this.langTick.toString())
-          .opacity(0)
-          .width(0)
-          .height(0)
-        
-        Text(this.strings.code_table || i18nService.t('code_table'))
-          .fontSize(20)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#FFFFFF')
-          .layoutWeight(1)
-          .textAlign(TextAlign.Center)
-
-        // 中按钮 - 只在中文环境下显示
-        if (!this.isEnglish) {
-          Button() {
-            Text('中')
-              .fontSize(18)
-              .fontWeight(FontWeight.Bold)
-              .fontColor('#FFFFFF')
-          }
-          .width(40)
-          .height(40)
-          .backgroundColor(Color.Transparent)
-          .onClick(() => {
-            router.push({
-              url: 'pages/codetable/ChineseTelegraphCodePage'
-            })
-          })
-        } else {
-          // 英文环境下显示占位符，保持布局平衡
-          Column()
-            .width(40)
-            .height(40)
-        }
-      }
-      .height(52)
-      .width('100%')
-      .padding({ left: 16, right: 16 })
-      .backgroundColor('#000000')
+      this.TitleBar()
 
       // 内容区域 - 限制宽度为480vp
       Column() {

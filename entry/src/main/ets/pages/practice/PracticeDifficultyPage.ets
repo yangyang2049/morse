@@ -3,8 +3,6 @@ import { router } from '@kit.ArkUI'
 import { FavoritesStore } from '../../store/FavoritesStore'
 import { promptAction } from '@kit.ArkUI'
 import { i18nService } from '../../services/I18nService'
-// 使用$r()函数替代I18n
-import { eventHub, Events } from '../../utils/EventHub'
 
 interface DifficultyItem {
   key: string
@@ -33,7 +31,6 @@ interface LocalizedStrings {
 @Component
 export struct PracticeDifficultyPage {
   @State favoritesStore: FavoritesStore = FavoritesStore.getInstance()
-  @State private refreshTrigger: number = 0
   // 使用 StorageLink 监听语言变化
   @StorageLink('currentLanguage') currentLanguage: string = 'zh'
   // 语言变化计数器，用于强制UI刷新
@@ -145,7 +142,6 @@ export struct PracticeDifficultyPage {
     const favorites = this.favoritesStore.getFavoriteCharacters()
     if (favorites.length === 0) {
       // 引用langTick确保toast消息也会更新
-      const _ = this.langTick
       promptAction.showToast({
         message: this.strings.favorites_empty || i18nService.t('favorites_empty'),
         duration: 2000,
@@ -167,7 +163,6 @@ export struct PracticeDifficultyPage {
     const mistakes = this.favoritesStore.getMistakeCharacters()
     if (mistakes.length === 0) {
       // 引用langTick确保toast消息也会更新
-      const _ = this.langTick
       promptAction.showToast({
         message: this.strings.mistakes_empty || i18nService.t('mistakes_empty'),
         duration: 2000,
@@ -310,7 +305,7 @@ export struct PracticeDifficultyPage {
         .fontWeight(FontWeight.Bold)
         .fontColor('#FFFFFF')
     }
-    .height(52)
+    .height(56)
     .width('100%')
     .justifyContent(FlexAlign.Center)
     .backgroundColor('#000000')

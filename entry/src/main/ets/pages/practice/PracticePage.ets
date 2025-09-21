@@ -1,13 +1,9 @@
 import { PracticeViewModel } from '../../viewmodel/PracticeViewModel'
-import { MorseCode } from '../../models/MorseCode'
 import { router, promptAction } from '@kit.ArkUI'
 import { PracticeRecordDialog } from '../../widgets/PracticeRecordDialog'
 import { FavoritesStore } from '../../store/FavoritesStore'
 import { audioService } from '../../services/AudioService'
-import { Context } from '@kit.AbilityKit'
 import { i18nService } from '../../services/I18nService'
-// 使用$r()函数替代I18n
-// Removed per-page window system bar handling; EntryAbility sets it globally
 
 // 本地化字符串接口
 interface LocalizedStrings {
@@ -102,8 +98,6 @@ export struct PracticePage {
   // 获取格式化的标题显示
   private getFormattedTitle(): string {
     // 引用langTick确保标题会更新
-    const _ = this.langTick
-    
     if (typeof this.difficulty === 'string') {
       // 处理特殊模式
       if (this.difficulty === 'favorites') {
@@ -232,7 +226,7 @@ export struct PracticePage {
       })
 
       Text(this.getFormattedTitle())
-        .fontSize(18)
+        .fontSize(20)
         .fontWeight(FontWeight.Bold)
         .fontColor(Color.White)
         .layoutWeight(1)
@@ -246,7 +240,7 @@ export struct PracticePage {
         this.dialogController.open()
       })
     }
-    .height(52)
+    .height(56)
     .width('100%')
     .padding({ left: 16, right: 16 })
     .backgroundColor(Color.Black)
@@ -416,8 +410,6 @@ export struct PracticePage {
           this.vm.toggleFavorite()
           
           // 显示toast提示
-          // 引用langTick确保toast消息也会更新
-          const _ = this.langTick
           promptAction.showToast({
             message: wasFavorite ? (this.strings.favorite_removed || i18nService.t('favorite_removed')) : (this.strings.favorite_added || i18nService.t('favorite_added')),
             duration: 1500,

@@ -2,8 +2,6 @@ import { MorseCodeData } from '../../models/MorseCode'
 import { PinyinService } from '../../services/PinyinService'
 import { promptAction } from '@kit.ArkUI'
 import { i18nService } from '../../services/I18nService'
-import { eventHub, Events } from '../../utils/EventHub'
-
 // 本地化字符串接口
 interface LocalizedStrings {
   translate: string
@@ -23,8 +21,6 @@ export struct TranslatePage {
   @State morseInput: string = ''
   private readonly boxFontSize: number = 16
   private readonly pillRadius: number = 20
-  private screenHeight: number = 0
-  @State private refreshTrigger: number = 0
   // 使用 StorageLink 监听语言变化
   @StorageLink('currentLanguage') currentLanguage: string = 'zh-CN'
   // 语言变化计数器，用于强制UI刷新
@@ -148,11 +144,6 @@ export struct TranslatePage {
     }
   }
 
-  // 清除所有输入
-  private clearAll() {
-    this.morseInput = ''
-  }
-
   // 获取输入/输出框的高度
   private getBoxHeight(): number | string {
     return '25%'
@@ -172,7 +163,7 @@ export struct TranslatePage {
         .fontWeight(FontWeight.Bold)
         .fontColor('#FFFFFF')
     }
-    .height(52)
+    .height(56)
     .width('100%')
     .justifyContent(FlexAlign.Center)
     .backgroundColor('#000000')
@@ -298,9 +289,6 @@ export struct TranslatePage {
         })
         .margin({ right: -4, bottom: 8 })
         .onClick(() => {
-          // 复制到剪贴板
-          // 引用langTick确保toast消息也会更新
-          const _ = this.langTick
           promptAction.showToast({
             message: this.strings.copied || i18nService.t('copied'),
             duration: 1500,
