@@ -5,8 +5,6 @@ import { router } from '@kit.ArkUI'
 import { eventHub, Events } from '../../utils/EventHub'
 import { promptAction } from '@kit.ArkUI'
 import { i18nService } from '../../services/I18nService'
-// 使用$r()函数替代I18n
-// System bar colors are set globally in EntryAbility
 
 // 本地化字符串接口
 interface LocalizedStrings {
@@ -29,8 +27,6 @@ export struct LearnPage {
   @State vm: LearnViewModel = new LearnViewModel()
   @State private isInitialized: boolean = false
   private languageChangeListener: ((lang: string) => void) | null = null
-  // 移除@State缓存，直接从ViewModel获取最新数据
-  // 使用 StorageLink + Watch 实时监听语言变化（替代轮询）
   @StorageLink('currentLanguage') @Watch('onLanguageChange') currentLanguage: string = 'zh-CN'
   // 语言强制刷新触发器（由 i18nService 维护）
   @StorageLink('languageRefreshTrigger') @Watch('onLanguageRefreshTrigger') languageRefreshTrigger: number = 0

@@ -1,10 +1,8 @@
 import { MorseCodeData } from '../../models/MorseCode'
 import { PinyinService } from '../../services/PinyinService'
-// System bar colors are set globally in EntryAbility
 import { promptAction } from '@kit.ArkUI'
 import { i18nService } from '../../services/I18nService'
 import { eventHub, Events } from '../../utils/EventHub'
-// 使用$r()函数替代I18n
 
 // 本地化字符串接口
 interface LocalizedStrings {

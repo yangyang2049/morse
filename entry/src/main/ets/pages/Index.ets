@@ -6,27 +6,40 @@ import { MePage } from './me/MePage'
 import { audioService } from '../services/AudioService'
 import { Context } from '@kit.AbilityKit'
 import { i18nService } from '../services/I18nService'
+import deviceInfo from '@ohos.deviceInfo'
 // Window system bar properties are managed globally in EntryAbility
 
 @Entry
 @Component
 struct Index {
   @State currentIndex: number = 0
-  // 监听语言变化，确保UI能及时响应
+  @State isTablet: boolean = false
+
   @StorageLink('currentLanguage') currentLanguage: string = 'zh-CN'
-  // 监听语言刷新触发器，用于强制重建所有标签页
+
   @StorageLink('languageRefreshTrigger') languageRefreshTrigger: number = 0
-  // 页面重建键，当语言变化时递增以强制重建所有页面
+
   @State pageRebuildKey: number = 0
 
   aboutToAppear() {
-    // System bar colors are set globally in EntryAbility
-    
-    // 初始化音频服务
+    // 检查是否为平板设备
+    this.checkDeviceType()
+
     this.initAudioService()
     
-    // 监听语言变化，当语言切换时强制重建所有页面
     this.watchLanguageChanges()
+  }
+
+  // 检查设备类型
+  private checkDeviceType() {
+    try {
+      const deviceType = deviceInfo.deviceType
+      this.isTablet = deviceType === 'tablet'
+      console.log(`[INDEX] Device type: ${deviceType}, isTablet: ${this.isTablet}`)
+    } catch (error) {
+      console.error('[INDEX] Error getting device type:', error)
+      this.isTablet = false
+    }
   }
   
   // 监听语言变化
@@ -71,7 +84,11 @@ struct Index {
   }
 
   build() {
-    Tabs({ barPosition: BarPosition.End, controller: new TabsController(), index: this.currentIndex }) {
+    Tabs({ 
+      barPosition: this.isTablet ? BarPosition.Start : BarPosition.End, 
+      controller: new TabsController(), 
+      index: this.currentIndex 
+    }) {
       TabContent() {
         // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
         if (this.pageRebuildKey >= 0) {
@@ -112,10 +129,8 @@ struct Index {
       }
       .tabBar(this.TabBuilder(4, $rawfile('ic_me.svg'), $rawfile('ic_me_light.svg')))
     }
-    .vertical(false)
+    .vertical(this.isTablet)
     .barMode(BarMode.Fixed)
-    .barWidth('100%')
-    .barHeight(56)
     .barBackgroundColor(Color.Black)
     .animationDuration(400)
     .onChange((index: number) => {
