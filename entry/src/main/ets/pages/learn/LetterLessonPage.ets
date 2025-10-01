@@ -18,7 +18,7 @@ interface LetterLessonStrings {
 
 @Entry
 @Component
-struct LetterLessonPage {
+  struct LetterLessonPage {
   @State viewModel: LetterLessonViewModel = new LetterLessonViewModel()
   private readonly pillRadius: number = 20
   // 语言热更新状态
@@ -45,12 +45,12 @@ struct LetterLessonPage {
     const params = router.getParams() as Record<string, Object>
     const lessonId = (params['lessonId'] as string) || ''
     const title = (params['title'] as string) || '练习'
-    
+
     console.log(`[LetterLessonPage] Received lessonId: ${lessonId}, title: ${title}`)
-    
+
     // 根据lessonId设置课程数据
     const codes = this.setupLessonData(lessonId)
-    
+
     // 初始化ViewModel
     if (hostContext) {
       this.viewModel.init(hostContext, lessonId, title, codes)
@@ -86,9 +86,9 @@ struct LetterLessonPage {
 
   private setupLessonData(lessonId: string): MorseCode[] {
     console.log(`[LetterLessonPage] setupLessonData: lessonId=${lessonId}`)
-    
+
     const lessonNumber = parseInt(lessonId) || 0
-    
+
     // 根据课程编号确定课程类型和内容
     if (lessonNumber >= 3 && lessonNumber <= 11) {
       // 字母课程 (3-11)
@@ -96,7 +96,7 @@ struct LetterLessonPage {
       const alphabetGroups = LessonData.getAlphabetGroups()
       if (lessonIndex < alphabetGroups.length) {
         const targetLetters = alphabetGroups[lessonIndex]
-        return MorseCodeData.englishAlphabet.filter(code => 
+        return MorseCodeData.englishAlphabet.filter(code =>
           targetLetters.includes(code.character)
         )
       } else {
@@ -108,7 +108,7 @@ struct LetterLessonPage {
       const numberGroups = LessonData.getNumberGroups()
       if (lessonIndex < numberGroups.length) {
         const targetNumbers = numberGroups[lessonIndex]
-        return MorseCodeData.numbers.filter(code => 
+        return MorseCodeData.numbers.filter(code =>
           targetNumbers.includes(code.character)
         )
       } else {
@@ -120,7 +120,7 @@ struct LetterLessonPage {
       const punctuationGroups = LessonData.getPunctuationGroups()
       if (lessonIndex < punctuationGroups.length) {
         const targetPunctuation = punctuationGroups[lessonIndex]
-        return MorseCodeData.punctuation.filter(code => 
+        return MorseCodeData.punctuation.filter(code =>
           targetPunctuation.includes(code.character)
         )
       } else {
@@ -187,12 +187,17 @@ struct LetterLessonPage {
     Column() {
       Row() {
         Button() {
-          Image($rawfile('ic_back.svg')).width(24).height(24).fillColor(Color.White)
+          Image($rawfile('ic_back.svg'))
+            .width(20)
+            .height(20)
+            .fillColor(Color.White)
         }
-        .backgroundColor(Color.Transparent)
-        .onClick(() => {
-          router.back()
-        })
+        .width(48)
+          .height(48)
+          .backgroundColor(Color.Transparent)
+          .onClick(() => {
+            router.back()
+          })
 
         Blank().width(20)
 
@@ -209,8 +214,8 @@ struct LetterLessonPage {
           .justifyContent(FlexAlign.Center)
         }
         .layoutWeight(1)
-        .scrollable(ScrollDirection.Horizontal)
-        .scrollBar(BarState.Off)
+          .scrollable(ScrollDirection.Horizontal)
+          .scrollBar(BarState.Off)
 
         Blank().width(20)
 
@@ -219,15 +224,15 @@ struct LetterLessonPage {
             .width(22).height(22)
         }
         .backgroundColor(Color.Transparent)
-        .onClick(() => {
-          this.viewModel.showSettingsDialog = true
-        })
+          .onClick(() => {
+            this.viewModel.showSettingsDialog = true
+          })
       }
       .height(56)
-      .padding({ left: 16, right: 16 })
+        .padding({ left: 16, right: 16 })
     }
     .width('100%')
-    .backgroundColor(Color.Black)
+      .backgroundColor(Color.Black)
   }
 
   @Builder
@@ -237,7 +242,7 @@ struct LetterLessonPage {
         .fill(Color.Transparent)
         .strokeWidth(8)
         .stroke('#333333')
-      
+
       Circle({ width: 220, height: 220 })
         .fill(Color.Transparent)
         .strokeWidth(8)
@@ -246,10 +251,10 @@ struct LetterLessonPage {
         .strokeDashOffset(this.viewModel.getCircumference() / 4)
         .strokeLineCap(LineCapStyle.Round)
         .opacity(this.viewModel.progressVisual > 0 ? 1 : 0)
-      
+
       Circle({ width: 200, height: 200 })
         .fill(this.viewModel.getProgressColor())
-      
+
       Text(this.viewModel.codes[this.viewModel.currentIndex]?.character || '')
         .fontSize(this.isWordLesson() ? 20 : 80)
         .fontWeight(FontWeight.Bold)
@@ -292,16 +297,16 @@ struct LetterLessonPage {
       }
     }
     .height(80)
-    .width('95%')
-    .margin({ left: 24, right: 24 })
-    .padding({ left: 16, right: 16, top: 16, bottom: 16 })
-    .backgroundColor('#1A1A1A')
-    .borderRadius(this.pillRadius)
-    .justifyContent(FlexAlign.Center)
-    .onClick(() => {
-      // 点击提示框本身进行显隐切换
-      this.viewModel.showMorseCode = !this.viewModel.showMorseCode
-    })
+      .width('95%')
+      .margin({ left: 24, right: 24 })
+      .padding({ left: 16, right: 16, top: 16, bottom: 16 })
+      .backgroundColor('#1A1A1A')
+      .borderRadius(this.pillRadius)
+      .justifyContent(FlexAlign.Center)
+      .onClick(() => {
+        // 点击提示框本身进行显隐切换
+        this.viewModel.showMorseCode = !this.viewModel.showMorseCode
+      })
   }
 
 
@@ -317,14 +322,14 @@ struct LetterLessonPage {
               Circle({ width: this.isWordLesson() ? 6.4 : 8, height: this.isWordLesson() ? 6.4 : 8 })
                 .fill(
                   this.viewModel.showResult && this.viewModel.isCorrect ? Color.Green :
-                  this.viewModel.showResult && !this.viewModel.isCorrect ? Color.Red : '#FFD700'
+                    this.viewModel.showResult && !this.viewModel.isCorrect ? Color.Red : '#FFD700'
                 )
                 .margin({ right: this.isWordLesson() ? 6.4 : 8 })
             } else if (char === '-') {
               Rect({ width: this.isWordLesson() ? 12.8 : 16, height: this.isWordLesson() ? 3.2 : 4 })
                 .fill(
                   this.viewModel.showResult && this.viewModel.isCorrect ? Color.Green :
-                  this.viewModel.showResult && !this.viewModel.isCorrect ? Color.Red : '#FFD700'
+                    this.viewModel.showResult && !this.viewModel.isCorrect ? Color.Red : '#FFD700'
                 )
                 .margin({ right: this.isWordLesson() ? 6.4 : 8 })
             } else if (char === ' ') {
@@ -339,9 +344,9 @@ struct LetterLessonPage {
       }
     }
     .height(60)
-    .width('100%')
-    .justifyContent(FlexAlign.Center)
-    .alignItems(HorizontalAlign.Center)
+      .width('100%')
+      .justifyContent(FlexAlign.Center)
+      .alignItems(HorizontalAlign.Center)
   }
 
   @Builder
@@ -354,16 +359,16 @@ struct LetterLessonPage {
             .fill('#FFD700')
         }
         .height(80)
-        .backgroundColor('#1A1A1A')
-        .borderRadius(this.pillRadius)
-        .border({ width: 1, color: '#333333' })
-        .onClick(async () => {
-          this.viewModel.addDot()
-          if (this.viewModel.soundEnabled) {
-            await audioService.playDit()
-          }
-        })
-        .layoutWeight(1)
+          .backgroundColor('#1A1A1A')
+          .borderRadius(this.pillRadius)
+          .border({ width: 1, color: '#333333' })
+          .onClick(async () => {
+            this.viewModel.addDot()
+            if (this.viewModel.soundEnabled) {
+              await audioService.playDit()
+            }
+          })
+          .layoutWeight(1)
 
         Blank().width(8)
 
@@ -375,16 +380,16 @@ struct LetterLessonPage {
             .fontWeight(FontWeight.Bold)
         }
         .height(80)
-        .width(60)
-        .backgroundColor('#1A1A1A')
-        .borderRadius(12)
-        .border({ width: 1, color: '#333333' })
-        .onClick(async () => {
-          this.viewModel.addSpace()
-          if (this.viewModel.soundEnabled) {
-            await audioService.playSpace()
-          }
-        })
+          .width(60)
+          .backgroundColor('#1A1A1A')
+          .borderRadius(12)
+          .border({ width: 1, color: '#333333' })
+          .onClick(async () => {
+            this.viewModel.addSpace()
+            if (this.viewModel.soundEnabled) {
+              await audioService.playSpace()
+            }
+          })
 
         Blank().width(8)
 
@@ -393,16 +398,16 @@ struct LetterLessonPage {
             .fill('#FFD700')
         }
         .height(80)
-        .backgroundColor('#1A1A1A')
-        .borderRadius(this.pillRadius)
-        .border({ width: 1, color: '#333333' })
-        .onClick(async () => {
-          this.viewModel.addDash()
-          if (this.viewModel.soundEnabled) {
-            await audioService.playDah()
-          }
-        })
-        .layoutWeight(1)
+          .backgroundColor('#1A1A1A')
+          .borderRadius(this.pillRadius)
+          .border({ width: 1, color: '#333333' })
+          .onClick(async () => {
+            this.viewModel.addDash()
+            if (this.viewModel.soundEnabled) {
+              await audioService.playDah()
+            }
+          })
+          .layoutWeight(1)
       } else {
         // 其他课程：两个按钮（点、划），平均分配宽度
         Button() {
@@ -410,16 +415,16 @@ struct LetterLessonPage {
             .fill('#FFD700')
         }
         .height(80)
-        .backgroundColor('#1A1A1A')
-        .borderRadius(this.pillRadius)
-        .border({ width: 1, color: '#333333' })
-        .onClick(async () => {
-          this.viewModel.addDot()
-          if (this.viewModel.soundEnabled) {
-            await audioService.playDit()
-          }
-        })
-        .layoutWeight(1)
+          .backgroundColor('#1A1A1A')
+          .borderRadius(this.pillRadius)
+          .border({ width: 1, color: '#333333' })
+          .onClick(async () => {
+            this.viewModel.addDot()
+            if (this.viewModel.soundEnabled) {
+              await audioService.playDit()
+            }
+          })
+          .layoutWeight(1)
 
         Blank().width(20)
 
@@ -428,16 +433,16 @@ struct LetterLessonPage {
             .fill('#FFD700')
         }
         .height(80)
-        .backgroundColor('#1A1A1A')
-        .borderRadius(this.pillRadius)
-        .border({ width: 1, color: '#333333' })
-        .onClick(async () => {
-          this.viewModel.addDash()
-          if (this.viewModel.soundEnabled) {
-            await audioService.playDah()
-          }
-        })
-        .layoutWeight(1)
+          .backgroundColor('#1A1A1A')
+          .borderRadius(this.pillRadius)
+          .border({ width: 1, color: '#333333' })
+          .onClick(async () => {
+            this.viewModel.addDash()
+            if (this.viewModel.soundEnabled) {
+              await audioService.playDah()
+            }
+          })
+          .layoutWeight(1)
       }
     }
     .padding({ left: 20, right: 20, bottom: 60 })
@@ -450,7 +455,7 @@ struct LetterLessonPage {
       // 隐藏的语言触发器
       Text(this.langTick.toString()).opacity(0).width(0).height(0)
       Blank().layoutWeight(1)
-      
+
       // 对话框内容
       Column() {
         Column()
@@ -461,12 +466,12 @@ struct LetterLessonPage {
             .fontWeight(FontWeight.Bold)
             .fontColor(Color.White)
         }.width(80)
-        .height(80)
-        .backgroundColor(Color.Green)
-        .borderRadius(40)
-        .alignItems(HorizontalAlign.Center)
-        .justifyContent(FlexAlign.Center)
-        .shadow({ radius: 20, color: 'rgba(0, 255, 0, 0.3)', offsetX: 0, offsetY: 8 })
+          .height(80)
+          .backgroundColor(Color.Green)
+          .borderRadius(40)
+          .alignItems(HorizontalAlign.Center)
+          .justifyContent(FlexAlign.Center)
+          .shadow({ radius: 20, color: 'rgba(0, 255, 0, 0.3)', offsetX: 0, offsetY: 8 })
 
         Blank().height(24)
 
@@ -489,8 +494,8 @@ struct LetterLessonPage {
               .fontColor('#B0B0B0')
           }
           .layoutWeight(1)
-          .alignItems(HorizontalAlign.Center)
-          .justifyContent(FlexAlign.Center)
+            .alignItems(HorizontalAlign.Center)
+            .justifyContent(FlexAlign.Center)
 
           Blank().width(1).height(40).backgroundColor('#333333')
 
@@ -504,14 +509,14 @@ struct LetterLessonPage {
               .fontColor('#B0B0B0')
           }
           .layoutWeight(1)
-          .alignItems(HorizontalAlign.Center)
-          .justifyContent(FlexAlign.Center)
+            .alignItems(HorizontalAlign.Center)
+            .justifyContent(FlexAlign.Center)
         }
         .width('100%')
-        .padding(20)
-        .backgroundColor('#1A1A1A')
-        .border({ width: 1, color: '#333333' })
-        .borderRadius(12)
+          .padding(20)
+          .backgroundColor('#1A1A1A')
+          .border({ width: 1, color: '#333333' })
+          .borderRadius(12)
 
         Blank().height(24)
 
@@ -523,15 +528,15 @@ struct LetterLessonPage {
               .fontColor(Color.White)
           }
           .layoutWeight(1)
-          .height(44)
-          .backgroundColor(Color.Transparent)
-          .border({ width: 2, color: Color.White })
-          .borderRadius(8)
-          .onClick(async () => {
-            this.viewModel.closeCompletionDialog()
-            // 课程已经在最后一个字母完成时标记了，这里不需要重复标记
-            router.back()
-          })
+            .height(44)
+            .backgroundColor(Color.Transparent)
+            .border({ width: 2, color: Color.White })
+            .borderRadius(8)
+            .onClick(async () => {
+              this.viewModel.closeCompletionDialog()
+              // 课程已经在最后一个字母完成时标记了，这里不需要重复标记
+              router.back()
+            })
 
           Blank().width(12)
 
@@ -542,31 +547,31 @@ struct LetterLessonPage {
               .fontColor(Color.White)
           }
           .layoutWeight(1)
-          .height(44)
-          .backgroundColor(Color.Green)
-          .borderRadius(8)
-          .onClick(async () => {
-            this.viewModel.closeCompletionDialog()
-            // 课程已经在最后一个字母完成时标记了，这里不需要重复标记
-            this.viewModel.restartLesson()
-          })
+            .height(44)
+            .backgroundColor(Color.Green)
+            .borderRadius(8)
+            .onClick(async () => {
+              this.viewModel.closeCompletionDialog()
+              // 课程已经在最后一个字母完成时标记了，这里不需要重复标记
+              this.viewModel.restartLesson()
+            })
         }
         .width('100%')
       }
       .width(360)
-      .padding(20)
-      .backgroundColor('#000000')
-      .border({ width: 2, color: Color.Green })
-      .borderRadius(16)
-      .shadow({ radius: 24, color: 'rgba(0,0,0,0.4)', offsetX: 0, offsetY: 12 })
-      .margin({ left: 20, right: 20 })
-      
+        .padding(20)
+        .backgroundColor('#000000')
+        .border({ width: 2, color: Color.Green })
+        .borderRadius(16)
+        .shadow({ radius: 24, color: 'rgba(0,0,0,0.4)', offsetX: 0, offsetY: 12 })
+        .margin({ left: 20, right: 20 })
+
       Blank().layoutWeight(1)
     }
     .width('100%')
-    .height('100%')
-    .justifyContent(FlexAlign.Center)
-    .alignItems(HorizontalAlign.Center)
+      .height('100%')
+      .justifyContent(FlexAlign.Center)
+      .alignItems(HorizontalAlign.Center)
   }
 
   @Builder
@@ -599,7 +604,7 @@ struct LetterLessonPage {
             })
         }
         .height(44)
-        .padding({ left: 4, right: 4 })
+          .padding({ left: 4, right: 4 })
 
         Blank().height(12)
 
@@ -614,16 +619,16 @@ struct LetterLessonPage {
             Text('-').fontSize(18).fontColor(Color.White)
           }
           .height(36)
-          .width(44)
-          .backgroundColor('#333333')
-          .borderRadius(8)
-          .onClick(() => {
-            const next = Math.max(3, Math.min(5, this.viewModel.REQUIRED_PRACTICE_COUNT - 1))
-            this.viewModel.REQUIRED_PRACTICE_COUNT = next
-            // 修正当前进度显示
-            const count = this.viewModel.practiceCount.get(this.viewModel.currentIndex) || 0
-            this.viewModel.progressVisual = Math.min(count / this.viewModel.REQUIRED_PRACTICE_COUNT, 1)
-          })
+            .width(44)
+            .backgroundColor('#333333')
+            .borderRadius(8)
+            .onClick(() => {
+              const next = Math.max(3, Math.min(5, this.viewModel.REQUIRED_PRACTICE_COUNT - 1))
+              this.viewModel.REQUIRED_PRACTICE_COUNT = next
+              // 修正当前进度显示
+              const count = this.viewModel.practiceCount.get(this.viewModel.currentIndex) || 0
+              this.viewModel.progressVisual = Math.min(count / this.viewModel.REQUIRED_PRACTICE_COUNT, 1)
+            })
 
           Blank().width(12)
 
@@ -638,18 +643,18 @@ struct LetterLessonPage {
             Text('+').fontSize(18).fontColor(Color.White)
           }
           .height(36)
-          .width(44)
-          .backgroundColor('#333333')
-          .borderRadius(8)
-          .onClick(() => {
-            const next = Math.max(3, Math.min(5, this.viewModel.REQUIRED_PRACTICE_COUNT + 1))
-            this.viewModel.REQUIRED_PRACTICE_COUNT = next
-            const count = this.viewModel.practiceCount.get(this.viewModel.currentIndex) || 0
-            this.viewModel.progressVisual = Math.min(count / this.viewModel.REQUIRED_PRACTICE_COUNT, 1)
-          })
+            .width(44)
+            .backgroundColor('#333333')
+            .borderRadius(8)
+            .onClick(() => {
+              const next = Math.max(3, Math.min(5, this.viewModel.REQUIRED_PRACTICE_COUNT + 1))
+              this.viewModel.REQUIRED_PRACTICE_COUNT = next
+              const count = this.viewModel.practiceCount.get(this.viewModel.currentIndex) || 0
+              this.viewModel.progressVisual = Math.min(count / this.viewModel.REQUIRED_PRACTICE_COUNT, 1)
+            })
         }
         .height(44)
-        .alignItems(VerticalAlign.Center)
+          .alignItems(VerticalAlign.Center)
 
         Blank().height(20)
 
@@ -660,24 +665,24 @@ struct LetterLessonPage {
             .fontColor(Color.Black)
         }
         .height(44)
-        .width('100%')
-        .backgroundColor('#FFD700')
-        .borderRadius(8)
-        .onClick(() => { this.viewModel.showSettingsDialog = false })
+          .width('100%')
+          .backgroundColor('#FFD700')
+          .borderRadius(8)
+          .onClick(() => { this.viewModel.showSettingsDialog = false })
       }
       .width(320)
-      .padding(20)
-      .backgroundColor('#000000')
-      .border({ width: 1, color: '#333333' })
-      .borderRadius(12)
-      .shadow({ radius: 24, color: 'rgba(0,0,0,0.4)', offsetX: 0, offsetY: 12 })
+        .padding(20)
+        .backgroundColor('#000000')
+        .border({ width: 1, color: '#333333' })
+        .borderRadius(12)
+        .shadow({ radius: 24, color: 'rgba(0,0,0,0.4)', offsetX: 0, offsetY: 12 })
 
       Blank().layoutWeight(1)
     }
     .width('100%')
-    .height('100%')
-    .justifyContent(FlexAlign.Center)
-    .alignItems(HorizontalAlign.Center)
+      .height('100%')
+      .justifyContent(FlexAlign.Center)
+      .alignItems(HorizontalAlign.Center)
   }
 
   @Builder
@@ -696,7 +701,7 @@ struct LetterLessonPage {
       }
     }
     .width('100%')
-    .height('100%')
+      .height('100%')
   }
 
   build() {
@@ -716,27 +721,27 @@ struct LetterLessonPage {
             this.InputDisplay()
           }
           .layoutWeight(1)
-          .justifyContent(FlexAlign.Center)
+            .justifyContent(FlexAlign.Center)
 
           this.BottomKeys()
         }
         .width('100%')
-        .constraintSize({ maxWidth: 480 })
-        .padding({ left: 20, right: 20 })
-        .height('100%')
-        .justifyContent(FlexAlign.Center)
-        .alignItems(HorizontalAlign.Center)
+          .constraintSize({ maxWidth: 480 })
+          .padding({ left: 20, right: 20 })
+          .height('100%')
+          .justifyContent(FlexAlign.Center)
+          .alignItems(HorizontalAlign.Center)
       }
       .width('100%')
-      .height('100%')
+        .height('100%')
 
       if (this.viewModel.showCompletionDialog || this.viewModel.showSettingsDialog) {
         this.OverlayCover()
       }
     }
     .width('100%')
-    .height('100%')
-    .backgroundColor(Color.Black)
-    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+      .height('100%')
+      .backgroundColor(Color.Black)
+      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }

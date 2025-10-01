@@ -4,16 +4,16 @@
       {
         name: "default",
         signingConfig: "default",
-        compileSdkVersion: "5.1.0(18)",
-        targetSdkVersion: "5.1.0(18)",
+        compileSdkVersion: "6.0.0(20)",
+        targetSdkVersion: "6.0.0(20)",
         compatibleSdkVersion: "5.0.0(12)",
         runtimeOS: "HarmonyOS",
       },
       {
         name: "prodRelease",
         signingConfig: "release",
-        compileSdkVersion: "5.1.0(18)",
-        targetSdkVersion: "5.1.0(18)",
+        compileSdkVersion: "6.0.0(20)",
+        targetSdkVersion: "6.0.0(20)",
         compatibleSdkVersion: "5.0.0(12)",
         runtimeOS: "HarmonyOS",
       },
@@ -62,7 +62,10 @@
       targets: [
         {
           name: "default",
-          applyToProducts: ["default", "prodRelease"],
+          applyToProducts: [
+            "default",
+            "prodRelease"
+          ],
         },
       ],
     },

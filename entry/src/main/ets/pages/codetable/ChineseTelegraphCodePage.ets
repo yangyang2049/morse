@@ -17,30 +17,30 @@ export struct ChineseTelegraphCodePage {
   @State filteredCodes: ChineseTelegraphCode[] = []
   @State isLoading: boolean = true
   @State isSearching: boolean = false
-  
+
   // 分页相关状态
   @State currentPage: number = 0
   @State pageSize: number = 100
   @State hasMoreData: boolean = true
   @State isLoadingMore: boolean = false
-  
+
   // 搜索相关状态
   @State searchResults: ChineseTelegraphCode[] = []
   @State isSearchMode: boolean = false
-  
+
   // 语言检测
   @State isEnglish: boolean = false
-  
+
   // 数据缓存
   private static allDataCache: ChineseTelegraphCode[] | null = null
   private static isDataLoaded: boolean = false
 
   aboutToAppear() {
     console.log('ChineseTelegraphCodePage aboutToAppear called')
-    
+
     // 检查语言设置
     this.checkLanguage()
-    
+
     // 延迟加载数据，让页面先显示
     setTimeout(() => {
       console.log('Starting to load Chinese telegraph codes...')
@@ -58,7 +58,7 @@ export struct ChineseTelegraphCodePage {
   private loadFirstPage() {
     this.loadPage(0)
   }
-  
+
   // 加载指定页面的数据
   private loadPage(page: number) {
     // 如果数据已缓存，直接使用缓存
@@ -66,27 +66,27 @@ export struct ChineseTelegraphCodePage {
       this.processPageData(ChineseTelegraphCodePage.allDataCache, page)
       return
     }
-    
+
     try {
       const context = this.getUIContext().getHostContext()
       if (context) {
         context.resourceManager.getRawFileContent('chinese_telegraph_codes_full.json')
-        .then((data: ArrayBuffer) => {
-          const decoder = new util.TextDecoder('utf-8')
-          const uint8Array = new Uint8Array(data)
-          const jsonString = decoder.decodeToString(uint8Array)
-          const allData = JSON.parse(jsonString) as ChineseTelegraphCode[]
-          
-          // 缓存数据
-          ChineseTelegraphCodePage.allDataCache = allData
-          ChineseTelegraphCodePage.isDataLoaded = true
-          
-          this.processPageData(allData, page)
-        })
-        .catch((error: Error) => {
-          console.error('Failed to load Chinese telegraph codes:', error.message ?? '')
-          this.handleLoadError()
-        })
+          .then((data: ArrayBuffer) => {
+            const decoder = new util.TextDecoder('utf-8')
+            const uint8Array = new Uint8Array(data)
+            const jsonString = decoder.decodeToString(uint8Array)
+            const allData = JSON.parse(jsonString) as ChineseTelegraphCode[]
+
+            // 缓存数据
+            ChineseTelegraphCodePage.allDataCache = allData
+            ChineseTelegraphCodePage.isDataLoaded = true
+
+            this.processPageData(allData, page)
+          })
+          .catch((error: Error) => {
+            console.error('Failed to load Chinese telegraph codes:', error.message ?? '')
+            this.handleLoadError()
+          })
       } else {
         console.error('Host context is undefined')
         this.handleLoadError()
@@ -95,14 +95,14 @@ export struct ChineseTelegraphCodePage {
       this.handleLoadError()
     }
   }
-  
+
   // 处理分页数据
   private processPageData(allData: ChineseTelegraphCode[], page: number) {
     // 计算分页数据
     const startIndex = page * this.pageSize
     const endIndex = Math.min(startIndex + this.pageSize, allData.length)
     const pageData = allData.slice(startIndex, endIndex)
-    
+
     if (page === 0) {
       // 第一页，替换所有数据
       this.codes = pageData
@@ -116,14 +116,14 @@ export struct ChineseTelegraphCodePage {
       }
       this.isLoadingMore = false
     }
-    
+
     // 检查是否还有更多数据
     this.hasMoreData = endIndex < allData.length
     this.currentPage = page
-    
+
     console.log(`Loaded page ${page + 1}, total items: ${this.codes.length}`)
   }
-  
+
   // 处理加载错误
   private handleLoadError() {
     this.codes = []
@@ -131,13 +131,13 @@ export struct ChineseTelegraphCodePage {
     this.isLoading = false
     this.isLoadingMore = false
   }
-  
+
   // 加载更多数据
   private loadMoreData() {
     if (this.isLoadingMore || !this.hasMoreData || this.isSearchMode) {
       return
     }
-    
+
     this.isLoadingMore = true
     this.loadPage(this.currentPage + 1)
   }
@@ -155,49 +155,49 @@ export struct ChineseTelegraphCodePage {
       // 进入搜索模式
       this.isSearchMode = true
       this.isSearching = true
-      
+
       // 延迟搜索，避免频繁搜索
       setTimeout(() => {
         this.performSearch(text)
       }, 300)
     }
   }
-  
+
   // 执行搜索
   private performSearch(text: string) {
     if (this.searchText !== text) {
       return // 搜索文本已改变，忽略此次搜索
     }
-    
+
     // 如果数据已缓存，直接使用缓存进行搜索
     if (ChineseTelegraphCodePage.isDataLoaded && ChineseTelegraphCodePage.allDataCache) {
       this.performSearchOnData(ChineseTelegraphCodePage.allDataCache, text)
       return
     }
-    
+
     // 如果数据未缓存，先加载数据
     try {
       const context = this.getUIContext().getHostContext()
       if (context) {
         context.resourceManager.getRawFileContent('chinese_telegraph_codes_full.json')
-        .then((data: ArrayBuffer) => {
-          const decoder = new util.TextDecoder('utf-8')
-          const uint8Array = new Uint8Array(data)
-          const jsonString = decoder.decodeToString(uint8Array)
-          const allData = JSON.parse(jsonString) as ChineseTelegraphCode[]
-          
-          // 缓存数据
-          ChineseTelegraphCodePage.allDataCache = allData
-          ChineseTelegraphCodePage.isDataLoaded = true
-          
-          this.performSearchOnData(allData, text)
-        })
-        .catch((error: Error) => {
-          console.error('Search failed:', error.message ?? '')
-          this.searchResults = []
-          this.filteredCodes = []
-          this.isSearching = false
-        })
+          .then((data: ArrayBuffer) => {
+            const decoder = new util.TextDecoder('utf-8')
+            const uint8Array = new Uint8Array(data)
+            const jsonString = decoder.decodeToString(uint8Array)
+            const allData = JSON.parse(jsonString) as ChineseTelegraphCode[]
+
+            // 缓存数据
+            ChineseTelegraphCodePage.allDataCache = allData
+            ChineseTelegraphCodePage.isDataLoaded = true
+
+            this.performSearchOnData(allData, text)
+          })
+          .catch((error: Error) => {
+            console.error('Search failed:', error.message ?? '')
+            this.searchResults = []
+            this.filteredCodes = []
+            this.isSearching = false
+          })
       }
     } catch {
       this.searchResults = []
@@ -205,18 +205,18 @@ export struct ChineseTelegraphCodePage {
       this.isSearching = false
     }
   }
-  
+
   // 在指定数据中执行搜索
   private performSearchOnData(allData: ChineseTelegraphCode[], text: string) {
     // 在全部数据中搜索
-    const results = allData.filter(code => 
+    const results = allData.filter(code =>
       code.character.includes(text) || code.code.includes(text)
     )
-    
+
     this.searchResults = results
     this.filteredCodes = results
     this.isSearching = false
-    
+
     console.log(`Search for "${text}" found ${results.length} results`)
   }
 
@@ -225,16 +225,16 @@ export struct ChineseTelegraphCodePage {
     Row() {
       Button() {
         Image($rawfile('ic_back.svg'))
-          .width(24)
-          .height(24)
+          .width(20)
+          .height(20)
           .fillColor(Color.White)
       }
-      .width(40)
-      .height(40)
-      .backgroundColor(Color.Transparent)
-      .onClick(() => {
-        router.back()
-      })
+      .width(48)
+        .height(48)
+        .backgroundColor(Color.Transparent)
+        .onClick(() => {
+          router.back()
+        })
 
       Text('标准中文电码')
         .fontSize(20)
@@ -253,18 +253,18 @@ export struct ChineseTelegraphCodePage {
             .width('100%')
         }
         .width(40)
-        .height(40)
-        .backgroundColor(Color.Transparent)
-        .onClick(() => {
-          // Use custom dialog to support proper line breaks
-          DialogManager.show({
-            title: '标准中文电码',
-            message: '中文电码表（又称"汉字电报码"）是为了在电报传输时代能够准确、快速地发送和接收汉字而设计的编码系统。\n\n• 起源与标准化\n最早由清末盛宣怀主持制定，后来经过民国与新中国的多次修订，形成了较为统一的国家标准。常见的版本是《标准电码本》，收录 7000 余个常用汉字。\n\n• 编码方式\n每个汉字对应一个四位数字编码，范围一般是 0001–9999。\n例如：\n• "中" = 0029\n• "国" = 0049\n• "电" = 0168\n• "码" = 0203\n\n• 使用方式\n在电报传输中，发送方只需要发送对应的四位数字，接收方就能根据电码本查回原来的汉字。这样既能保证传输准确，也方便跨语言通信（数字是国际通用的）。\n\n本页面可按"汉字"或"电码"搜索，方便快速定位目标。',
-            confirmText: '知道了',
-            showCancel: false,
-            showClose: false
+          .height(40)
+          .backgroundColor(Color.Transparent)
+          .onClick(() => {
+            // Use custom dialog to support proper line breaks
+            DialogManager.show({
+              title: '标准中文电码',
+              message: '中文电码表（又称"汉字电报码"）是为了在电报传输时代能够准确、快速地发送和接收汉字而设计的编码系统。\n\n• 起源与标准化\n最早由清末盛宣怀主持制定，后来经过民国与新中国的多次修订，形成了较为统一的国家标准。常见的版本是《标准电码本》，收录 7000 余个常用汉字。\n\n• 编码方式\n每个汉字对应一个四位数字编码，范围一般是 0001–9999。\n例如：\n• "中" = 0029\n• "国" = 0049\n• "电" = 0168\n• "码" = 0203\n\n• 使用方式\n在电报传输中，发送方只需要发送对应的四位数字，接收方就能根据电码本查回原来的汉字。这样既能保证传输准确，也方便跨语言通信（数字是国际通用的）。\n\n本页面可按"汉字"或"电码"搜索，方便快速定位目标。',
+              confirmText: '知道了',
+              showCancel: false,
+              showClose: false
+            })
           })
-        })
       } else {
         // 英文环境下显示占位符，保持布局平衡
         Column()
@@ -273,8 +273,8 @@ export struct ChineseTelegraphCodePage {
       }
     }
     .width('100%')
-    .height(56)
-    .padding({ left: 16, right: 16 })
+      .height(56)
+      .padding({ left: 16, right: 16 })
   }
 
   // System dialog used instead of custom dialog
@@ -286,21 +286,21 @@ export struct ChineseTelegraphCodePage {
         value: this.searchText,
         placeholder: '搜索汉字或电码...'
       })
-      .placeholderColor('#666666')
-      .fontColor(Color.White)
-      .backgroundColor('#1A1A1A')
-      .borderRadius(20)
-      .height(40)
-      .searchIcon({ color: Color.White })
-      .onChange((value: string) => {
-        this.onSearchTextChange(value)
-      })
-      .onSubmit((value: string) => {
-        this.onSearchTextChange(value)
-      })
-      .width('100%')
-      .margin({ left: 16, right: 16, top: 16, bottom: 8 })
-      
+        .placeholderColor('#666666')
+        .fontColor(Color.White)
+        .backgroundColor('#1A1A1A')
+        .borderRadius(20)
+        .height(40)
+        .searchIcon({ color: Color.White })
+        .onChange((value: string) => {
+          this.onSearchTextChange(value)
+        })
+        .onSubmit((value: string) => {
+          this.onSearchTextChange(value)
+        })
+        .width('100%')
+        .margin({ left: 16, right: 16, top: 16, bottom: 8 })
+
       // 搜索状态指示器
       if (this.isSearching) {
         Row() {
@@ -308,14 +308,14 @@ export struct ChineseTelegraphCodePage {
             .width(16)
             .height(16)
             .color('#FFD700')
-          
+
           Text('搜索中...')
             .fontSize(12)
             .fontColor('#CCCCCC')
             .margin({ left: 8 })
         }
         .margin({ left: 16, right: 16, bottom: 8 })
-        .justifyContent(FlexAlign.Start)
+          .justifyContent(FlexAlign.Start)
       }
     }
   }
@@ -338,10 +338,10 @@ export struct ChineseTelegraphCodePage {
         .textAlign(TextAlign.Center)
     }
     .width('100%')
-    .height(48)
-    .backgroundColor('#1A1A1A')
-    .padding({ left: 16, right: 16 })
-    .border({ width: 1, color: '#333333' })
+      .height(48)
+      .backgroundColor('#1A1A1A')
+      .padding({ left: 16, right: 16 })
+      .border({ width: 1, color: '#333333' })
   }
 
   @Builder
@@ -363,10 +363,10 @@ export struct ChineseTelegraphCodePage {
         .fontFamily('monospace')
     }
     .width('100%')
-    .height(48)
-    .backgroundColor(index % 2 === 0 ? '#0A0A0A' : '#111111')
-    .padding({ left: 16, right: 16 })
-    .border({ width: 1, color: '#333333' })
+      .height(48)
+      .backgroundColor(index % 2 === 0 ? '#0A0A0A' : '#111111')
+      .padding({ left: 16, right: 16 })
+      .border({ width: 1, color: '#333333' })
   }
 
   @Builder
@@ -376,20 +376,20 @@ export struct ChineseTelegraphCodePage {
         .width(40)
         .height(40)
         .color('#FFD700')
-      
+
       Blank().height(16)
-      
+
       Text('加载中...')
         .fontSize(16)
         .fontColor('#CCCCCC')
         .textAlign(TextAlign.Center)
     }
     .width('100%')
-    .height(200)
-    .justifyContent(FlexAlign.Center)
-    .alignItems(HorizontalAlign.Center)
+      .height(200)
+      .justifyContent(FlexAlign.Center)
+      .alignItems(HorizontalAlign.Center)
   }
-  
+
   @Builder
   LoadMoreButton() {
     Button() {
@@ -399,14 +399,14 @@ export struct ChineseTelegraphCodePage {
             .width(16)
             .height(16)
             .color('#FFD700')
-          
+
           Text('加载中...')
             .fontSize(14)
             .fontColor(Color.White)
             .margin({ left: 8 })
         }
         .justifyContent(FlexAlign.Center)
-        .alignItems(VerticalAlign.Center)
+          .alignItems(VerticalAlign.Center)
       } else {
         Text('加载更多')
           .fontSize(14)
@@ -414,21 +414,21 @@ export struct ChineseTelegraphCodePage {
       }
     }
     .width('100%')
-    .height(48)
-    .backgroundColor('#1A1A1A')
-    .border({ width: 1, color: '#333333' })
-    .borderRadius(8)
-    .margin({ top: 8, bottom: 8 })
-    .onClick(() => {
-      this.loadMoreData()
-    })
+      .height(48)
+      .backgroundColor('#1A1A1A')
+      .border({ width: 1, color: '#333333' })
+      .borderRadius(8)
+      .margin({ top: 8, bottom: 8 })
+      .onClick(() => {
+        this.loadMoreData()
+      })
   }
 
   build() {
     Stack() {
       Column() {
         this.TitleBar()
-        
+
         // 内容区域 - 响应式宽度，最大480vp
         Column() {
           // 加载中：只显示加载指示器，不显示搜索与表头
@@ -448,9 +448,9 @@ export struct ChineseTelegraphCodePage {
                   .textAlign(TextAlign.Center)
               }
               .layoutWeight(1)
-              .width('100%')
-              .justifyContent(FlexAlign.Center)
-              .alignItems(HorizontalAlign.Center)
+                .width('100%')
+                .justifyContent(FlexAlign.Center)
+                .alignItems(HorizontalAlign.Center)
             } else {
               List() {
                 ForEach(this.filteredCodes, (code: ChineseTelegraphCode, index: number) => {
@@ -458,7 +458,7 @@ export struct ChineseTelegraphCodePage {
                     this.TableRow(code, index)
                   }
                 }, (code: ChineseTelegraphCode) => code.character + code.code)
-                
+
                 // 加载更多按钮（仅在分页模式且还有更多数据时显示）
                 if (!this.isSearchMode && this.hasMoreData) {
                   ListItem() {
@@ -467,28 +467,28 @@ export struct ChineseTelegraphCodePage {
                 }
               }
               .layoutWeight(1)
-              .divider({ strokeWidth: 0 })
-              .scrollBar(BarState.Auto)
-              .onReachEnd(() => {
-                // 滚动到底部时自动加载更多
-                if (!this.isSearchMode && this.hasMoreData && !this.isLoadingMore) {
-                  this.loadMoreData()
-                }
-              })
+                .divider({ strokeWidth: 0 })
+                .scrollBar(BarState.Auto)
+                .onReachEnd(() => {
+                  // 滚动到底部时自动加载更多
+                  if (!this.isSearchMode && this.hasMoreData && !this.isLoadingMore) {
+                    this.loadMoreData()
+                  }
+                })
             }
           }
         }
         .width('100%')
-        .constraintSize({ maxWidth: 400 })
-        .padding({ left: 20, right: 20 })
-        .layoutWeight(1)
-        .justifyContent(FlexAlign.Center)
-        .alignItems(HorizontalAlign.Center)
+          .constraintSize({ maxWidth: 400 })
+          .padding({ left: 20, right: 20 })
+          .layoutWeight(1)
+          .justifyContent(FlexAlign.Center)
+          .alignItems(HorizontalAlign.Center)
       }
       .width('100%')
-      .height('100%')
-      .backgroundColor(Color.Black)
-      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+        .height('100%')
+        .backgroundColor(Color.Black)
+        .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
 
       // 自定义对话框
       CustomDialog()

@@ -65,20 +65,20 @@ export struct PracticePage {
       // 触发UI强制刷新
       this.langTick++
     }
-    
+
     // 启动语言变化监听
     this.startLanguageWatcher()
-    
+
     // 初始化本地化字符串
     this.strings = this.computeStrings()
-    
+
     // 从路由参数获取难度和字符列表（容错处理，避免无参数时崩溃）
     try {
       const params: Record<string, Object> = (router.getParams?.() as Record<string, Object>) ?? {}
       const diff = (params['difficulty'] as string) || ''
       const characters = (params['characters'] as string[]) || []
       this.difficulty = diff && typeof diff === 'string' ? diff : this.strings.easy || i18nService.t('easy')
-      
+
       // 如果是收藏或错题本模式，使用指定的字符列表
       if ((this.difficulty === 'favorites' || this.difficulty === 'mistakes') && characters && Array.isArray(characters)) {
         this.vm.initWithCharacters(this.difficulty, characters)
@@ -106,7 +106,7 @@ export struct PracticePage {
       if (this.difficulty === 'mistakes') {
         return this.strings.mistakes || i18nService.t('mistakes')
       }
-      
+
       // 处理难度级别 - 使用缓存的字符串
       if (this.difficulty === 'easy' || this.difficulty === '简单') {
         return this.strings.easy || i18nService.t('easy')
@@ -117,7 +117,7 @@ export struct PracticePage {
       if (this.difficulty === 'hard' || this.difficulty === '困难') {
         return this.strings.hard || i18nService.t('hard')
       }
-      
+
       // 如果是已经本地化的字符串，直接返回
       return this.difficulty
     }
@@ -177,7 +177,7 @@ export struct PracticePage {
       const currentChangeId = this.vm.getCharacterChangeId()
       if (currentChangeId !== this.lastCharacterChangeId) {
         this.lastCharacterChangeId = currentChangeId
-        
+
         // 先隐藏当前字母（保持旧字符内容）
         animateTo({
           duration: 100,
@@ -185,13 +185,13 @@ export struct PracticePage {
         }, () => {
           this.circleScale = 0.0
         })
-        
+
         // 等待隐藏动画完成后更新字符内容并显示新字母
         setTimeout(() => {
           this.displayCharacter = this.vm.getCurrentCharacter() // 更新显示字符
           // 重置可视化进度
           this.setProgressInstant(0)
-          
+
           // 再等50ms后开始显示新字母的动画
           setTimeout(() => {
             animateTo({
@@ -218,12 +218,17 @@ export struct PracticePage {
   private TitleBar() {
     Row() {
       Button() {
-        Image($rawfile('ic_back.svg')).width(24).height(24).fillColor(Color.White)
+        Image($rawfile('ic_back.svg'))
+          .width(20)
+          .height(20)
+          .fillColor(Color.White)
       }
-      .backgroundColor(Color.Transparent)
-      .onClick(() => {
-        router.back()
-      })
+      .width(48)
+        .height(48)
+        .backgroundColor(Color.Transparent)
+        .onClick(() => {
+          router.back()
+        })
 
       Text(this.getFormattedTitle())
         .fontSize(20)
@@ -236,14 +241,14 @@ export struct PracticePage {
         Image($rawfile('ic_records.svg')).width(22).height(22).fillColor(Color.White)
       }
       .backgroundColor(Color.Transparent)
-      .onClick(() => {
-        this.dialogController.open()
-      })
+        .onClick(() => {
+          this.dialogController.open()
+        })
     }
     .height(56)
-    .width('100%')
-    .padding({ left: 16, right: 16 })
-    .backgroundColor(Color.Black)
+      .width('100%')
+      .padding({ left: 16, right: 16 })
+      .backgroundColor(Color.Black)
   }
 
   @Builder
@@ -276,8 +281,8 @@ export struct PracticePage {
         .width(180)
         .height(180)
         .backgroundColor(
-          this.vm.getShowResult() && !this.vm.getIsCorrect() ? Color.Red : 
-          (this.vm.getIsCorrect() ? Color.Green : '#FFD700')
+          this.vm.getShowResult() && !this.vm.getIsCorrect() ? Color.Red :
+            (this.vm.getIsCorrect() ? Color.Green : '#FFD700')
         )
         .borderRadius(90)
         .animation({ duration: 300, curve: Curve.EaseInOut })
@@ -289,8 +294,8 @@ export struct PracticePage {
         .fontColor(Color.Black)
     }
     .width(200)
-    .height(200)
-    .scale({ x: this.circleScale, y: this.circleScale }) // 使用状态控制的缩放
+      .height(200)
+      .scale({ x: this.circleScale, y: this.circleScale }) // 使用状态控制的缩放
   }
 
   @Builder
@@ -313,14 +318,14 @@ export struct PracticePage {
       }
     }
     .height(60)
-    .width(150)
-    .backgroundColor('#1A1A1A')
-    .borderRadius(this.pillRadius)
-    .justifyContent(FlexAlign.Center)
-    .alignItems(HorizontalAlign.Center)
-    .onClick(() => {
-      this.vm.flashHint()
-    })
+      .width(150)
+      .backgroundColor('#1A1A1A')
+      .borderRadius(this.pillRadius)
+      .justifyContent(FlexAlign.Center)
+      .alignItems(HorizontalAlign.Center)
+      .onClick(() => {
+        this.vm.flashHint()
+      })
   }
 
   private getCircumference(): number {
@@ -381,17 +386,17 @@ export struct PracticePage {
         .letterSpacing(4)
         .fontColor(
           this.vm.getShowResult() && this.vm.getIsCorrect() ? Color.Green :
-          (this.vm.getShowResult() && !this.vm.getIsCorrect() ? Color.Red :
-          (this.vm.getUserInput().length === 0 ? Color.Transparent : '#FFD700'))
+            (this.vm.getShowResult() && !this.vm.getIsCorrect() ? Color.Red :
+              (this.vm.getUserInput().length === 0 ? Color.Transparent : '#FFD700'))
         )
         .textAlign(TextAlign.Center)
         .width('100%')
     }
     // Fixed size to reserve space even when empty
     .width(400)
-    .height(60)
-    .justifyContent(FlexAlign.Center)
-    .alignItems(HorizontalAlign.Center)
+      .height(60)
+      .justifyContent(FlexAlign.Center)
+      .alignItems(HorizontalAlign.Center)
   }
 
   @Builder
@@ -403,19 +408,19 @@ export struct PracticePage {
           .fillColor(this.vm.getIsFavorite() ? '#FFD700' : Color.White)
       }
         .onClick(() => {
-          const currentChar = this.vm.getCurrentCharacter()
-          const wasFavorite = this.favoritesStore.isFavorite(currentChar)
-          this.favoritesStore.toggleFavorite(currentChar)
-          // 同步VM中的收藏状态以驱动UI更新
-          this.vm.toggleFavorite()
-          
-          // 显示toast提示
-          promptAction.showToast({
-            message: wasFavorite ? (this.strings.favorite_removed || i18nService.t('favorite_removed')) : (this.strings.favorite_added || i18nService.t('favorite_added')),
-            duration: 1500,
-            bottom: '80%'
-          })
+        const currentChar = this.vm.getCurrentCharacter()
+        const wasFavorite = this.favoritesStore.isFavorite(currentChar)
+        this.favoritesStore.toggleFavorite(currentChar)
+        // 同步VM中的收藏状态以驱动UI更新
+        this.vm.toggleFavorite()
+
+        // 显示toast提示
+        promptAction.showToast({
+          message: wasFavorite ? (this.strings.favorite_removed || i18nService.t('favorite_removed')) : (this.strings.favorite_added || i18nService.t('favorite_added')),
+          duration: 1500,
+          bottom: '80%'
         })
+      })
         .width(48).height(48)
         .backgroundColor(Color.Transparent)
 
@@ -427,8 +432,8 @@ export struct PracticePage {
           .width(24).height(24).fillColor(Color.White)
       }
         .onClick(() => {
-          this.soundEnabled = !this.soundEnabled
-        })
+        this.soundEnabled = !this.soundEnabled
+      })
         .width(48).height(48)
         .backgroundColor(Color.Transparent)
 
@@ -443,7 +448,7 @@ export struct PracticePage {
         .backgroundColor(Color.Transparent)
     }
     .justifyContent(FlexAlign.Center)
-    .padding({ left: 20, right: 20 })
+      .padding({ left: 20, right: 20 })
   }
 
   @Builder
@@ -455,16 +460,16 @@ export struct PracticePage {
           .fill('#FFD700')
       }
       .height(80)
-      .backgroundColor('#1A1A1A')
-      .borderRadius(this.pillRadius)
-      .border({ width: 1, color: '#333333' })
-      .onClick(async () => {
-        this.vm.addDot()
-        if (this.soundEnabled) {
-          await audioService.playDit()
-        }
-      })
-      .layoutWeight(1)
+        .backgroundColor('#1A1A1A')
+        .borderRadius(this.pillRadius)
+        .border({ width: 1, color: '#333333' })
+        .onClick(async () => {
+          this.vm.addDot()
+          if (this.soundEnabled) {
+            await audioService.playDit()
+          }
+        })
+        .layoutWeight(1)
 
       Blank().width(20)
 
@@ -474,16 +479,16 @@ export struct PracticePage {
           .fill('#FFD700')
       }
       .height(80)
-      .backgroundColor('#1A1A1A')
-      .borderRadius(this.pillRadius)
-      .border({ width: 1, color: '#333333' })
-      .onClick(async () => {
-        this.vm.addDash()
-        if (this.soundEnabled) {
-          await audioService.playDah()
-        }
-      })
-      .layoutWeight(1)
+        .backgroundColor('#1A1A1A')
+        .borderRadius(this.pillRadius)
+        .border({ width: 1, color: '#333333' })
+        .onClick(async () => {
+          this.vm.addDash()
+          if (this.soundEnabled) {
+            await audioService.playDah()
+          }
+        })
+        .layoutWeight(1)
     }
     .padding({ left: 20, right: 20, bottom: 12 })
   }
@@ -515,8 +520,8 @@ export struct PracticePage {
             this.InputDisplay()
           }
           .width('100%')
-          .justifyContent(FlexAlign.Center)
-          .alignItems(HorizontalAlign.Center)
+            .justifyContent(FlexAlign.Center)
+            .alignItems(HorizontalAlign.Center)
 
           Blank().height(12)
           this.ToolButtons()
@@ -524,16 +529,16 @@ export struct PracticePage {
           this.BottomKeys()
         }
         .width('100%')
-        .constraintSize({ maxWidth: 480 })
-        .padding({ left: 20, right: 20 })
-        .layoutWeight(1)
-        .justifyContent(FlexAlign.Center)
-        .alignItems(HorizontalAlign.Center)
+          .constraintSize({ maxWidth: 480 })
+          .padding({ left: 20, right: 20 })
+          .layoutWeight(1)
+          .justifyContent(FlexAlign.Center)
+          .alignItems(HorizontalAlign.Center)
       }
       .width('100%')
-      .height('100%')
-      .backgroundColor(Color.Black)
-      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+        .height('100%')
+        .backgroundColor(Color.Black)
+        .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
     }
   }
 }

@@ -5,13 +5,12 @@ import { CodeTablePage } from './codetable/CodeTablePage'
 import { MePage } from './me/MePage'
 import { audioService } from '../services/AudioService'
 import { Context } from '@kit.AbilityKit'
-import { i18nService } from '../services/I18nService'
 import deviceInfo from '@ohos.deviceInfo'
 // Window system bar properties are managed globally in EntryAbility
 
 @Entry
 @Component
-struct Index {
+  struct Index {
   @State currentIndex: number = 0
   @State isTablet: boolean = false
 
@@ -26,7 +25,7 @@ struct Index {
     this.checkDeviceType()
 
     this.initAudioService()
-    
+
     this.watchLanguageChanges()
   }
 
@@ -41,7 +40,7 @@ struct Index {
       this.isTablet = false
     }
   }
-  
+
   // 监听语言变化
   private watchLanguageChanges() {
     // 使用watcher监听languageRefreshTrigger的变化
@@ -78,16 +77,16 @@ struct Index {
         .size({ width: 28, height: 28 })
     }
     .width('100%')
-    .height(56)
-    .justifyContent(FlexAlign.Center)
-    .alignItems(HorizontalAlign.Center)
+      .height(56)
+      .justifyContent(FlexAlign.Center)
+      .alignItems(HorizontalAlign.Center)
   }
 
   build() {
-    Tabs({ 
-      barPosition: this.isTablet ? BarPosition.Start : BarPosition.End, 
-      controller: new TabsController(), 
-      index: this.currentIndex 
+    Tabs({
+      barPosition: this.isTablet ? BarPosition.Start : BarPosition.End,
+      controller: new TabsController(),
+      index: this.currentIndex
     }) {
       TabContent() {
         // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
@@ -130,15 +129,16 @@ struct Index {
       .tabBar(this.TabBuilder(4, $rawfile('ic_me.svg'), $rawfile('ic_me_light.svg')))
     }
     .vertical(this.isTablet)
-    .barMode(BarMode.Fixed)
-    .barBackgroundColor(Color.Black)
-    .animationDuration(400)
-    .onChange((index: number) => {
-      this.currentIndex = index
-    })
-    .width('100%')
-    .height('100%')
-    .backgroundColor(Color.Black)
-    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+      .scrollable(false)
+      .barMode(BarMode.Fixed)
+      .barBackgroundColor(Color.Black)
+      .animationDuration(400)
+      .onChange((index: number) => {
+        this.currentIndex = index
+      })
+      .width('100%')
+      .height('100%')
+      .backgroundColor(Color.Black)
+      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }
