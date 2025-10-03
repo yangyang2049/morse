@@ -3,39 +3,12 @@ import { router } from '@kit.ArkUI'
 import { LetterLessonViewModel } from '../../viewmodel/LetterLessonViewModel'
 import { LessonData } from '../../data/LessonData'
 import { audioService } from '../../services/AudioService'
-import { i18nService } from '../../services/I18nService'
-// 本地化字符串接口（避免ArkTS内联对象类型报错）
-interface LetterLessonStrings {
-  settings: string
-  sound: string
-  practice_count: string
-  close: string
-  back: string
-  practice_again: string
-  congratulations_completed: string
-  letters: string
-}
 
 @Entry
 @Component
-  struct LetterLessonPage {
+export struct LetterLessonPage {
   @State viewModel: LetterLessonViewModel = new LetterLessonViewModel()
   private readonly pillRadius: number = 20
-  // 语言热更新状态
-  @StorageLink('currentLanguage') currentLanguage: string = 'zh-CN'
-  @State langTick: number = 0
-  private languageChangeListener: ((lang: string) => void) | null = null
-  // 本地化字符串
-  @State private strings: LetterLessonStrings = {
-    settings: '',
-    sound: '',
-    practice_count: '',
-    close: '',
-    back: '',
-    practice_again: '',
-    congratulations_completed: '',
-    letters: ''
-  }
 
   aboutToAppear() {
     const uiContext = this.getUIContext()
@@ -55,21 +28,10 @@ interface LetterLessonStrings {
     if (hostContext) {
       this.viewModel.init(hostContext, lessonId, title, codes)
     }
-
-    // 初始化本地化并监听语言变化
-    this.strings = this.computeStrings()
-    this.languageChangeListener = () => {
-      this.strings = this.computeStrings()
-      this.langTick++
-    }
-    this.startLanguageWatcher()
   }
 
   aboutToDisappear() {
     this.viewModel.destroy()
-    if (this.languageChangeListener) {
-      this.languageChangeListener = null
-    }
   }
 
   // 判断是否为单词课程
@@ -154,33 +116,6 @@ interface LetterLessonStrings {
     }
   }
 
-  // 语言变化轮询监听
-  private startLanguageWatcher(): void {
-    let last = this.currentLanguage
-    const check = () => {
-      if (this.currentLanguage !== last) {
-        last = this.currentLanguage
-        if (this.languageChangeListener) {
-          this.languageChangeListener(this.currentLanguage)
-        }
-      }
-      setTimeout(check, 100)
-    }
-    check()
-  }
-
-  private computeStrings(): LetterLessonStrings {
-    return {
-      settings: i18nService.t('settings'),
-      sound: i18nService.t('sound'),
-      practice_count: i18nService.t('practice_count'),
-      close: i18nService.t('close'),
-      back: i18nService.t('back'),
-      practice_again: i18nService.t('practice_again'),
-      congratulations_completed: i18nService.t('congratulations_completed'),
-      letters: i18nService.t('letters')
-    }
-  }
 
   @Builder
   private TitleBar() {
@@ -452,8 +387,6 @@ interface LetterLessonStrings {
   private CompletionDialog() {
     // 全屏覆盖层，用于居中显示对话框
     Column() {
-      // 隐藏的语言触发器
-      Text(this.langTick.toString()).opacity(0).width(0).height(0)
       Blank().layoutWeight(1)
 
       // 对话框内容
@@ -475,7 +408,7 @@ interface LetterLessonStrings {
 
         Blank().height(24)
 
-        Text(this.strings.congratulations_completed || $r('app.string.congratulations_completed'))
+        Text($r('app.string.congratulations_completed'))
           .fontSize(24)
           .fontWeight(FontWeight.Bold)
           .fontColor('#FFFFFF')
@@ -489,7 +422,7 @@ interface LetterLessonStrings {
               .fontSize(24)
               .fontWeight(FontWeight.Bold)
               .fontColor(Color.White)
-            Text(this.strings.letters || $r('app.string.letters'))
+            Text($r('app.string.letters'))
               .fontSize(10)
               .fontColor('#B0B0B0')
           }
@@ -504,7 +437,7 @@ interface LetterLessonStrings {
               .fontSize(24)
               .fontWeight(FontWeight.Bold)
               .fontColor(Color.White)
-            Text(this.strings.practice_count || $r('app.string.practice_count'))
+            Text($r('app.string.practice_count'))
               .fontSize(10)
               .fontColor('#B0B0B0')
           }
@@ -522,7 +455,7 @@ interface LetterLessonStrings {
 
         Row() {
           Button() {
-            Text(this.strings.back || $r('app.string.back'))
+            Text($r('app.string.back'))
               .fontSize(16)
               .fontWeight(FontWeight.Bold)
               .fontColor(Color.White)
@@ -541,7 +474,7 @@ interface LetterLessonStrings {
           Blank().width(12)
 
           Button() {
-            Text(this.strings.practice_again || $r('app.string.practice_again'))
+            Text($r('app.string.practice_again'))
               .fontSize(16)
               .fontWeight(FontWeight.Bold)
               .fontColor(Color.White)
@@ -581,9 +514,7 @@ interface LetterLessonStrings {
       Blank().layoutWeight(1)
 
       Column() {
-        // 隐藏的语言触发器
-        Text(this.langTick.toString()).opacity(0).width(0).height(0)
-        Text(this.strings.settings || $r('app.string.settings'))
+        Text($r('app.string.settings'))
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
           .fontColor('#FFFFFF')
@@ -593,7 +524,7 @@ interface LetterLessonStrings {
 
         // 声音
         Row() {
-          Text(this.strings.sound || $r('app.string.sound'))
+          Text($r('app.string.sound'))
             .fontSize(16)
             .fontColor('#FFFFFF')
           Blank().layoutWeight(1)
@@ -610,7 +541,7 @@ interface LetterLessonStrings {
 
         // 练习次数 (3-5) - 单行布局，系统步进器不可用时使用 +/-
         Row() {
-          Text(this.strings.practice_count || $r('app.string.practice_count'))
+          Text($r('app.string.practice_count'))
             .fontSize(16)
             .fontColor('#FFFFFF')
           Blank().layoutWeight(1)
@@ -659,7 +590,7 @@ interface LetterLessonStrings {
         Blank().height(20)
 
         Button() {
-          Text(this.strings.close || $r('app.string.close'))
+          Text($r('app.string.close'))
             .fontSize(16)
             .fontWeight(FontWeight.Bold)
             .fontColor(Color.Black)

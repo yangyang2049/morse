@@ -1,0 +1,808 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "Morse Code"
+    },
+    {
+      "name": "app_name",
+      "value": "Morse Code"
+    },
+    {
+      "name": "tagline",
+      "value": "Make learning Morse code simple and fun"
+    },
+    {
+      "name": "learn",
+      "value": "Learn"
+    },
+    {
+      "name": "practice",
+      "value": "Practice"
+    },
+    {
+      "name": "translate",
+      "value": "Translate"
+    },
+    {
+      "name": "code_table",
+      "value": "Code Table"
+    },
+    {
+      "name": "me",
+      "value": "Me"
+    },
+    {
+      "name": "confirm",
+      "value": "Confirm"
+    },
+    {
+      "name": "cancel",
+      "value": "Cancel"
+    },
+    {
+      "name": "close",
+      "value": "OK"
+    },
+    {
+      "name": "back",
+      "value": "Back"
+    },
+    {
+      "name": "next",
+      "value": "Next"
+    },
+    {
+      "name": "loading",
+      "value": "Loading..."
+    },
+    {
+      "name": "copied",
+      "value": "Copied to clipboard"
+    },
+    {
+      "name": "got_it",
+      "value": "Got it"
+    },
+    {
+      "name": "settings",
+      "value": "Settings"
+    },
+    {
+      "name": "sound",
+      "value": "Sound"
+    },
+    {
+      "name": "language",
+      "value": "Language"
+    },
+    {
+      "name": "language_selection_title",
+      "value": "Select Language"
+    },
+    {
+      "name": "language_selection_content",
+      "value": "Choose your preferred language for the app interface"
+    },
+    {
+      "name": "chinese",
+      "value": "中文"
+    },
+    {
+      "name": "english",
+      "value": "English"
+    },
+    {
+      "name": "language_switched_chinese",
+      "value": "语言已切换为中文"
+    },
+    {
+      "name": "language_switched_english",
+      "value": "Language switched to English"
+    },
+    {
+      "name": "language_switch_failed",
+      "value": "Language switch failed, please try again later"
+    },
+    {
+      "name": "morse_code_basics",
+      "value": "Basics"
+    },
+    {
+      "name": "morse_code_intro",
+      "value": "Morse code is a character encoding system based on \"dots (·) and dashes (-)\". Different combinations of dots and dashes represent letters, numbers, and symbols."
+    },
+    {
+      "name": "alphabet_lesson",
+      "value": "Alphabet"
+    },
+    {
+      "name": "number_lesson",
+      "value": "Number"
+    },
+    {
+      "name": "punctuation_lesson",
+      "value": "Punctuation"
+    },
+    {
+      "name": "word_lesson",
+      "value": "Word"
+    },
+    {
+      "name": "review_lesson",
+      "value": "Review"
+    },
+    {
+      "name": "lesson_completed",
+      "value": "Completed"
+    },
+    {
+      "name": "next_lesson",
+      "value": "Next Lesson"
+    },
+    {
+      "name": "start_test",
+      "value": "Start Test"
+    },
+    {
+      "name": "your_score",
+      "value": "Your Score"
+    },
+    {
+      "name": "congratulations_passed",
+      "value": "🎉 Congratulations!"
+    },
+    {
+      "name": "keep_trying",
+      "value": "Keep trying!"
+    },
+    {
+      "name": "mastered_basics",
+      "value": "You have mastered the basics of Morse code"
+    },
+    {
+      "name": "need_100_points",
+      "value": "Need 100 points to pass the test"
+    },
+    {
+      "name": "easy",
+      "value": "Easy"
+    },
+    {
+      "name": "medium",
+      "value": "Medium"
+    },
+    {
+      "name": "hard",
+      "value": "Hard"
+    },
+    {
+      "name": "easy_desc",
+      "value": "Letters Only"
+    },
+    {
+      "name": "medium_desc",
+      "value": "Letters + Numbers"
+    },
+    {
+      "name": "hard_desc",
+      "value": "All Characters"
+    },
+    {
+      "name": "favorites",
+      "value": "Favorites"
+    },
+    {
+      "name": "mistakes",
+      "value": "Mistakes"
+    },
+    {
+      "name": "practice_again",
+      "value": "Practice Again"
+    },
+    {
+      "name": "practice_count",
+      "value": "Practice Count"
+    },
+    {
+      "name": "congratulations_completed",
+      "value": "Congratulations!"
+    },
+    {
+      "name": "favorite_added",
+      "value": "Added to favorites"
+    },
+    {
+      "name": "favorite_removed",
+      "value": "Removed from favorites"
+    },
+    {
+      "name": "practice_records",
+      "value": "Practice Records"
+    },
+    {
+      "name": "practiced",
+      "value": "Practiced"
+    },
+    {
+      "name": "total",
+      "value": "Total"
+    },
+    {
+      "name": "learning_completed",
+      "value": "Learning Completed"
+    },
+    {
+      "name": "you_mastered_basics",
+      "value": "You have mastered the basics of Morse code"
+    },
+    {
+      "name": "need_100_to_pass",
+      "value": "• Need 100 points to pass"
+    },
+    {
+      "name": "test_your_mastery",
+      "value": "Test your mastery of this lesson"
+    },
+    {
+      "name": "test_content",
+      "value": "Test Content"
+    },
+    {
+      "name": "true_false_questions",
+      "value": "• 2 True/False questions (20 points each)"
+    },
+    {
+      "name": "multiple_choice_questions",
+      "value": "• 3 Multiple choice questions (20 points each)"
+    },
+    {
+      "name": "retake_test",
+      "value": "Retake Test"
+    },
+    {
+      "name": "next_question",
+      "value": "Next Question"
+    },
+    {
+      "name": "view_results",
+      "value": "View Results"
+    },
+    {
+      "name": "correct",
+      "value": "Correct"
+    },
+    {
+      "name": "wrong",
+      "value": "Wrong"
+    },
+    {
+      "name": "q1_question",
+      "value": "Morse code is a character encoding system based on \"dots (·) and dashes (-)\"."
+    },
+    {
+      "name": "q1_options",
+      "value": "Correct,Wrong"
+    },
+    {
+      "name": "q2_question",
+      "value": "The SOS signal in Morse code is ··· --- ···, and normal character spacing should be maintained between characters."
+    },
+    {
+      "name": "q2_options",
+      "value": "Correct,Wrong"
+    },
+    {
+      "name": "q3_question",
+      "value": "In Morse code timing rules, the unit ratio of dots, dashes, and character spacing is:"
+    },
+    {
+      "name": "q3_options",
+      "value": "1 : 2 : 5,1 : 3 : 7,1 : 4 : 8,2 : 3 : 6"
+    },
+    {
+      "name": "q4_question",
+      "value": "In which era was Morse code developed?"
+    },
+    {
+      "name": "q4_options",
+      "value": "1820s,1830-1840s,1850s,1860s"
+    },
+    {
+      "name": "q5_question",
+      "value": "The recommended learning order for Morse code is:"
+    },
+    {
+      "name": "q5_options",
+      "value": "Numbers → Letters → Symbols,Symbols → Letters → Numbers,Letters → Numbers → Symbols,Random learning"
+    },
+    {
+      "name": "cq1_question",
+      "value": "Chinese Morse code is a Morse code system specifically designed for Chinese characters."
+    },
+    {
+      "name": "cq1_options",
+      "value": "Correct,Wrong"
+    },
+    {
+      "name": "cq2_question",
+      "value": "Chinese Morse code encoding is typically shorter than English Morse code."
+    },
+    {
+      "name": "cq2_options",
+      "value": "Correct,Wrong"
+    },
+    {
+      "name": "cq3_question",
+      "value": "In which era was Chinese Morse code first established?"
+    },
+    {
+      "name": "cq3_options",
+      "value": "1900s,1920s,1950s,1980s"
+    },
+    {
+      "name": "cq4_question",
+      "value": "Which of the following is NOT an application scenario for Chinese Morse code?"
+    },
+    {
+      "name": "cq4_options",
+      "value": "Military communication,Aviation communication,Online chat,Maritime communication"
+    },
+    {
+      "name": "cq5_question",
+      "value": "The recommended learning order for Chinese Morse code is:"
+    },
+    {
+      "name": "cq5_options",
+      "value": "Start with complex characters,Start with basic characters,Random learning,Start with punctuation"
+    },
+    {
+      "name": "exp1_title",
+      "value": "Basic Elements of Morse Code"
+    },
+    {
+      "name": "exp1_content",
+      "value": "• Morse code is based on \"dots (·) and dashes (-)\"\n• Different combinations of dots and dashes represent letters, numbers, and symbols\n• This is the foundation of all Morse code and must be mastered"
+    },
+    {
+      "name": "exp2_title",
+      "value": "SOS Signal"
+    },
+    {
+      "name": "exp2_content",
+      "value": "• SOS is an emergency distress signal that needs quick recognition\n• Compact transmission: The three characters (··· --- ···) are sent compactly without normal character spacing\n• Standard spacing rules: Normally, Morse code characters should have 3-unit spacing between them\n• SOS exception: But SOS, as an emergency signal, ignores this rule and sends compactly for faster recognition"
+    },
+    {
+      "name": "exp3_title",
+      "value": "Importance of Timing Rules"
+    },
+    {
+      "name": "exp3_content",
+      "value": "• The 1:3:7 ratio is the core rule of Morse code\n• Dot = 1 unit, Dash = 3 units, Character spacing = 3 units, Word spacing = 7 units\n• This precise timing ensures accuracy and readability of information transmission"
+    },
+    {
+      "name": "exp4_title",
+      "value": "Historical Background"
+    },
+    {
+      "name": "exp4_content",
+      "value": "• Samuel Morse and Alfred Vail collaborated in the 1830-1840s\n• Initially used for telegraph systems, later evolved into international Morse code\n• Became the global standard for radio communication encoding"
+    },
+    {
+      "name": "exp5_title",
+      "value": "Learning Strategy"
+    },
+    {
+      "name": "exp5_content",
+      "value": "• Letters → Numbers → Symbols is the most scientific learning order\n• Master basic letters first, then learn numbers and symbols\n• Progressive learning to avoid information overload and improve efficiency"
+    },
+    {
+      "name": "cexp1_title",
+      "value": "Definition of Chinese Morse Code"
+    },
+    {
+      "name": "cexp1_content",
+      "value": "• Chinese Morse code is a coding system specifically designed for Chinese characters\n• Uses combinations of dots (·) and dashes (-) to represent Chinese characters\n• Combines traditional Morse code principles with Chinese language characteristics\n• Provides standardized encoding for Chinese communication"
+    },
+    {
+      "name": "cexp2_title",
+      "value": "Characteristics of Encoding Length"
+    },
+    {
+      "name": "cexp2_content",
+      "value": "• Chinese Morse code encoding is typically longer than English Morse code\n• This is because Chinese characters are numerous and require more dot-dash combinations\n• Each Chinese character has a unique Morse code representation\n• Increased encoding length ensures character uniqueness"
+    },
+    {
+      "name": "cexp3_title",
+      "value": "Historical Development Background"
+    },
+    {
+      "name": "cexp3_content",
+      "value": "• 1920s: Initial establishment of Chinese Morse code standards\n• Developed to meet the needs of Chinese telegraph communication\n• International Telecommunication Union (ITU) participated in development\n• Modern standards formed through multiple optimizations"
+    },
+    {
+      "name": "cexp4_title",
+      "value": "Application Scenario Analysis"
+    },
+    {
+      "name": "cexp4_content",
+      "value": "• Military communication: Secret communication between troops\n• Aviation communication: Communication between pilots and ground control towers\n• Maritime communication: Communication between ships\n• Online chat is not a traditional application scenario"
+    },
+    {
+      "name": "cexp5_title",
+      "value": "Learning Strategy Recommendations"
+    },
+    {
+      "name": "cexp5_content",
+      "value": "• Starting with basic characters is most scientific\n• Basic characters are used frequently and easy to remember\n• Progressive learning to avoid information overload\n• Build learning confidence and improve efficiency"
+    },
+    {
+      "name": "text_to_morse",
+      "value": "Text → Morse"
+    },
+    {
+      "name": "morse_to_text",
+      "value": "Morse → Text"
+    },
+    {
+      "name": "input_text_placeholder",
+      "value": "Enter text here, e.g., Hello World"
+    },
+    {
+      "name": "input_morse_placeholder",
+      "value": "Enter Morse here, e.g., ··· --- ···"
+    },
+    {
+      "name": "output_text_placeholder",
+      "value": "Morse will display here"
+    },
+    {
+      "name": "output_morse_placeholder",
+      "value": "Text will display here"
+    },
+    {
+      "name": "standard_chinese_telegraph_code",
+      "value": "Standard Chinese Telegraph Code"
+    },
+    {
+      "name": "chinese_characters",
+      "value": "Chinese Characters"
+    },
+    {
+      "name": "telegraph_code",
+      "value": "Telegraph Code"
+    },
+    {
+      "name": "searching",
+      "value": "Searching..."
+    },
+    {
+      "name": "no_data",
+      "value": "No Data"
+    },
+    {
+      "name": "telegraph_code_description",
+      "value": "Chinese Telegraph Code (also known as \"Chinese Telegraph Cipher\") is a coding system designed for accurate and fast transmission and reception of Chinese characters during the telegraph transmission era.\\n\\n• Origin and Standardization\\nOriginally developed by Sheng Xuanhuai in the late Qing Dynasty, it was later revised multiple times during the Republic of China and New China, forming a unified national standard. The common version is the \"Standard Telegraph Code Book\", which includes more than 7,000 commonly used Chinese characters.\\n\\n• Encoding Method\\nEach Chinese character corresponds to a four-digit numeric code, ranging from 0001 to 9999.\\nFor example:\\n• \"中\" = 0029\\n• \"国\" = 0049\\n• \"电\" = 0168\\n• \"码\" = 0203\\n\\n• Usage\\nIn telegraph transmission, the sender only needs to send the corresponding four-digit number, and the receiver can look up the original Chinese character according to the code book. This ensures accurate transmission and facilitates cross-language communication (numbers are internationally universal).\\n\\nThis page can search by \"Chinese character\" or \"telegraph code\" for quick location."
+    },
+    {
+      "name": "rating_feedback",
+      "value": "Rating & Feedback"
+    },
+    {
+      "name": "share_app",
+      "value": "Share App"
+    },
+    {
+      "name": "other_apps",
+      "value": "Other Apps"
+    },
+    {
+      "name": "version",
+      "value": "Version"
+    },
+    {
+      "name": "copyright",
+      "value": "© 2025 Douhua Technology Co., Ltd."
+    },
+    {
+      "name": "share_text",
+      "value": "Recommend a Morse code learning app:\n《Morse Code Master》📡\n\n• Learn Morse code from scratch\n• Follow-along practice and listening training\n• Text and Morse code translation\n\nDownload now:\nhttps://appgallery.huawei.com/app/detail?id=com.douhua.morsecode"
+    },
+    {
+      "name": "share_copied",
+      "value": "Share content copied to clipboard"
+    },
+    {
+      "name": "copy_failed",
+      "value": "Copy failed, please try again later"
+    },
+    {
+      "name": "copy_success",
+      "value": "Copied to clipboard"
+    },
+    {
+      "name": "opening_app_gallery",
+      "value": "Opening App Gallery..."
+    },
+    {
+      "name": "opened_via_browser",
+      "value": "Opened App Gallery via browser"
+    },
+    {
+      "name": "cannot_open_app_gallery",
+      "value": "Cannot open App Gallery, please try again later"
+    },
+    {
+      "name": "lesson_1",
+      "value": "Lesson 1"
+    },
+    {
+      "name": "lesson_2",
+      "value": "Lesson 2"
+    },
+    {
+      "name": "lesson_3",
+      "value": "Lesson 3"
+    },
+    {
+      "name": "lesson_4",
+      "value": "Lesson 4"
+    },
+    {
+      "name": "lesson_5",
+      "value": "Lesson 5"
+    },
+    {
+      "name": "lesson_6",
+      "value": "Lesson 6"
+    },
+    {
+      "name": "lesson_7",
+      "value": "Lesson 7"
+    },
+    {
+      "name": "lesson_8",
+      "value": "Lesson 8"
+    },
+    {
+      "name": "lesson_9",
+      "value": "Lesson 9"
+    },
+    {
+      "name": "lesson_10",
+      "value": "Lesson 10"
+    },
+    {
+      "name": "lesson_11",
+      "value": "Lesson 11"
+    },
+    {
+      "name": "lesson_12",
+      "value": "Lesson 12"
+    },
+    {
+      "name": "lesson_13",
+      "value": "Lesson 13"
+    },
+    {
+      "name": "lesson_14",
+      "value": "Lesson 14"
+    },
+    {
+      "name": "lesson_15",
+      "value": "Lesson 15"
+    },
+    {
+      "name": "lesson_16",
+      "value": "Lesson 16"
+    },
+    {
+      "name": "lesson_17",
+      "value": "Lesson 17"
+    },
+    {
+      "name": "lesson_18",
+      "value": "Lesson 18"
+    },
+    {
+      "name": "lesson_19",
+      "value": "Lesson 19"
+    },
+    {
+      "name": "lesson_20",
+      "value": "Lesson 20"
+    },
+    {
+      "name": "lesson_21",
+      "value": "Lesson 21"
+    },
+    {
+      "name": "alphabet_abc",
+      "value": "ABC"
+    },
+    {
+      "name": "alphabet_def",
+      "value": "DEF"
+    },
+    {
+      "name": "alphabet_ghij",
+      "value": "GHIJ"
+    },
+    {
+      "name": "alphabet_review_aj",
+      "value": "Review: A-J"
+    },
+    {
+      "name": "alphabet_klmn",
+      "value": "KLMN"
+    },
+    {
+      "name": "alphabet_opqr",
+      "value": "OPQR"
+    },
+    {
+      "name": "alphabet_stuv",
+      "value": "STUV"
+    },
+    {
+      "name": "alphabet_wxyz",
+      "value": "WXYZ"
+    },
+    {
+      "name": "alphabet_review_kz",
+      "value": "Review: K-Z"
+    },
+    {
+      "name": "numbers_123",
+      "value": "1 2 3"
+    },
+    {
+      "name": "numbers_456",
+      "value": "4 5 6"
+    },
+    {
+      "name": "numbers_7890",
+      "value": "7 8 9 0"
+    },
+    {
+      "name": "numbers_review",
+      "value": "Review: 0-9"
+    },
+    {
+      "name": "punctuation_basic",
+      "value": ". , ? ! : ;"
+    },
+    {
+      "name": "punctuation_advanced",
+      "value": "= + - _ \" ' ( ) / @"
+    },
+    {
+      "name": "punctuation_review",
+      "value": "Review"
+    },
+    {
+      "name": "words_3letter",
+      "value": "3-Letter Words"
+    },
+    {
+      "name": "words_4letter",
+      "value": "4-Letter Words"
+    },
+    {
+      "name": "words_5letter",
+      "value": "5-Letter Words"
+    },
+    {
+      "name": "all_codes",
+      "value": "All"
+    },
+    {
+      "name": "letters",
+      "value": "Letters"
+    },
+    {
+      "name": "numbers",
+      "value": "Numbers"
+    },
+    {
+      "name": "punctuation",
+      "value": "Punctuation"
+    },
+    {
+      "name": "practice_favorites",
+      "value": "Practice favorite letters"
+    },
+    {
+      "name": "mistakes_desc",
+      "value": "Review wrong letters"
+    },
+    {
+      "name": "favorites_empty",
+      "value": "Favorites is empty, go practice some letters first!"
+    },
+    {
+      "name": "mistakes_empty",
+      "value": "No mistakes yet!"
+    },
+    {
+      "name": "periodic_table_app",
+      "value": "Periodic Table"
+    },
+    {
+      "name": "morsecode_app",
+      "value": "Morse Code"
+    },
+    {
+      "name": "please_complete_previous_lessons",
+      "value": "Please complete the previous lessons first"
+    },
+    {
+      "name": "lesson_unlocked",
+      "value": "Lesson unlocked, you can start learning"
+    },
+    {
+      "name": "basics_test",
+      "value": "Basics Test"
+    },
+    {
+      "name": "chinese_morse_code",
+      "value": "Chinese Morse Code"
+    },
+    {
+      "name": "chinese_code_test",
+      "value": "Chinese Code Test"
+    },
+    {
+      "name": "placeholder",
+      "value": "Placeholder"
+    },
+    {
+      "name": "removed_from_mistakes",
+      "value": "Removed from mistakes!"
+    },
+    {
+      "name": "load_more",
+      "value": "Load More"
+    },
+    {
+      "name": "theme",
+      "value": "Theme"
+    },
+    {
+      "name": "theme_selection_title",
+      "value": "Select Theme"
+    },
+    {
+      "name": "theme_default",
+      "value": "Default"
+    },
+    {
+      "name": "theme_retro",
+      "value": "Retro"
+    },
+    {
+      "name": "font",
+      "value": "Font"
+    },
+    {
+      "name": "font_selection_title",
+      "value": "Select Font"
+    },
+    {
+      "name": "font_default",
+      "value": "Default"
+    },
+    {
+      "name": "font_digital",
+      "value": "Digital"
+    }
+  ]
+}

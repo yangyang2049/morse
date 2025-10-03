@@ -6,6 +6,7 @@ import { MePage } from './me/MePage'
 import { audioService } from '../services/AudioService'
 import { Context } from '@kit.AbilityKit'
 import deviceInfo from '@ohos.deviceInfo'
+import { i18n } from '@kit.LocalizationKit'
 // Window system bar properties are managed globally in EntryAbility
 
 @Entry
@@ -14,7 +15,7 @@ import deviceInfo from '@ohos.deviceInfo'
   @State currentIndex: number = 0
   @State isTablet: boolean = false
 
-  @StorageLink('currentLanguage') currentLanguage: string = 'zh-CN'
+  @StorageLink('currentLanguage') currentLanguage: string = this.getInitialLanguage()
 
   @StorageLink('languageRefreshTrigger') languageRefreshTrigger: number = 0
 
@@ -27,6 +28,24 @@ import deviceInfo from '@ohos.deviceInfo'
     this.initAudioService()
 
     this.watchLanguageChanges()
+  }
+
+  // 获取初始语言
+  private getInitialLanguage(): string {
+    try {
+      const currentLocale = i18n.System.getSystemLocale()
+      console.log(`[INDEX] System locale: ${currentLocale}`)
+      // 将系统locale转换为我们的语言代码格式
+      if (currentLocale.startsWith('zh')) {
+        return 'zh-CN'
+      } else if (currentLocale.startsWith('en')) {
+        return 'en-US'
+      }
+      return 'zh-CN' // 默认中文
+    } catch (error) {
+      console.error('[INDEX] Failed to get initial language:', error)
+      return 'zh-CN' // 默认中文
+    }
   }
 
   // 检查设备类型

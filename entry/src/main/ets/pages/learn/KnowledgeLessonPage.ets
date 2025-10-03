@@ -1,31 +1,55 @@
 import { router } from '@kit.ArkUI'
 // System bar colors are set globally in EntryAbility
 import { KnowledgeLessonViewModel } from '../../viewmodel/KnowledgeLessonViewModel'
-import { LessonNavParams } from '../../types/LessonTypes'
-import { i18nService } from '../../services/I18nService'
+import { LessonNavParams } from '../../types/Types'
+import { resourceManager, i18n } from '@kit.LocalizationKit'
 
 @Entry
 @Component
-struct KnowledgeLessonPage {
+  struct KnowledgeLessonPage {
   @State viewModel: KnowledgeLessonViewModel = new KnowledgeLessonViewModel()
-  @State title: string = i18nService.t('morse_code_basics')
-  @State content: string = i18nService.t('morse_code_intro')
+  @State title: Resource | string = $r('app.string.morse_code_basics')
+  @State content: Resource | string = $r('app.string.morse_code_intro')
   @State customSections: string[] = []
-  
-  // 监听语言变化
-  @StorageLink('currentLanguage') @Watch('onLanguageChange') currentLanguage: string = 'zh-CN'
-  @StorageLink('languageRefreshTrigger') @Watch('onLanguageRefreshTrigger') languageRefreshTrigger: number = 0
+  @StorageLink('currentLanguage') currentLanguage: string = 'zh-CN'
 
-  aboutToAppear() {
+  // Quiz card localized strings
+  @State testYourMasteryText: string = ''
+  @State testContentText: string = ''
+  @State trueFalseQuestionsText: string = ''
+  @State multipleChoiceQuestionsText: string = ''
+  @State need100ToPassText: string = ''
+  @State startTestText: string = ''
+  // 资源管理器
+  private resourceMgr: resourceManager.ResourceManager | null = null
+
+  async aboutToAppear(): Promise<void> {
+    // 初始化资源管理器
+    try {
+      this.resourceMgr = getContext(this).resourceManager
+    } catch (error) {
+      console.error('[KnowledgeLessonPage] Failed to get resource manager:', error)
+    }
+
     const uiContext = this.getUIContext()
     const hostContext = uiContext.getHostContext()
-    
+
     // Read navigation params and initialize ViewModel
     try {
       const params: LessonNavParams = (router.getParams() as Record<string, Object>) as LessonNavParams ?? {} as LessonNavParams
       console.error(`[KNOWLEDGE_LESSON] aboutToAppear: Raw params=`, JSON.stringify(params))
+
+      // Update language from params if provided
+      if (params.currentLanguage) {
+        this.currentLanguage = params.currentLanguage as string
+        AppStorage.setOrCreate('currentLanguage', this.currentLanguage)
+      }
+
+      // Load localized strings after language is set
+      this.loadLocalizedStrings()
+
       this.viewModel.init(params, hostContext)
-      
+
       // Update local state if params are provided
       if (params.title) {
         this.title = params.title
@@ -35,32 +59,58 @@ struct KnowledgeLessonPage {
     }
   }
 
-  // 语言变化时的处理方法
-  onLanguageChange(): void {
-    // 同步到 i18nService 的当前语言
-    i18nService.setLanguage(this.currentLanguage)
-      .then(() => {
-        this.refreshContent()
-      })
-      .catch(() => {
-        // 即便失败也尝试更新，以防止 UI 不刷新
-        this.refreshContent()
-      })
+
+  // 加载本地化字符串
+  private loadLocalizedStrings(): void {
+    const isChinese = this.currentLanguage.startsWith('zh')
+
+    if (isChinese) {
+      this.testYourMasteryText = '测试你对本课程的掌握程度'
+      this.testContentText = '测试内容'
+      this.trueFalseQuestionsText = '• 2道判断题（每题20分）'
+      this.multipleChoiceQuestionsText = '• 3道选择题（每题20分）'
+      this.need100ToPassText = '• 需要100分才能通过'
+      this.startTestText = '开始测试'
+    } else {
+      this.testYourMasteryText = 'Test your mastery of this lesson'
+      this.testContentText = 'Test Content'
+      this.trueFalseQuestionsText = '• 2 True/False questions (20 points each)'
+      this.multipleChoiceQuestionsText = '• 3 Multiple choice questions (20 points each)'
+      this.need100ToPassText = '• Need 100 points to pass'
+      this.startTestText = 'Start Test'
+    }
   }
 
-  // 当全局语言刷新触发器变化时，强制刷新内容
-  onLanguageRefreshTrigger(): void {
-    this.refreshContent()
+  // 获取当前系统语言
+  private getCurrentLanguage(): string {
+    try {
+      const currentLocale = i18n.System.getSystemLocale()
+      // 将系统locale转换为我们的语言代码格式
+      if (currentLocale.startsWith('zh')) {
+        return 'zh-CN'
+      } else if (currentLocale.startsWith('en')) {
+        return 'en-US'
+      }
+      return 'zh-CN' // 默认中文
+    } catch (error) {
+      console.error('[KnowledgeLessonPage] Failed to get current language:', error)
+      return 'zh-CN' // 默认中文
+    }
   }
 
-  // 刷新页面内容
-  private refreshContent(): void {
-    // 重新获取标题和内容
-    this.title = i18nService.t('morse_code_basics')
-    this.content = i18nService.t('morse_code_intro')
-    
-    // 刷新ViewModel的内容
-    this.viewModel.refreshContent()
+  // 获取系统资源字符串
+  private async getStringResource(key: string): Promise<string> {
+    try {
+      if (this.resourceMgr) {
+        // 使用资源ID获取字符串
+        const resourceId = await this.resourceMgr.getStringByName(key)
+        return resourceId
+      }
+      return key
+    } catch (error) {
+      console.error(`[KnowledgeLessonPage] Failed to get string resource for key: ${key}`, error)
+      return key
+    }
   }
 
   // Removed onPageShow system bar re-application to avoid flicker
@@ -75,11 +125,11 @@ struct KnowledgeLessonPage {
           .fillColor(Color.White)
       }
       .width(48)
-      .height(48)
-      .backgroundColor(Color.Transparent)
-      .onClick(() => {
-        router.back()
-      })
+        .height(48)
+        .backgroundColor(Color.Transparent)
+        .onClick(() => {
+          router.back()
+        })
 
       Text(this.viewModel.title || this.title)
         .fontSize(18)
@@ -95,7 +145,7 @@ struct KnowledgeLessonPage {
         .enabled(false)
     }
     .height(56)
-    .padding({ left: 16, right: 16 })
+      .padding({ left: 16, right: 16 })
   }
 
   @Builder
@@ -131,9 +181,9 @@ struct KnowledgeLessonPage {
       })
     }
     .alignItems(HorizontalAlign.Start)
-    .justifyContent(FlexAlign.Start)
-    .width('100%')
-    .align(Alignment.TopStart)
+      .justifyContent(FlexAlign.Start)
+      .width('100%')
+      .align(Alignment.TopStart)
   }
 
   @Builder
@@ -163,24 +213,24 @@ struct KnowledgeLessonPage {
             this.buildDefaultSection(title, contents)
           }
           .layoutWeight(1)
-          .scrollBar(BarState.Off)
-          .edgeEffect(EdgeEffect.Spring)
-          .align(Alignment.TopStart)
+            .scrollBar(BarState.Off)
+            .edgeEffect(EdgeEffect.Spring)
+            .align(Alignment.TopStart)
         }
         .alignItems(HorizontalAlign.Start)
-        .justifyContent(FlexAlign.Start)
-        .width('100%')
-        .height('100%')
-        .padding({ top: 0 })
+          .justifyContent(FlexAlign.Start)
+          .width('100%')
+          .height('100%')
+          .padding({ top: 0 })
       }
     }
     .width(320)
-    .height(480)
-    .padding(16)
-    .backgroundColor('#1A1A1A')
-    .border({ width: 1, color: '#333333' })
-    .borderRadius(12)
-    .margin({ right: 16 })
+      .height(480)
+      .padding(16)
+      .backgroundColor('#1A1A1A')
+      .border({ width: 1, color: '#333333' })
+      .borderRadius(12)
+      .margin({ right: 16 })
   }
 
   @Builder
@@ -200,12 +250,12 @@ struct KnowledgeLessonPage {
           }
           .margin({ bottom: 32 })
 
-          Text(i18nService.t('test_your_mastery'))
+          Text(this.testYourMasteryText)
             .fontSize(16)
             .fontColor('#FF8C00')
             .margin({ bottom: 16 })
 
-          Text(i18nService.t('test_content'))
+          Text(this.testContentText)
             .fontSize(16)
             .fontWeight(FontWeight.Bold)
             .fontColor('#FF8C00')
@@ -213,53 +263,54 @@ struct KnowledgeLessonPage {
             .alignSelf(ItemAlign.Start)
 
           Column() {
-            Text(i18nService.t('test_format_1')).fontSize(14).fontColor(Color.Black).margin({ bottom: 4 })
-            Text(i18nService.t('test_format_2')).fontSize(14).fontColor(Color.Black).margin({ bottom: 4 })
-            Text(i18nService.t('need_100_to_pass')).fontSize(14).fontColor(Color.Black)
+            Text(this.trueFalseQuestionsText).fontSize(14).fontColor(Color.Black).margin({ bottom: 4 })
+            Text(this.multipleChoiceQuestionsText).fontSize(14).fontColor(Color.Black).margin({ bottom: 4 })
+            Text(this.need100ToPassText).fontSize(14).fontColor(Color.Black)
           }
           .margin({ bottom: 16 })
-          .alignItems(HorizontalAlign.Start)
+            .alignItems(HorizontalAlign.Start)
 
           Blank().layoutWeight(1)
 
           Button() {
-            Text(i18nService.t('start_test'))
+            Text(this.startTestText)
               .fontSize(16)
               .fontWeight(FontWeight.Bold)
               .fontColor(Color.White)
           }
           .width('100%')
-          .height(48)
-          .backgroundColor('#FF8C00')
-          .borderRadius(8)
-          .onClick(() => {
-            // Navigate to quiz page
-            console.error(`[KNOWLEDGE_LESSON] Start quiz: pageTitle=${this.viewModel.testTitle}`)
-            router.push({
-              url: 'pages/learn/LessonQuizPage',
-              params: {
-                pageTitle: this.viewModel.testTitle,
-                lessonCompletedKey: this.viewModel.lessonCompletedKey
-              }
+            .height(48)
+            .backgroundColor('#FF8C00')
+            .borderRadius(8)
+            .onClick(() => {
+              // Navigate to quiz page
+              console.error(`[KNOWLEDGE_LESSON] Start quiz: pageTitle=${this.viewModel.testTitle}`)
+              router.push({
+                url: 'pages/learn/LessonQuizPage',
+                params: {
+                  pageTitle: this.viewModel.testTitle,
+                  lessonCompletedKey: this.viewModel.lessonCompletedKey,
+                  currentLanguage: this.currentLanguage
+                }
+              })
             })
-          })
 
           Blank().height(16)
         }
         .alignItems(HorizontalAlign.Start)
-        .justifyContent(FlexAlign.Start)
-        .width('100%')
-        .height('100%')
+          .justifyContent(FlexAlign.Start)
+          .width('100%')
+          .height('100%')
       }
     }
     .alignItems(HorizontalAlign.Start)
-    .justifyContent(FlexAlign.Start)
-    .width(320)
-    .height(480)
-    .padding(16)
-    .backgroundColor('#FFF8DC')
-    .border({ width: 1, color: '#FF8C00' })
-    .borderRadius(12)
+      .justifyContent(FlexAlign.Start)
+      .width(320)
+      .height(480)
+      .padding(16)
+      .backgroundColor('#FFF8DC')
+      .border({ width: 1, color: '#FF8C00' })
+      .borderRadius(12)
   }
 
   @Builder
@@ -273,10 +324,10 @@ struct KnowledgeLessonPage {
         .width('100%')
     }
     .width('100%')
-    .padding(20)
-    .backgroundColor('#2A2A2A')
-    .border({ width: 1, color: '#333333' })
-    .borderRadius(12)
+      .padding(20)
+      .backgroundColor('#2A2A2A')
+      .border({ width: 1, color: '#333333' })
+      .borderRadius(12)
   }
 
   @Builder
@@ -293,11 +344,11 @@ struct KnowledgeLessonPage {
               .width('100%')
           }
           .width('100%')
-          .padding(20)
-          .backgroundColor('#2A2A2A')
-          .border({ width: 1, color: '#333333' })
-          .borderRadius(12)
-          .margin({ top: index > 0 ? 20 : 0 })
+            .padding(20)
+            .backgroundColor('#2A2A2A')
+            .border({ width: 1, color: '#333333' })
+            .borderRadius(12)
+            .margin({ top: index > 0 ? 20 : 0 })
         })
       }
     }
@@ -306,21 +357,21 @@ struct KnowledgeLessonPage {
   @Builder
   CompleteButton() {
     Button() {
-      Text(i18nService.t('learning_completed'))
+      Text($r('app.string.learning_completed'))
         .fontSize(16)
         .fontWeight(FontWeight.Bold)
         .fontColor('#1A1A1A')
     }
     .width('100%')
-    .height(48)
-    .backgroundColor('#FFD700')
-    .borderRadius(12)
-    .onClick(async () => {
-      console.error(`[KNOWLEDGE_LESSON] CompleteButton: User completed learning, marking lesson as completed`)
-      // 立即标记课程完成
-      await this.viewModel.markLessonCompletedImmediately()
-      router.back()
-    })
+      .height(48)
+      .backgroundColor('#FFD700')
+      .borderRadius(12)
+      .onClick(async () => {
+        console.error(`[KNOWLEDGE_LESSON] CompleteButton: User completed learning, marking lesson as completed`)
+        // 立即标记课程完成
+        await this.viewModel.markLessonCompletedImmediately()
+        router.back()
+      })
   }
 
   // 检查是否使用分章节模式
@@ -344,11 +395,11 @@ struct KnowledgeLessonPage {
         this.CompleteButton()
       }
       .padding(16)
-      .alignItems(HorizontalAlign.Start)
+        .alignItems(HorizontalAlign.Start)
     }
     .layoutWeight(1)
-    .scrollBar(BarState.Off)
-    .edgeEffect(EdgeEffect.Spring)
+      .scrollBar(BarState.Off)
+      .edgeEffect(EdgeEffect.Spring)
   }
 
   @Builder
@@ -367,10 +418,10 @@ struct KnowledgeLessonPage {
       .alignItems(VerticalAlign.Top)
     }
     .scrollable(ScrollDirection.Horizontal)
-    .scrollBar(BarState.Off)
-    .edgeEffect(EdgeEffect.Spring)
-    .layoutWeight(1)
-    .padding({ left: 16, right: 16, top: 16, bottom: 24 })
+      .scrollBar(BarState.Off)
+      .edgeEffect(EdgeEffect.Spring)
+      .layoutWeight(1)
+      .padding({ left: 16, right: 16, top: 16, bottom: 24 })
   }
 
   build() {
@@ -388,13 +439,13 @@ struct KnowledgeLessonPage {
         }
       }
       .width('100%')
-      .layoutWeight(1)
-      .justifyContent(FlexAlign.Start)
-      .alignItems(HorizontalAlign.Start)
+        .layoutWeight(1)
+        .justifyContent(FlexAlign.Start)
+        .alignItems(HorizontalAlign.Start)
     }
     .width('100%')
-    .height('100%')
-    .backgroundColor(Color.Black)
-    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+      .height('100%')
+      .backgroundColor(Color.Black)
+      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }

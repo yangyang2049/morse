@@ -1,18 +1,7 @@
 import { MorseCodeData } from '../../models/MorseCode'
 import { PinyinService } from '../../services/PinyinService'
 import { promptAction } from '@kit.ArkUI'
-import { i18nService } from '../../services/I18nService'
-// 本地化字符串接口
-interface LocalizedStrings {
-  translate: string
-  text_to_morse: string
-  morse_to_text: string
-  input_text_placeholder: string
-  input_morse_placeholder: string
-  output_text_placeholder: string
-  output_morse_placeholder: string
-  copied: string
-}
+import { resourceManager, i18n } from '@kit.LocalizationKit'
 
 @Component
 export struct TranslatePage {
@@ -21,24 +10,21 @@ export struct TranslatePage {
   @State morseInput: string = ''
   private readonly boxFontSize: number = 16
   private readonly pillRadius: number = 20
-  // 使用 StorageLink 监听语言变化
-  @StorageLink('currentLanguage') currentLanguage: string = 'zh-CN'
-  // 语言变化计数器，用于强制UI刷新
-  @State langTick: number = 0
-  // 缓存本地化字符串
-  @State strings: LocalizedStrings = {
-    translate: '',
-    text_to_morse: '',
-    morse_to_text: '',
-    input_text_placeholder: '',
-    input_morse_placeholder: '',
-    output_text_placeholder: '',
-    output_morse_placeholder: '',
-    copied: ''
-  }
-  private languageChangeListener: ((lang: string) => void) | null = null
+  @State currentLanguage: string = 'zh-CN'
+  // 资源管理器
+  private resourceMgr: resourceManager.ResourceManager | null = null
 
-  aboutToAppear() {
+  async aboutToAppear(): Promise<void> {
+    // 初始化资源管理器
+    try {
+      this.resourceMgr = getContext(this).resourceManager
+    } catch (error) {
+      console.error('[TranslatePage] Failed to get resource manager:', error)
+    }
+
+    // 获取当前系统语言
+    this.currentLanguage = this.getCurrentLanguage()
+
     // System bar colors are set globally in EntryAbility
     // Preload pinyin dictionary for Chinese → pinyin conversion
     const uiContext = this.getUIContext()
@@ -46,58 +32,41 @@ export struct TranslatePage {
     if (hostContext) {
       PinyinService.load(hostContext)
     }
-
-    // 添加语言变化监听器
-    this.languageChangeListener = (lang: string) => {
-      console.log(`[TranslatePage] Language changed to: ${lang}`)
-      // 更新缓存的本地化字符串
-      this.strings = this.computeStrings()
-      // 触发UI强制刷新
-      this.langTick++
-    }
-    
-    // 启动语言变化监听
-    this.startLanguageWatcher()
-    
-    // 初始化本地化字符串
-    this.strings = this.computeStrings()
   }
 
   aboutToDisappear() {
-    // 清理语言变化监听器
-    if (this.languageChangeListener) {
-      this.languageChangeListener = null
-    }
+    // 清理资源
   }
 
-  // 启动语言变化监听器
-  private startLanguageWatcher(): void {
-    let lastLanguage = this.currentLanguage
-    const checkLanguageChange = () => {
-      if (this.currentLanguage !== lastLanguage) {
-        console.log(`[TranslatePage] Language changed from ${lastLanguage} to ${this.currentLanguage}`)
-        lastLanguage = this.currentLanguage
-        if (this.languageChangeListener) {
-          this.languageChangeListener(this.currentLanguage)
-        }
+  // 获取当前系统语言
+  private getCurrentLanguage(): string {
+    try {
+      const currentLocale = i18n.System.getSystemLocale()
+      // 将系统locale转换为我们的语言代码格式
+      if (currentLocale.startsWith('zh')) {
+        return 'zh-CN'
+      } else if (currentLocale.startsWith('en')) {
+        return 'en-US'
       }
-      // 继续监听
-      setTimeout(checkLanguageChange, 100)
+      return 'zh-CN' // 默认中文
+    } catch (error) {
+      console.error('[TranslatePage] Failed to get current language:', error)
+      return 'zh-CN' // 默认中文
     }
-    checkLanguageChange()
   }
 
-  // 计算本地化字符串
-  private computeStrings(): LocalizedStrings {
-    return {
-      translate: i18nService.t('translate'),
-      text_to_morse: i18nService.t('text_to_morse'),
-      morse_to_text: i18nService.t('morse_to_text'),
-      input_text_placeholder: i18nService.t('input_text_placeholder'),
-      input_morse_placeholder: i18nService.t('input_morse_placeholder'),
-      output_text_placeholder: i18nService.t('output_text_placeholder'),
-      output_morse_placeholder: i18nService.t('output_morse_placeholder'),
-      copied: i18nService.t('copied')
+  // 获取系统资源字符串
+  private async getStringResource(key: string): Promise<string> {
+    try {
+      if (this.resourceMgr) {
+        // 使用资源ID获取字符串
+        const resourceId = await this.resourceMgr.getStringByName(key)
+        return resourceId
+      }
+      return key
+    } catch (error) {
+      console.error(`[TranslatePage] Failed to get string resource for key: ${key}`, error)
+      return key
     }
   }
 
@@ -106,8 +75,9 @@ export struct TranslatePage {
     if (this.isTextToMorse) {
       return MorseCodeData.textToMorse(this.textInput, (char: string) => {
         // 显示中文字符不在拼音表中的提示
+        const isChinese = this.currentLanguage.startsWith('zh')
         promptAction.showToast({
-          message: i18nService.isChinese() ? `"${char}" 不在拼音表中` : `"${char}" not in pinyin table`,
+          message: isChinese ? `"${char}" 不在拼音表中` : `"${char}" not in pinyin table`,
           duration: 2000,
           bottom: '80%'
         })
@@ -152,28 +122,22 @@ export struct TranslatePage {
   @Builder
   private TitleBar() {
     Row() {
-      // 隐藏的langTick触发器
-      Text(this.langTick.toString())
-        .opacity(0)
-        .width(0)
-        .height(0)
-      
-      Text(this.strings.translate || i18nService.t('translate'))
+      Text($r('app.string.translate'))
         .fontSize(20)
         .fontWeight(FontWeight.Bold)
         .fontColor('#FFFFFF')
     }
     .height(56)
-    .width('100%')
-    .justifyContent(FlexAlign.Center)
-    .backgroundColor('#000000')
+      .width('100%')
+      .justifyContent(FlexAlign.Center)
+      .backgroundColor('#000000')
   }
 
   @Builder
   private ModeToggle() {
     Row() {
       // 文本 → 电码
-      Button(this.strings.text_to_morse || i18nService.t('text_to_morse'))
+      Button($r('app.string.text_to_morse'))
         .onClick(() => { this.isTextToMorse = true })
         .backgroundColor(this.isTextToMorse ? '#FFD700' : '#1A1A1A')
         .fontColor(this.isTextToMorse ? '#000000' : '#B0B0B0')
@@ -183,7 +147,7 @@ export struct TranslatePage {
         .border({ width: 1, color: '#333333' })
 
       // 电码 → 文本
-      Button(this.strings.morse_to_text || i18nService.t('morse_to_text'))
+      Button($r('app.string.morse_to_text'))
         .onClick(() => { this.isTextToMorse = false })
         .backgroundColor(!this.isTextToMorse ? '#FFD700' : '#1A1A1A')
         .fontColor(!this.isTextToMorse ? '#000000' : '#B0B0B0')
@@ -192,7 +156,7 @@ export struct TranslatePage {
         .border({ width: 1, color: '#333333' })
     }
     .justifyContent(FlexAlign.Center)
-    .padding(12)
+      .padding(12)
   }
 
   @Builder
@@ -200,7 +164,7 @@ export struct TranslatePage {
     RelativeContainer() {
       // 输入框
       if (this.isTextToMorse) {
-        TextArea({ text: this.textInput, placeholder: this.strings.input_text_placeholder || i18nService.t('input_text_placeholder') })
+        TextArea({ text: this.textInput, placeholder: $r('app.string.input_text_placeholder') })
           .layoutWeight(1)
           .fontSize(this.boxFontSize)
           .fontColor(Color.White)
@@ -211,7 +175,7 @@ export struct TranslatePage {
           .onChange((v: string) => { this.textInput = v })
           .id('text_input_area')
       } else {
-        TextArea({ text: this.morseInput, placeholder: this.strings.input_morse_placeholder || i18nService.t('input_morse_placeholder') })
+        TextArea({ text: this.morseInput, placeholder: $r('app.string.input_morse_placeholder') })
           .layoutWeight(1)
           .fontSize(this.boxFontSize)
           .fontColor(Color.White)
@@ -231,38 +195,40 @@ export struct TranslatePage {
             .height(20)
         }
         .width(36)
-        .height(36)
-        .backgroundColor(Color.Transparent)
-        .borderRadius(18)
-        .alignRules({
-          bottom: { anchor: this.isTextToMorse ? 'text_input_area' : 'morse_input_area', align: VerticalAlign.Bottom },
-          right: { anchor: this.isTextToMorse ? 'text_input_area' : 'morse_input_area', align: HorizontalAlign.End }
-        })
-        .margin({ right: -4, bottom: 8 })
-        .onClick(() => {
-          if (this.isTextToMorse) {
-            this.textInput = ''
-          } else {
-            this.morseInput = ''
-          }
-          // 清除输入后，输出也会自动更新为空
-        })
-        .zIndex(1)
+          .height(36)
+          .backgroundColor(Color.Transparent)
+          .borderRadius(18)
+          .alignRules({
+            bottom: { anchor: this.isTextToMorse ? 'text_input_area' : 'morse_input_area', align: VerticalAlign.Bottom },
+            right: { anchor: this.isTextToMorse ? 'text_input_area' : 'morse_input_area', align: HorizontalAlign.End }
+          })
+          .margin({ right: -4, bottom: 8 })
+          .onClick(() => {
+            if (this.isTextToMorse) {
+              this.textInput = ''
+            } else {
+              this.morseInput = ''
+            }
+            // 清除输入后，输出也会自动更新为空
+          })
+          .zIndex(1)
       }
     }
     .height(this.getBoxHeight())
-    .backgroundColor('#1A1A1A')
-    .borderRadius(12)
-    .margin({ left: 12, right: 12 })
-    .border({ width: 1, color: '#333333' })
+      .backgroundColor('#1A1A1A')
+      .borderRadius(12)
+      .margin({ left: 12, right: 12 })
+      .border({ width: 1, color: '#333333' })
   }
 
   @Builder
   private OutputArea() {
     RelativeContainer() {
       // 输出框
-      TextArea({ text: this.getOutput().length > 0 ? this.getOutput() : 
-        (this.isTextToMorse ? (this.strings.output_text_placeholder || i18nService.t('output_text_placeholder')) : (this.strings.output_morse_placeholder || i18nService.t('output_morse_placeholder'))) })
+      TextArea({
+        text: this.getOutput().length > 0 ? this.getOutput() :
+          (this.isTextToMorse ? $r('app.string.output_text_placeholder') : $r('app.string.output_morse_placeholder'))
+      })
         .layoutWeight(1)
         .fontSize(this.boxFontSize)
         .margin(12)
@@ -280,29 +246,29 @@ export struct TranslatePage {
             .height(20)
         }
         .width(36)
-        .height(36)
-        .backgroundColor(Color.Transparent)
-        .borderRadius(18)
-        .alignRules({
-          bottom: { anchor: 'output_area', align: VerticalAlign.Bottom },
-          right: { anchor: 'output_area', align: HorizontalAlign.End }
-        })
-        .margin({ right: -4, bottom: 8 })
-        .onClick(() => {
-          promptAction.showToast({
-            message: this.strings.copied || i18nService.t('copied'),
-            duration: 1500,
-            bottom: '80%'
+          .height(36)
+          .backgroundColor(Color.Transparent)
+          .borderRadius(18)
+          .alignRules({
+            bottom: { anchor: 'output_area', align: VerticalAlign.Bottom },
+            right: { anchor: 'output_area', align: HorizontalAlign.End }
           })
-        })
-        .zIndex(1)
+          .margin({ right: -4, bottom: 8 })
+          .onClick(() => {
+            promptAction.showToast({
+              message: $r('app.string.copied').toString(),
+              duration: 1500,
+              bottom: '80%'
+            })
+          })
+          .zIndex(1)
       }
     }
     .height(this.getBoxHeight())
-    .backgroundColor('#1A1A1A')
-    .borderRadius(12)
-    .margin({ left: 12, right: 12, bottom: 12 })
-    .border({ width: 1, color: '#333333' })
+      .backgroundColor('#1A1A1A')
+      .borderRadius(12)
+      .margin({ left: 12, right: 12, bottom: 12 })
+      .border({ width: 1, color: '#333333' })
   }
 
   @Builder
@@ -318,11 +284,11 @@ export struct TranslatePage {
             .fontWeight(FontWeight.Bold)
         }
         .height(40)
-        .backgroundColor('#1A1A1A')
-        .borderRadius(0)
-        .border({ width: 1, color: '#333333' })
-        .onClick(() => this.addSlash())
-        .layoutWeight(1)
+          .backgroundColor('#1A1A1A')
+          .borderRadius(0)
+          .border({ width: 1, color: '#333333' })
+          .onClick(() => this.addSlash())
+          .layoutWeight(1)
 
         Blank().width(8)
 
@@ -334,11 +300,11 @@ export struct TranslatePage {
             .fontWeight(FontWeight.Bold)
         }
         .height(40)
-        .backgroundColor('#1A1A1A')
-        .borderRadius(0)
-        .border({ width: 1, color: '#333333' })
-        .onClick(() => this.addSpace())
-        .layoutWeight(1)
+          .backgroundColor('#1A1A1A')
+          .borderRadius(0)
+          .border({ width: 1, color: '#333333' })
+          .onClick(() => this.addSpace())
+          .layoutWeight(1)
 
         Blank().width(8)
 
@@ -350,11 +316,11 @@ export struct TranslatePage {
             .fontWeight(FontWeight.Bold)
         }
         .height(40)
-        .backgroundColor('#1A1A1A')
-        .borderRadius(0)
-        .border({ width: 1, color: '#333333' })
-        .onClick(() => this.deleteLast())
-        .layoutWeight(1)
+          .backgroundColor('#1A1A1A')
+          .borderRadius(0)
+          .border({ width: 1, color: '#333333' })
+          .onClick(() => this.deleteLast())
+          .layoutWeight(1)
       }
       .padding({ left: 20, right: 20 })
 
@@ -367,11 +333,11 @@ export struct TranslatePage {
             .fill('#FFD700')
         }
         .height(80)
-        .backgroundColor('#1A1A1A')
-        .borderRadius(this.pillRadius)
-        .border({ width: 1, color: '#333333' })
-        .onClick(() => this.addDot())
-        .layoutWeight(1)
+          .backgroundColor('#1A1A1A')
+          .borderRadius(this.pillRadius)
+          .border({ width: 1, color: '#333333' })
+          .onClick(() => this.addDot())
+          .layoutWeight(1)
 
         Blank().width(20)
 
@@ -380,11 +346,11 @@ export struct TranslatePage {
             .fill('#FFD700')
         }
         .height(80)
-        .backgroundColor('#1A1A1A')
-        .borderRadius(this.pillRadius)
-        .border({ width: 1, color: '#333333' })
-        .onClick(() => this.addDash())
-        .layoutWeight(1)
+          .backgroundColor('#1A1A1A')
+          .borderRadius(this.pillRadius)
+          .border({ width: 1, color: '#333333' })
+          .onClick(() => this.addDash())
+          .layoutWeight(1)
       }
       .padding({ left: 20, right: 20, bottom: 60 })
     }
@@ -393,14 +359,14 @@ export struct TranslatePage {
   build() {
     Column() {
       this.TitleBar()
-      
+
       // 内容区域 - 响应式宽度，最大480vp
       Column() {
         this.ModeToggle()
         this.InputArea()
         Blank().height(12)
         this.OutputArea()
-        
+
         // 在电码→文本模式下显示底部按钮
         if (!this.isTextToMorse) {
           Blank().layoutWeight(1)
@@ -408,15 +374,15 @@ export struct TranslatePage {
         }
       }
       .width('100%')
-      .constraintSize({ maxWidth: 480 })
-      .padding({ left: 20, right: 20 })
-      .layoutWeight(1)
-      .justifyContent(FlexAlign.Start)
-      .alignItems(HorizontalAlign.Center)
+        .constraintSize({ maxWidth: 480 })
+        .padding({ left: 20, right: 20 })
+        .layoutWeight(1)
+        .justifyContent(FlexAlign.Start)
+        .alignItems(HorizontalAlign.Center)
     }
     .width('100%')
-    .height('100%')
-    .backgroundColor('#000000')
-    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+      .height('100%')
+      .backgroundColor('#000000')
+      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }

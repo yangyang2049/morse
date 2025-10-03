@@ -1,6 +1,5 @@
 import { MorseCode, MorseCodeData } from '../models/MorseCode'
 import { promptAction } from '@kit.ArkUI'
-import { i18nService } from '../services/I18nService'
 import { FavoritesStore } from '../store/FavoritesStore'
 // 使用$r()函数替代I18n
 
@@ -21,7 +20,7 @@ export class PracticeViewModel {
   @Track hasIncorrectAttempt: boolean = false // Track if user made incorrect attempt
   @Track characterChangeId: number = 0 // 用于触发字符变化动画的唯一ID
   @Track isCurrentCharacterInMistakes: boolean = false // Track if current character is in mistakes
-  
+
   private checkTimer: number | null = null
   private hintTimer: number | null = null
   @Track currentCodes: MorseCode[] = []
@@ -31,41 +30,41 @@ export class PracticeViewModel {
   private favoritesStore: FavoritesStore = FavoritesStore.getInstance()
 
   // Derived values (methods for compatibility with existing pages)
-  getProgress(): number { 
+  getProgress(): number {
     // 只有在用户出现错误后才显示进度环
     // 第一次正确：进度 = 0.5 (半圆)
     // 第二次正确：进度 = 1.0 (完整圆)
     if (!this.hasIncorrectAttempt) {
       return 0.0
     }
-    
+
     // 当有错误尝试时，根据正确次数计算进度
     if (this.correctCount === 1) {
       return 0.5 // 第一次正确：填充半圆
     } else if (this.correctCount >= 2) {
       return 1.0 // 第二次正确：填充完整圆
     }
-    
+
     return 0.0
   }
-  getRequiredAttempts(): number { 
-    return this.hasIncorrectAttempt ? 2 : 1 
+  getRequiredAttempts(): number {
+    return this.hasIncorrectAttempt ? 2 : 1
   }
-  getCurrentCodes(): MorseCode[] { 
-    return this.currentCodes 
+  getCurrentCodes(): MorseCode[] {
+    return this.currentCodes
   }
-  getCompletionCount(): Map<number, number> { 
-    return this.completionCount 
+  getCompletionCount(): Map<number, number> {
+    return this.completionCount
   }
-  getHadIncorrectOnCompletion(): Map<number, boolean> { 
-    return this.hadIncorrectOnCompletion 
+  getHadIncorrectOnCompletion(): Map<number, boolean> {
+    return this.hadIncorrectOnCompletion
   }
-  
+
   // 获取当前字符的连续正确次数
   getConsecutiveCorrectCount(): number {
     return this.favoritesStore.getConsecutiveCorrectCount(this.currentCharacter)
   }
-  
+
   // 检查当前字符是否在错题本中
   isInMistakes(): boolean {
     return this.isCurrentCharacterInMistakes
@@ -137,7 +136,7 @@ export class PracticeViewModel {
   private loadCodesFromCharacters(characters: string[]): void {
     const allCodes = [...MorseCodeData.englishAlphabet, ...MorseCodeData.numbers, ...MorseCodeData.punctuation]
     this.currentCodes = allCodes.filter(code => characters.includes(code.character))
-    
+
     // Reset session completion tracking when loading new code set
     this.completionCount = new Map()
     this.hadIncorrectOnCompletion = new Map()
@@ -209,7 +208,7 @@ export class PracticeViewModel {
       if (this.favoritesStore.isMistake(this.currentCharacter)) {
         const consecutiveCount = this.favoritesStore.incrementConsecutiveCorrect(this.currentCharacter)
         console.log(`Character ${this.currentCharacter} consecutive correct: ${consecutiveCount}`)
-        
+
         // 检查是否应该从错题本移除
         if (this.favoritesStore.tryRemoveFromMistakes(this.currentCharacter)) {
           console.log(`Character ${this.currentCharacter} removed from mistakes after 3 consecutive correct answers`)
@@ -217,7 +216,7 @@ export class PracticeViewModel {
           this.isCurrentCharacterInMistakes = false
           // 显示移除提示
           promptAction.showToast({
-            message: `🎉 ${this.currentCharacter} ${i18nService.t('removed_from_mistakes')}`,
+            message: `🎉 ${this.currentCharacter} ${$r('app.string.removed_from_mistakes')}`,
             duration: 2000,
             bottom: '70%'
           })
@@ -248,28 +247,28 @@ export class PracticeViewModel {
     } else {
       // Wrong answer, show system toast at top of screen
       promptAction.showToast({
-        message: i18nService.isChinese() ? '再试一次' : 'Try again',
+        message: '再试一次',
         duration: 1500,
         bottom: '80%'
       })
-      
+
       // Add to mistakes if not already there
       this.favoritesStore.addToMistakes(this.currentCharacter)
-      
+
       // 重置连续正确次数（因为答错了）
       this.favoritesStore.resetConsecutiveCorrect(this.currentCharacter)
-      
+
       // Mark that user made incorrect attempt (if not already marked)
       if (!this.hasIncorrectAttempt) {
         this.hasIncorrectAttempt = true
         this.correctCount = 0 // Only reset counter on first incorrect attempt
       }
-      
+
       // After 500ms, show correct answer
       setTimeout(() => {
         this.showCorrectAnswer = true
       }, 500)
-      
+
       // Auto-hide error state after 2 seconds total (500ms red + 1.5s correct answer)
       setTimeout(() => {
         this.showResult = false

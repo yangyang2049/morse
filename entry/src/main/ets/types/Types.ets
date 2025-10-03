@@ -19,11 +19,13 @@ export interface LessonNavParams {
   title?: string
   testTitle?: string
   lessonCompletedKey?: string
+  currentLanguage?: string
 }
 
 export interface QuizNavParams {
   pageTitle?: string
   lessonCompletedKey?: string
+  currentLanguage?: string
 }
 
 export interface QuestionItem {

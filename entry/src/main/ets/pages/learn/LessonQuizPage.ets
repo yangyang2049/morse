@@ -2,14 +2,24 @@ import { router } from '@kit.ArkUI'
 import { ExplanationTipsCard } from '../../widgets/ExplanationTipsCard'
 import { LearnViewModel } from '../../viewmodel/LearnViewModel'
 import { QuizViewModel } from '../../viewmodel/QuizViewModel'
-import { QuizNavParams } from '../../types/LessonTypes'
-import { i18nService } from '../../services/I18nService'
+import { QuizNavParams } from '../../types/Types'
+import { i18n } from '@kit.LocalizationKit'
 
 @Entry
 @Component
-struct LessonQuizPage {
+  struct LessonQuizPage {
   @State quizViewModel: QuizViewModel = new QuizViewModel()
   @State learnViewModel: LearnViewModel = new LearnViewModel()
+  @StorageLink('currentLanguage') @Watch('onLanguageChange') currentLanguage: string = 'zh-CN'
+
+  onLanguageChange(): void {
+    // 重新初始化测试数据以加载新语言
+    const hostContext = this.getUIContext()?.getHostContext()
+    if (hostContext) {
+      this.quizViewModel.initializeTestData(this.quizViewModel.pageTitle, hostContext, this.currentLanguage)
+    }
+  }
+
 
   aboutToAppear() {
     // Load route params, if any
@@ -18,8 +28,14 @@ struct LessonQuizPage {
       if (params) {
         if (params.pageTitle) this.quizViewModel.pageTitle = params.pageTitle
         if (params.lessonCompletedKey) this.quizViewModel.lessonCompletedKey = params.lessonCompletedKey
+
+        // Update language from params if provided
+        if (params.currentLanguage) {
+          this.currentLanguage = params.currentLanguage as string
+          AppStorage.setOrCreate('currentLanguage', this.currentLanguage)
+        }
       }
-      console.error(`[QUIZ] aboutToAppear params: pageTitle=${this.quizViewModel.pageTitle}, lessonCompletedKey=${this.quizViewModel.lessonCompletedKey}`)
+      console.error(`[QUIZ] aboutToAppear params: pageTitle=${this.quizViewModel.pageTitle}, lessonCompletedKey=${this.quizViewModel.lessonCompletedKey}, language=${this.currentLanguage}`)
     } catch (e) {
       console.warn('No params or failed to read params for LessonQuizPage:', e)
     }
@@ -31,7 +47,7 @@ struct LessonQuizPage {
       this.learnViewModel.init(hostContext2)
     }
     console.error('[QUIZ] aboutToAppear: init ViewModel called')
-    this.quizViewModel.initializeTestData(this.quizViewModel.pageTitle, hostContext2)
+    this.quizViewModel.initializeTestData(this.quizViewModel.pageTitle, hostContext2, this.currentLanguage)
   }
 
   // Removed onPageShow system bar re-application to avoid flicker
@@ -53,10 +69,10 @@ struct LessonQuizPage {
       if (hostContext) {
         const lessonNumber = parseInt(this.quizViewModel.lessonCompletedKey) || 0
 
-        
+
         console.error(`[QUIZ] markLessonCompleted: Completed for lessonNumber=${lessonNumber}`)
       }
-      
+
       this.quizViewModel.progressSaved = true
     } catch (err) {
     }
@@ -92,11 +108,11 @@ struct LessonQuizPage {
           .fillColor(Color.White)
       }
       .width(48)
-      .height(48)
-      .backgroundColor(Color.Transparent)
-      .onClick(() => {
-        router.back()
-      })
+        .height(48)
+        .backgroundColor(Color.Transparent)
+        .onClick(() => {
+          router.back()
+        })
 
       Text(this.quizViewModel.pageTitle)
         .fontSize(20)
@@ -112,8 +128,8 @@ struct LessonQuizPage {
         .margin({ right: 16 })
     }
     .height(56)
-    .padding({ left: 16, right: 16 })
-    .backgroundColor(Color.Transparent)
+      .padding({ left: 16, right: 16 })
+      .backgroundColor(Color.Transparent)
   }
 
   @Builder
@@ -123,7 +139,7 @@ struct LessonQuizPage {
         .fontSize(80)
         .margin({ bottom: 16 })
 
-      Text(i18nService.t('your_score'))
+      Text($r('app.string.your_score'))
         .fontSize(14)
         .fontWeight(FontWeight.Bold)
         .fontColor('#FFFFFFB3')
@@ -136,20 +152,20 @@ struct LessonQuizPage {
         .margin({ bottom: 8 })
 
       Column() {
-        Text(this.quizViewModel.score >= 100 ? i18nService.t('congratulations_passed') : i18nService.t('keep_trying'))
+        Text(this.quizViewModel.score >= 100 ? $r('app.string.congratulations_passed') : $r('app.string.keep_trying'))
           .fontSize(28)
           .fontColor(Color.White)
           .textAlign(TextAlign.Center)
           .margin({ bottom: 8 })
 
         if (this.quizViewModel.score >= 100) {
-          Text(i18nService.t('you_mastered_basics'))
+          Text($r('app.string.you_mastered_basics'))
             .fontSize(16)
             .fontColor(Color.White)
             .textAlign(TextAlign.Center)
             .margin({ bottom: 8 })
         } else {
-          Text(i18nService.t('need_100_to_pass'))
+          Text($r('app.string.need_100_to_pass'))
             .fontSize(16)
             .fontColor('#FFFFFFB3')
             .fontWeight(FontWeight.Medium)
@@ -160,58 +176,58 @@ struct LessonQuizPage {
 
       Row() {
         Button() {
-          Text(i18nService.t('back'))
+          Text($r('app.string.back'))
             .fontSize(16)
             .fontWeight(FontWeight.Bold)
             .fontColor('#1A1A1A')
         }
         .layoutWeight(1)
-        .height(48)
-        .backgroundColor(Color.White)
-        .borderRadius(8)
-        .onClick(() => {
-          this.backAfterPersist()
-        })
+          .height(48)
+          .backgroundColor(Color.White)
+          .borderRadius(8)
+          .onClick(() => {
+            this.backAfterPersist()
+          })
 
         if (this.quizViewModel.score >= 100) {
           Button() {
-            Text(i18nService.t('next_lesson'))
+            Text($r('app.string.next_lesson'))
               .fontSize(16)
               .fontWeight(FontWeight.Bold)
               .fontColor('#1A1A1A')
           }
           .layoutWeight(1)
-          .height(48)
-          .backgroundColor('#FFD700')
-          .borderRadius(8)
-          .margin({ left: 16 })
-          .onClick(() => {
-            this.goToNextLesson()
-          })
+            .height(48)
+            .backgroundColor('#FFD700')
+            .borderRadius(8)
+            .margin({ left: 16 })
+            .onClick(() => {
+              this.goToNextLesson()
+            })
         } else {
           Button() {
-            Text(i18nService.t('retake_test'))
+            Text($r('app.string.retake_test'))
               .fontSize(16)
               .fontWeight(FontWeight.Bold)
               .fontColor('#1A1A1A')
           }
           .layoutWeight(1)
-          .height(48)
-          .backgroundColor('#FF8C00')
-          .borderRadius(8)
-          .margin({ left: 16 })
-          .onClick(() => {
-            this.restartTest()
-          })
+            .height(48)
+            .backgroundColor('#FF8C00')
+            .borderRadius(8)
+            .margin({ left: 16 })
+            .onClick(() => {
+              this.restartTest()
+            })
         }
       }
       .width('100%')
     }
     .constraintSize({ maxWidth: 480 })
-    .width('100%')
-    .height('100%')
-    .justifyContent(FlexAlign.Center)
-    .padding(24)
+      .width('100%')
+      .height('100%')
+      .justifyContent(FlexAlign.Center)
+      .padding(24)
   }
 
   @Builder
@@ -235,16 +251,16 @@ struct LessonQuizPage {
             .width('100%')
         }
         .width('100%')
-        .height(160)
-        .padding({ left: 16, right: 16, top: 24, bottom: 24 })
-        .backgroundColor('#FFF8DC')
-        .borderRadius(16)
-        .margin({ bottom: 32 })
-        .justifyContent(FlexAlign.Center)
-        .animation({
-          duration: 600,
-          curve: Curve.EaseInOut
-        })
+          .height(160)
+          .padding({ left: 16, right: 16, top: 24, bottom: 24 })
+          .backgroundColor('#FFF8DC')
+          .borderRadius(16)
+          .margin({ bottom: 32 })
+          .justifyContent(FlexAlign.Center)
+          .animation({
+            duration: 600,
+            curve: Curve.EaseInOut
+          })
 
         // Answer options
         if (this.quizViewModel.questions[this.quizViewModel.currentQuestionIndex].type === 'true_false') {
@@ -260,12 +276,12 @@ struct LessonQuizPage {
             content: this.quizViewModel.explanations[this.quizViewModel.currentQuestionIndex].content,
             color: '#FF8C00'
           })
-          .margin({ top: 24 })
-          .opacity(this.quizViewModel.showDelayedContent ? 1 : 0)
-          .animation({
-            duration: 600,
-            curve: Curve.EaseInOut
-          })
+            .margin({ top: 24 })
+            .opacity(this.quizViewModel.showDelayedContent ? 1 : 0)
+            .animation({
+              duration: 600,
+              curve: Curve.EaseInOut
+            })
         }
 
         // Next button - 延迟显示，使用透明度动画
@@ -274,11 +290,11 @@ struct LessonQuizPage {
             this.NextButton()
           }
           .margin({ top: 24 })
-          .opacity(this.quizViewModel.showNextButton ? 1 : 0)
-          .animation({
-            duration: 600,
-            curve: Curve.EaseInOut
-          })
+            .opacity(this.quizViewModel.showNextButton ? 1 : 0)
+            .animation({
+              duration: 600,
+              curve: Curve.EaseInOut
+            })
         }
       }
 
@@ -287,12 +303,12 @@ struct LessonQuizPage {
         .layoutWeight(this.quizViewModel.isAnswered ? 0.5 : 1)
     }
     .width('100%')
-    .height('100%')
-    .padding(24)
-    .animation({
-      duration: 600,
-      curve: Curve.EaseInOut
-    })
+      .height('100%')
+      .padding(24)
+      .animation({
+        duration: 600,
+        curve: Curve.EaseInOut
+      })
   }
 
   @Builder
@@ -395,8 +411,8 @@ struct LessonQuizPage {
             .textAlign(TextAlign.Center)
         }
         .width('100%')
-        .justifyContent(FlexAlign.Center)
-        .alignItems(VerticalAlign.Center)
+          .justifyContent(FlexAlign.Center)
+          .alignItems(VerticalAlign.Center)
 
         // 选中圆点悬浮在右侧
         if (isSelected) {
@@ -405,28 +421,28 @@ struct LessonQuizPage {
               .fill(this.quizViewModel.getButtonStyle(isSelected, isCorrect, isWrong, isTrueFalse).textColor)
           }
           .width('100%')
-          .justifyContent(FlexAlign.End)
-          .alignItems(VerticalAlign.Center)
-          .padding({ right: 16 })
+            .justifyContent(FlexAlign.End)
+            .alignItems(VerticalAlign.Center)
+            .padding({ right: 16 })
         }
       }
       .width('100%')
     }
     .width('100%')
-    .height(48)
-    .backgroundColor(this.quizViewModel.getButtonStyle(isSelected, isCorrect, isWrong, isTrueFalse).backgroundColor)
-    .border({ width: 2, color: this.quizViewModel.getButtonStyle(isSelected, isCorrect, isWrong, isTrueFalse).borderColor })
-    .borderRadius(12)
-    .onClick(() => {
-      this.selectAnswer(value)
-    })
+      .height(48)
+      .backgroundColor(this.quizViewModel.getButtonStyle(isSelected, isCorrect, isWrong, isTrueFalse).backgroundColor)
+      .border({ width: 2, color: this.quizViewModel.getButtonStyle(isSelected, isCorrect, isWrong, isTrueFalse).borderColor })
+      .borderRadius(12)
+      .onClick(() => {
+        this.selectAnswer(value)
+      })
   }
 
   @Builder
   NextButton() {
     if (this.quizViewModel.isAnswered) {
       Button() {
-        Text(this.quizViewModel.currentQuestionIndex < this.quizViewModel.questions.length - 1 ? i18nService.t('next_question') : i18nService.t('view_results'))
+        Text(this.quizViewModel.currentQuestionIndex < this.quizViewModel.questions.length - 1 ? $r('app.string.next_question') : $r('app.string.view_results'))
           .fontSize(16)
           .fontWeight(FontWeight.Bold)
           .fontColor('#1A1A1A')
@@ -434,15 +450,15 @@ struct LessonQuizPage {
           .textAlign(TextAlign.Center)
       }
       .width('100%')
-      .height(48)
-      .backgroundColor('#FFD700')
-      .borderRadius(12)
-      .onClick(() => {
-        this.quizViewModel.nextQuestion()
-        if (this.quizViewModel.showResult) {
-          this.showTestResult()
-        }
-      })
+        .height(48)
+        .backgroundColor('#FFD700')
+        .borderRadius(12)
+        .onClick(() => {
+          this.quizViewModel.nextQuestion()
+          if (this.quizViewModel.showResult) {
+            this.showTestResult()
+          }
+        })
     }
   }
 
@@ -459,15 +475,15 @@ struct LessonQuizPage {
         }
       }
       .width('100%')
-      .constraintSize({ maxWidth: 480 })
-      .padding({ left: 20, right: 20 })
-      .layoutWeight(1)
-      .justifyContent(FlexAlign.Center)
-      .alignItems(HorizontalAlign.Center)
+        .constraintSize({ maxWidth: 480 })
+        .padding({ left: 20, right: 20 })
+        .layoutWeight(1)
+        .justifyContent(FlexAlign.Center)
+        .alignItems(HorizontalAlign.Center)
     }
     .width('100%')
-    .height('100%')
-    .backgroundColor(Color.Black)
-    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+      .height('100%')
+      .backgroundColor(Color.Black)
+      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }

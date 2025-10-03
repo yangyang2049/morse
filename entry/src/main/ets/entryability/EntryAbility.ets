@@ -1,10 +1,34 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
-import { i18nService } from '../services/I18nService'
+import { i18n } from '@kit.LocalizationKit';
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
+
+    // Initialize language detection and set to AppStorage
+    this.initializeLanguage();
+  }
+
+  // Initialize language based on system locale
+  private initializeLanguage(): void {
+    try {
+      const currentLocale = i18n.System.getSystemLocale();
+      console.log(`[EntryAbility] System locale: ${currentLocale}`);
+
+      let languageCode = 'zh-CN'; // Default to Chinese
+      if (currentLocale.startsWith('zh')) {
+        languageCode = 'zh-CN';
+      } else if (currentLocale.startsWith('en')) {
+        languageCode = 'en-US';
+      }
+
+      console.log(`[EntryAbility] Setting initial language to: ${languageCode}`);
+      AppStorage.setOrCreate('currentLanguage', languageCode);
+    } catch (error) {
+      console.error('[EntryAbility] Failed to initialize language:', error);
+      AppStorage.setOrCreate('currentLanguage', 'zh-CN'); // Fallback to Chinese
+    }
   }
 
   onDestroy(): void {
@@ -12,6 +36,11 @@ export default class EntryAbility extends UIAbility {
 
   onWindowStageCreate(windowStage: window.WindowStage): void {
     // Main window is created, set main page for this ability
+    windowStage.loadContent('pages/Index', (err) => {
+      if (err.code) {
+        return;
+      }
+    });
 
     // Set status bar and navigation bar style
     windowStage.getMainWindow().then((windowClass) => {
@@ -23,15 +52,6 @@ export default class EntryAbility extends UIAbility {
         navigationBarContentColor: '#FFFFFF'
       });
     });
-
-    // Initialize I18n service before loading UI
-    i18nService.init(this.context).finally(() => {
-      windowStage.loadContent('pages/Index', (err) => {
-        if (err.code) {
-          return;
-        }
-      });
-    })
   }
 
   onWindowStageDestroy(): void {

@@ -3,18 +3,7 @@ import { router, promptAction } from '@kit.ArkUI'
 import { PracticeRecordDialog } from '../../widgets/PracticeRecordDialog'
 import { FavoritesStore } from '../../store/FavoritesStore'
 import { audioService } from '../../services/AudioService'
-import { i18nService } from '../../services/I18nService'
-
-// 本地化字符串接口
-interface LocalizedStrings {
-  easy: string
-  medium: string
-  hard: string
-  favorites: string
-  mistakes: string
-  favorite_removed: string
-  favorite_added: string
-}
+import { resourceManager, i18n } from '@kit.LocalizationKit'
 
 @Entry
 @Component
@@ -26,26 +15,14 @@ export struct PracticePage {
   @State progressVisual: number = 0
   @State favoritesStore: FavoritesStore = FavoritesStore.getInstance()
   @State soundEnabled: boolean = true // 声音开关状态
-  // 使用 StorageLink 监听语言变化
-  @StorageLink('currentLanguage') currentLanguage: string = 'zh-CN'
-  // 语言变化计数器，用于强制UI刷新
-  @State langTick: number = 0
-  // 缓存本地化字符串
-  @State strings: LocalizedStrings = {
-    easy: '',
-    medium: '',
-    hard: '',
-    favorites: '',
-    mistakes: '',
-    favorite_removed: '',
-    favorite_added: ''
-  }
-  private languageChangeListener: ((lang: string) => void) | null = null
+  @State currentLanguage: string = 'zh-CN'
+  // 资源管理器
+  private resourceMgr: resourceManager.ResourceManager | null = null
   private progressTimer: number | null = null
   private targetProgress: number = 0
   private dialogController: CustomDialogController = new CustomDialogController({
     builder: PracticeRecordDialog({
-      vm: $vm
+      vm: this.vm
     }),
     autoCancel: true,
     alignment: DialogAlignment.Center,
@@ -56,28 +33,31 @@ export struct PracticePage {
   private animationTimer: number | null = null
   private readonly pillRadius: number = 20
 
-  aboutToAppear(): void {
-    // 添加语言变化监听器
-    this.languageChangeListener = (lang: string) => {
-      console.log(`[PracticePage] Language changed to: ${lang}`)
-      // 更新缓存的本地化字符串
-      this.strings = this.computeStrings()
-      // 触发UI强制刷新
-      this.langTick++
+  async aboutToAppear(): Promise<void> {
+    // 初始化资源管理器
+    try {
+      this.resourceMgr = getContext(this).resourceManager
+    } catch (error) {
+      console.error('[PracticePage] Failed to get resource manager:', error)
     }
 
-    // 启动语言变化监听
-    this.startLanguageWatcher()
-
-    // 初始化本地化字符串
-    this.strings = this.computeStrings()
+    // 获取当前语言 - 优先从AppStorage获取，否则从系统获取
+    const storedLanguage = AppStorage.get<string>('currentLanguage')
+    if (storedLanguage) {
+      this.currentLanguage = storedLanguage
+      console.log(`[PracticePage] Using stored language: ${this.currentLanguage}`)
+    } else {
+      this.currentLanguage = this.getCurrentLanguage()
+      console.log(`[PracticePage] Using system language: ${this.currentLanguage}`)
+      AppStorage.setOrCreate('currentLanguage', this.currentLanguage)
+    }
 
     // 从路由参数获取难度和字符列表（容错处理，避免无参数时崩溃）
     try {
       const params: Record<string, Object> = (router.getParams?.() as Record<string, Object>) ?? {}
       const diff = (params['difficulty'] as string) || ''
       const characters = (params['characters'] as string[]) || []
-      this.difficulty = diff && typeof diff === 'string' ? diff : this.strings.easy || i18nService.t('easy')
+      this.difficulty = diff && typeof diff === 'string' ? diff : 'easy'
 
       // 如果是收藏或错题本模式，使用指定的字符列表
       if ((this.difficulty === 'favorites' || this.difficulty === 'mistakes') && characters && Array.isArray(characters)) {
@@ -86,7 +66,7 @@ export struct PracticePage {
         this.vm.init(this.difficulty as string)
       }
     } catch {
-      this.difficulty = this.strings.easy || i18nService.t('easy')
+      this.difficulty = 'easy'
       this.vm.init(this.difficulty as string)
     }
     console.error(`[PracticePage] aboutToAppear: difficulty=${this.difficulty}`)
@@ -95,33 +75,64 @@ export struct PracticePage {
     this.startAnimationCheck()
   }
 
+  // 获取当前系统语言
+  private getCurrentLanguage(): string {
+    try {
+      const currentLocale = i18n.System.getSystemLocale()
+      // 将系统locale转换为我们的语言代码格式
+      if (currentLocale.startsWith('zh')) {
+        return 'zh-CN'
+      } else if (currentLocale.startsWith('en')) {
+        return 'en-US'
+      }
+      return 'zh-CN' // 默认中文
+    } catch (error) {
+      console.error('[PracticePage] Failed to get current language:', error)
+      return 'zh-CN' // 默认中文
+    }
+  }
+
+  // 获取系统资源字符串
+  private async getStringResource(key: string): Promise<string> {
+    try {
+      if (this.resourceMgr) {
+        // 使用资源ID获取字符串
+        const resourceId = await this.resourceMgr.getStringByName(key)
+        return resourceId
+      }
+      return key
+    } catch (error) {
+      console.error(`[PracticePage] Failed to get string resource for key: ${key}`, error)
+      return key
+    }
+  }
+
   // 获取格式化的标题显示
-  private getFormattedTitle(): string {
-    // 引用langTick确保标题会更新
+  private getFormattedTitle(): Resource | string {
     if (typeof this.difficulty === 'string') {
       // 处理特殊模式
       if (this.difficulty === 'favorites') {
-        return this.strings.favorites || i18nService.t('favorites')
+        return $r('app.string.favorites')
       }
       if (this.difficulty === 'mistakes') {
-        return this.strings.mistakes || i18nService.t('mistakes')
+        return $r('app.string.mistakes')
       }
 
-      // 处理难度级别 - 使用缓存的字符串
+      // 处理难度级别
       if (this.difficulty === 'easy' || this.difficulty === '简单') {
-        return this.strings.easy || i18nService.t('easy')
+        return $r('app.string.easy')
       }
       if (this.difficulty === 'medium' || this.difficulty === '中等') {
-        return this.strings.medium || i18nService.t('medium')
+        return $r('app.string.medium')
       }
       if (this.difficulty === 'hard' || this.difficulty === '困难') {
-        return this.strings.hard || i18nService.t('hard')
+        return $r('app.string.hard')
       }
 
       // 如果是已经本地化的字符串，直接返回
       return this.difficulty
     }
-    return String(this.difficulty)
+    return this.difficulty
   }
 
   aboutToDisappear(): void {
@@ -133,41 +144,8 @@ export struct PracticePage {
       clearInterval(this.progressTimer)
       this.progressTimer = null
     }
-    // 清理语言变化监听器
-    if (this.languageChangeListener) {
-      this.languageChangeListener = null
-    }
   }
 
-  // 启动语言变化监听器
-  private startLanguageWatcher(): void {
-    let lastLanguage = this.currentLanguage
-    const checkLanguageChange = () => {
-      if (this.currentLanguage !== lastLanguage) {
-        console.log(`[PracticePage] Language changed from ${lastLanguage} to ${this.currentLanguage}`)
-        lastLanguage = this.currentLanguage
-        if (this.languageChangeListener) {
-          this.languageChangeListener(this.currentLanguage)
-        }
-      }
-      // 继续监听
-      setTimeout(checkLanguageChange, 100)
-    }
-    checkLanguageChange()
-  }
-
-  // 计算本地化字符串
-  private computeStrings(): LocalizedStrings {
-    return {
-      easy: i18nService.t('easy'),
-      medium: i18nService.t('medium'),
-      hard: i18nService.t('hard'),
-      favorites: i18nService.t('favorites'),
-      mistakes: i18nService.t('mistakes'),
-      favorite_removed: i18nService.t('favorite_removed'),
-      favorite_added: i18nService.t('favorite_added')
-    }
-  }
 
   // Removed onPageShow system bar re-application to avoid flicker
 
@@ -242,6 +220,15 @@ export struct PracticePage {
       }
       .backgroundColor(Color.Transparent)
         .onClick(() => {
+          // 每次打开前重新创建对话框控制器，确保语言状态是最新的
+          this.dialogController = new CustomDialogController({
+            builder: PracticeRecordDialog({
+              vm: this.vm
+            }),
+            autoCancel: true,
+            alignment: DialogAlignment.Center,
+            customStyle: false
+          })
           this.dialogController.open()
         })
     }
@@ -416,7 +403,7 @@ export struct PracticePage {
 
         // 显示toast提示
         promptAction.showToast({
-          message: wasFavorite ? (this.strings.favorite_removed || i18nService.t('favorite_removed')) : (this.strings.favorite_added || i18nService.t('favorite_added')),
+          message: wasFavorite ? $r('app.string.favorite_removed').toString() : $r('app.string.favorite_added').toString(),
           duration: 1500,
           bottom: '80%'
         })

@@ -221,7 +221,7 @@ export class LessonData {
     const punctuation = ['.', ',', '?', '!', ':', ';', '=', '+', '-', '_', '"', "'", '(', ')', '/', '@']
     const groups: string[][] = []
     const itemsPerGroup = Math.ceil(punctuation.length / 3)
-    
+
     for (let i = 0; i < 3; i++) {
       const start = i * itemsPerGroup
       const end = Math.min((i + 1) * itemsPerGroup, punctuation.length)
@@ -229,14 +229,14 @@ export class LessonData {
         groups.push(punctuation.slice(start, end))
       }
     }
-    
+
     return groups
   }
 
   // 获取单词分组
   static getWordGroups(): string[][] {
     const words = ['THE', 'AND', 'FOR', 'ARE', 'BUT', 'NOT', 'YOU', 'ALL', 'CAN', 'HAD', 'HER', 'WAS', 'ONE', 'OUR', 'OUT', 'THAT', 'WITH', 'HAVE', 'THIS', 'WILL', 'YOUR', 'FROM', 'THEY', 'KNOW', 'WANT', 'BEEN', 'GOOD', 'MUCH', 'SOME', 'TIME', 'WOULD', 'THERE', 'COULD', 'OTHER', 'AFTER', 'FIRST', 'NEVER', 'THESE', 'THINK', 'WHERE', 'BEING', 'EVERY', 'GREAT', 'MIGHT', 'SHALL']
-    
+
     return [
       words.filter(word => word.length === 3), // 3字母单词
       words.filter(word => word.length === 4), // 4字母单词
@@ -251,7 +251,7 @@ export class LessonData {
     return currentLang.startsWith('en') ? LessonData.introSectionsEn : LessonData.introSections
   }
 
-  // 根据语言获取中文摩尔斯电码课程数据（英文版本不包含）
+  // 根据语言获取中文摩尔斯电码课程数据（英文环境下不显示）
   static getChineseSections(): Map<string, string[]> | null {
     // 使用 AppStorage 获取当前语言
     const currentLang: string = AppStorage.get<string>('currentLanguage') || 'zh-CN'
