@@ -202,7 +202,7 @@ export struct LetterLessonPage {
   @Builder
   private MorseDisplay() {
     Column() {
-      if (this.viewModel.showMorseCode) {
+      if (this.viewModel.shouldShowHint(this.viewModel.currentIndex)) {
         // 用图形化方式显示摩尔斯码
         // 用图形化方式显示摩尔斯码
         Row() {

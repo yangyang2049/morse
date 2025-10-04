@@ -141,10 +141,6 @@
       "value": "Review"
     },
     {
-      "name": "lesson_completed",
-      "value": "Completed"
-    },
-    {
       "name": "next_lesson",
       "value": "Next Lesson"
     },
