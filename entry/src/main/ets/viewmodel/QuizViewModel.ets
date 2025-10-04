@@ -1,5 +1,6 @@
 import { QuestionItem, ExplanationItem, ButtonStyle } from '../types/Types'
 import { progressStore } from '../store/ProgressStoreSingleton'
+import { LessonConfig } from '../data/LessonConfig'
 import Context from '@ohos.app.ability.common'
 
 @Observed
@@ -315,18 +316,23 @@ export class QuizViewModel {
     console.error(`[QuizViewModel] showTestResult: score=${this.score} willPersist=${willSave}`)
   }
 
-  // 立即标记课程完成 - 简化逻辑
+  // 立即标记课程完成 - 使用LessonConfig获取正确的课程编号
   private async markLessonCompletedImmediately(): Promise<void> {
     if (this.lessonCompletedKey && !this.isLessonCompleted && this.context) {
       try {
-        const lessonNumber = parseInt(this.lessonCompletedKey) || 0
-        console.error(`[QuizViewModel] markLessonCompletedImmediately: Starting for lessonNumber=${lessonNumber}`)
+        // 使用LessonConfig获取正确的课程编号
+        const lessonNumber = LessonConfig.getLessonNumber(this.lessonCompletedKey)
+        console.error(`[QuizViewModel] markLessonCompletedImmediately: Starting for lessonId=${this.lessonCompletedKey}, lessonNumber=${lessonNumber}`)
 
-        // 使用存储的context立即标记课程完成 - 这会自动发送事件
-        await progressStore.saveLessonCompleted(lessonNumber, this.context)
-        this.isLessonCompleted = true
-        this.progressSaved = true
-        console.error(`[QuizViewModel] markLessonCompletedImmediately: Completed for lessonNumber=${lessonNumber}`)
+        if (lessonNumber > 0) {
+          // 使用存储的context立即标记课程完成 - 这会自动发送事件
+          await progressStore.saveLessonCompleted(lessonNumber, this.context)
+          this.isLessonCompleted = true
+          this.progressSaved = true
+          console.error(`[QuizViewModel] markLessonCompletedImmediately: Completed for lessonNumber=${lessonNumber}`)
+        } else {
+          console.error(`[QuizViewModel] markLessonCompletedImmediately: Invalid lessonId=${this.lessonCompletedKey}`)
+        }
 
       } catch (error) {
         console.error(`[QuizViewModel] markLessonCompletedImmediately: Error: ${error}`)

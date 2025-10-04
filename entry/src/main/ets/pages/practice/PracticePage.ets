@@ -4,6 +4,7 @@ import { PracticeRecordDialog } from '../../widgets/PracticeRecordDialog'
 import { FavoritesStore } from '../../store/FavoritesStore'
 import { audioService } from '../../services/AudioService'
 import { resourceManager, i18n } from '@kit.LocalizationKit'
+import preferences from '@ohos.data.preferences'
 
 @Entry
 @Component
@@ -16,8 +17,16 @@ export struct PracticePage {
   @State favoritesStore: FavoritesStore = FavoritesStore.getInstance()
   @State soundEnabled: boolean = true // 声音开关状态
   @State currentLanguage: string = 'zh-CN'
+  @State useSingleButton: boolean = false // 是否使用单按钮模式
+  @State showButtonModeDialog: boolean = false // 是否显示按钮模式选择对话框
+  @State selectedButtonMode: boolean = false // 用户在对话框中选择的模式（不自动高亮）
+  @State showSettingsDialog: boolean = false // 是否显示设置对话框
+  @State sliderValue: number = 300 // 滑块值状态
+  @State settingsDialogScale: number = 0.8 // 设置对话框缩放动画
+  @State settingsDialogOpacity: number = 0 // 设置对话框透明度动画
   // 资源管理器
   private resourceMgr: resourceManager.ResourceManager | null = null
+  private preferencesStore: preferences.Preferences | null = null
   private progressTimer: number | null = null
   private targetProgress: number = 0
   private dialogController: CustomDialogController = new CustomDialogController({
@@ -32,6 +41,10 @@ export struct PracticePage {
   private lastCharacterChangeId: number = -1
   private animationTimer: number | null = null
   private readonly pillRadius: number = 20
+  // 单按钮模式相关
+  private pressStartTime: number = 0
+  private longPressThreshold: number = 300 // 长按阈值：300ms
+  private longPressTimer: number | null = null
 
   async aboutToAppear(): Promise<void> {
     // 初始化资源管理器
@@ -40,6 +53,9 @@ export struct PracticePage {
     } catch (error) {
       console.error('[PracticePage] Failed to get resource manager:', error)
     }
+
+    // 初始化偏好设置存储
+    await this.initPreferences()
 
     // 获取当前语言 - 优先从AppStorage获取，否则从系统获取
     const storedLanguage = AppStorage.get<string>('currentLanguage')
@@ -51,6 +67,15 @@ export struct PracticePage {
       console.log(`[PracticePage] Using system language: ${this.currentLanguage}`)
       AppStorage.setOrCreate('currentLanguage', this.currentLanguage)
     }
+
+    // 加载按钮模式偏好设置
+    await this.loadButtonModePreference()
+
+    // 加载长按时间偏好设置
+    await this.loadLongPressThresholdPreference()
+
+    // 根据按钮模式设置自动检查延迟
+    this.vm.setAutoCheckDelay(this.useSingleButton ? 1500 : 600) // 单按钮模式1.5秒，双按钮模式600ms
 
     // 从路由参数获取难度和字符列表（容错处理，避免无参数时崩溃）
     try {
@@ -107,6 +132,125 @@ export struct PracticePage {
     }
   }
 
+  // 初始化偏好设置存储
+  private async initPreferences(): Promise<void> {
+    try {
+      const context = getContext(this)
+      this.preferencesStore = await preferences.getPreferences(context, 'practice_preferences')
+      console.log('[PracticePage] Preferences store initialized')
+    } catch (error) {
+      console.error('[PracticePage] Failed to initialize preferences:', error)
+    }
+  }
+
+  // 加载按钮模式偏好设置
+  private async loadButtonModePreference(): Promise<void> {
+    try {
+      if (this.preferencesStore) {
+        const hasSetPreference = await this.preferencesStore.get('has_set_button_mode', false) as boolean
+        if (hasSetPreference) {
+          this.useSingleButton = await this.preferencesStore.get('use_single_button', false) as boolean
+          console.log(`[PracticePage] Loaded button mode preference: ${this.useSingleButton}`)
+        } else {
+          // 首次使用，显示选择对话框，不预选任何选项
+          this.selectedButtonMode = false
+          this.showButtonModeDialog = true
+          console.log('[PracticePage] First time user, showing button mode dialog')
+        }
+      }
+    } catch (error) {
+      console.error('[PracticePage] Failed to load button mode preference:', error)
+      this.selectedButtonMode = false
+      this.showButtonModeDialog = true
+    }
+  }
+
+  // 保存按钮模式偏好设置
+  private async saveButtonModePreference(useSingle: boolean): Promise<void> {
+    try {
+      if (this.preferencesStore) {
+        await this.preferencesStore.put('use_single_button', useSingle)
+        await this.preferencesStore.put('has_set_button_mode', true)
+        await this.preferencesStore.flush()
+        this.useSingleButton = useSingle
+        console.log(`[PracticePage] Saved button mode preference: ${useSingle}`)
+
+        // 更新自动检查延迟
+        this.vm.setAutoCheckDelay(this.useSingleButton ? 1500 : 600)
+
+        // 重新启动动画检查定时器以使用新的间隔
+        if (this.animationTimer) {
+          clearInterval(this.animationTimer)
+        }
+        this.startAnimationCheck()
+      }
+    } catch (error) {
+      console.error('[PracticePage] Failed to save button mode preference:', error)
+    }
+  }
+
+  // 加载长按时间偏好设置
+  private async loadLongPressThresholdPreference(): Promise<void> {
+    try {
+      if (this.preferencesStore) {
+        this.longPressThreshold = await this.preferencesStore.get('long_press_threshold', 300) as number
+        console.log(`[PracticePage] Loaded long press threshold: ${this.longPressThreshold}`)
+      }
+    } catch (error) {
+      console.error('[PracticePage] Failed to load long press threshold preference:', error)
+    }
+  }
+
+  // 保存长按时间偏好设置
+  private async saveLongPressThresholdPreference(threshold: number): Promise<void> {
+    try {
+      if (this.preferencesStore) {
+        await this.preferencesStore.put('long_press_threshold', threshold)
+        await this.preferencesStore.flush()
+        this.longPressThreshold = threshold
+        console.log(`[PracticePage] Saved long press threshold: ${threshold}`)
+      }
+    } catch (error) {
+      console.error('[PracticePage] Failed to save long press threshold preference:', error)
+    }
+  }
+
+  // 单按钮模式：处理按下
+  private handleSingleButtonPress(): void {
+    this.pressStartTime = Date.now()
+
+    // 设置长按定时器
+    this.longPressTimer = setTimeout(() => {
+      this.handleLongPress()
+    }, this.longPressThreshold)
+  }
+
+  // 单按钮模式：处理释放
+  private async handleSingleButtonRelease(): Promise<void> {
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer)
+      this.longPressTimer = null
+    }
+
+    const pressDuration = Date.now() - this.pressStartTime
+    if (pressDuration < this.longPressThreshold) {
+      // 短按：添加点
+      this.vm.addDot()
+      if (this.soundEnabled) {
+        await audioService.playDit()
+      }
+    }
+  }
+
+  // 单按钮模式：处理长按
+  private async handleLongPress(): Promise<void> {
+    // 长按：添加划
+    this.vm.addDash()
+    if (this.soundEnabled) {
+      await audioService.playDah()
+    }
+  }
+
   // 获取格式化的标题显示
   private getFormattedTitle(): Resource | string {
     if (typeof this.difficulty === 'string') {
@@ -151,6 +295,10 @@ export struct PracticePage {
 
   // 开始检查字符变化的定时器
   private startAnimationCheck(): void {
+    // 根据按钮模式设置不同的检查间隔
+    const checkInterval = this.useSingleButton ? 200 : 100 // 单按钮模式200ms，双按钮模式100ms
+    console.log(`[PracticePage] Animation check interval set to: ${checkInterval}ms (single button: ${this.useSingleButton})`)
+
     this.animationTimer = setInterval(() => {
       const currentChangeId = this.vm.getCharacterChangeId()
       if (currentChangeId !== this.lastCharacterChangeId) {
@@ -158,7 +306,7 @@ export struct PracticePage {
 
         // 先隐藏当前字母（保持旧字符内容）
         animateTo({
-          duration: 100,
+          duration: 50,
           curve: Curve.EaseIn
         }, () => {
           this.circleScale = 0.0
@@ -170,24 +318,22 @@ export struct PracticePage {
           // 重置可视化进度
           this.setProgressInstant(0)
 
-          // 再等50ms后开始显示新字母的动画
-          setTimeout(() => {
-            animateTo({
-              duration: 200,
-              curve: Curve.EaseInOut
-            }, () => {
-              this.circleScale = 1.0
-            })
-          }, 50)
-        }, 150) // 等待隐藏动画完成
+          // 立即开始显示新字母的动画
+          animateTo({
+            duration: 100,
+            curve: Curve.EaseInOut
+          }, () => {
+            this.circleScale = 1.0
+          })
+        }, 60) // 等待隐藏动画完成
       }
       // 检查进度变化，平滑推进可视化进度
       const p = Math.max(0, Math.min(this.vm.getProgress(), 1))
       if (Math.abs(p - this.targetProgress) > 1e-6) {
         this.targetProgress = p
-        this.animateProgressTo(this.targetProgress, 320)
+        this.animateProgressTo(this.targetProgress, 150)
       }
-    }, 100) // 每100ms检查一次
+    }, checkInterval)
   }
 
 
@@ -218,7 +364,9 @@ export struct PracticePage {
       Button() {
         Image($rawfile('ic_records.svg')).width(22).height(22).fillColor(Color.White)
       }
-      .backgroundColor(Color.Transparent)
+      .width(48)
+        .height(48)
+        .backgroundColor(Color.Transparent)
         .onClick(() => {
           // 每次打开前重新创建对话框控制器，确保语言状态是最新的
           this.dialogController = new CustomDialogController({
@@ -336,7 +484,7 @@ export struct PracticePage {
   }
 
   // 自定义补间动画至目标进度
-  private animateProgressTo(target: number, duration: number = 500) {
+  private animateProgressTo(target: number, duration: number = 200) {
     if (this.progressTimer) {
       clearInterval(this.progressTimer)
       this.progressTimer = null
@@ -394,7 +542,7 @@ export struct PracticePage {
         Image($rawfile('ic_star.svg')).width(24).height(24)
           .fillColor(this.vm.getIsFavorite() ? '#FFD700' : Color.White)
       }
-        .onClick(() => {
+        .onClick(async () => {
         const currentChar = this.vm.getCurrentCharacter()
         const wasFavorite = this.favoritesStore.isFavorite(currentChar)
         this.favoritesStore.toggleFavorite(currentChar)
@@ -402,8 +550,9 @@ export struct PracticePage {
         this.vm.toggleFavorite()
 
         // 显示toast提示
+        const message = wasFavorite ? await this.getStringResource('favorite_removed') : await this.getStringResource('favorite_added')
         promptAction.showToast({
-          message: wasFavorite ? $r('app.string.favorite_removed').toString() : $r('app.string.favorite_added').toString(),
+          message: message,
           duration: 1500,
           bottom: '80%'
         })
@@ -416,7 +565,7 @@ export struct PracticePage {
       // 声音开关按钮
       Button() {
         Image($rawfile(this.soundEnabled ? 'ic_sound_on.svg' : 'ic_sound_off.svg'))
-          .width(24).height(24).fillColor(Color.White)
+          .width(24).height(24)
       }
         .onClick(() => {
         this.soundEnabled = !this.soundEnabled
@@ -440,44 +589,329 @@ export struct PracticePage {
 
   @Builder
   private BottomKeys() {
-    Row() {
-      // 点 (短音)
-      Button() {
-        Circle({ width: 20, height: 20 })
-          .fill('#FFD700')
-      }
-      .height(80)
-        .backgroundColor('#1A1A1A')
-        .borderRadius(this.pillRadius)
-        .border({ width: 1, color: '#333333' })
-        .onClick(async () => {
-          this.vm.addDot()
-          if (this.soundEnabled) {
-            await audioService.playDit()
-          }
-        })
-        .layoutWeight(1)
+    if (this.useSingleButton) {
+      // 单按钮模式
+      Row() {
+        // 左侧占位框
+        Column()
+          .width(48)
+          .height(48)
 
-      Blank().width(20)
+        // 主按钮
+        Button() {
+          Text('·')
+            .fontSize(24)
+            .fontColor(Color.Black)
+            .fontWeight(FontWeight.Bold)
+        }
+        .height(120)
+          .width(120)
+          .backgroundColor('#FFD700')
+          .borderRadius(0)
+          .onTouch((event) => {
+            if (event.type === TouchType.Down) {
+              this.handleSingleButtonPress()
+            } else if (event.type === TouchType.Up) {
+              this.handleSingleButtonRelease()
+            }
+          })
 
-      // 划 (长音)
-      Button() {
-        Rect({ width: 40, height: 12 })
-          .fill('#FFD700')
+        // 右侧设置按钮
+        Button() {
+          Image($rawfile('ic_settings.svg'))
+            .width(24)
+            .height(24)
+        }
+        .width(48)
+          .height(48)
+          .backgroundColor(Color.Transparent)
+          .onClick(() => {
+            this.sliderValue = this.longPressThreshold
+            // 重置动画状态
+            this.settingsDialogScale = 0.8
+            this.settingsDialogOpacity = 0
+            this.showSettingsDialog = true
+            // 开始出现动画
+            setTimeout(() => {
+              animateTo({
+                duration: 200,
+                curve: Curve.EaseOut
+              }, () => {
+                this.settingsDialogScale = 1.0
+                this.settingsDialogOpacity = 1.0
+              })
+            }, 10)
+          })
       }
-      .height(80)
-        .backgroundColor('#1A1A1A')
-        .borderRadius(this.pillRadius)
-        .border({ width: 1, color: '#333333' })
-        .onClick(async () => {
-          this.vm.addDash()
-          if (this.soundEnabled) {
-            await audioService.playDah()
-          }
-        })
-        .layoutWeight(1)
+      .width('100%')
+        .justifyContent(FlexAlign.SpaceBetween)
+        .alignItems(VerticalAlign.Center)
+        .padding({ left: 20, right: 20, bottom: 12 })
+    } else {
+      // 双按钮模式
+      Row() {
+        // 点 (短音)
+        Button() {
+          Circle({ width: 20, height: 20 })
+            .fill('#FFD700')
+        }
+        .height(80)
+          .backgroundColor('#1A1A1A')
+          .borderRadius(this.pillRadius)
+          .border({ width: 1, color: '#333333' })
+          .onClick(async () => {
+            this.vm.addDot()
+            if (this.soundEnabled) {
+              await audioService.playDit()
+            }
+          })
+          .layoutWeight(1)
+
+        Blank().width(20)
+
+        // 划 (长音)
+        Button() {
+          Rect({ width: 40, height: 12 })
+            .fill('#FFD700')
+        }
+        .height(80)
+          .backgroundColor('#1A1A1A')
+          .borderRadius(this.pillRadius)
+          .border({ width: 1, color: '#333333' })
+          .onClick(async () => {
+            this.vm.addDash()
+            if (this.soundEnabled) {
+              await audioService.playDah()
+            }
+          })
+          .layoutWeight(1)
+      }
+      .padding({ left: 20, right: 20, bottom: 12 })
     }
-    .padding({ left: 20, right: 20, bottom: 12 })
+  }
+
+  @Builder
+  private ButtonModeDialog() {
+    Column() {
+      Column() {
+        Text($r('app.string.select_practice_input_mode'))
+          .fontSize(18)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#FFFFFF')
+          .margin({ bottom: 4 })
+
+        Text(this.currentLanguage.startsWith('zh') ? '可在设置中更改此选项' : 'You can change this in settings')
+          .fontSize(12)
+          .fontColor('#999999')
+      }
+      .width('100%')
+        .alignItems(HorizontalAlign.Start)
+        .margin({ bottom: 20 })
+
+      // 双按钮模式选项
+      Row() {
+        Column() {
+          Text($r('app.string.dual_button_mode'))
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#FFFFFF')
+            .margin({ bottom: 8 })
+          Text($r('app.string.dual_button_mode_desc'))
+            .fontSize(12)
+            .fontColor('#999999')
+        }
+        .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
+
+        if (!this.selectedButtonMode) {
+          Circle()
+            .width(16)
+            .height(16)
+            .fill(Color.Transparent)
+            .stroke('#FFD700')
+            .strokeWidth(2)
+        }
+      }
+      .width('100%')
+        .padding(16)
+        .backgroundColor('#111111')
+        .borderRadius(8)
+        .margin({ bottom: 8 })
+        .border({
+          width: !this.selectedButtonMode ? 1 : 0.5,
+          color: !this.selectedButtonMode ? '#FFD700' : '#222222',
+          radius: 8
+        })
+        .onClick(() => {
+          this.selectedButtonMode = false
+        })
+
+      // 单按钮模式选项
+      Row() {
+        Column() {
+          Text($r('app.string.single_button_mode'))
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#FFFFFF')
+            .margin({ bottom: 8 })
+          Text($r('app.string.single_button_mode_desc'))
+            .fontSize(12)
+            .fontColor('#999999')
+        }
+        .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
+
+        if (this.selectedButtonMode) {
+          Circle()
+            .width(16)
+            .height(16)
+            .fill(Color.Transparent)
+            .stroke('#FFD700')
+            .strokeWidth(2)
+        }
+      }
+      .width('100%')
+        .padding(16)
+        .backgroundColor('#111111')
+        .borderRadius(8)
+        .border({
+          width: this.selectedButtonMode ? 1 : 0.5,
+          color: this.selectedButtonMode ? '#FFD700' : '#222222',
+          radius: 8
+        })
+        .onClick(() => {
+          this.selectedButtonMode = true
+        })
+
+      // 确认按钮
+      Button($r('app.string.confirm'))
+        .width('100%')
+        .height(48)
+        .backgroundColor('#FFD700')
+        .borderRadius(8)
+        .fontColor(Color.Black)
+        .fontWeight(FontWeight.Bold)
+        .margin({ top: 20 })
+        .onClick(() => {
+          this.saveButtonModePreference(this.selectedButtonMode)
+          this.showButtonModeDialog = false
+        })
+    }
+    .padding(20)
+      .backgroundColor('#2A2A2A')
+      .borderRadius(12)
+      .width('90%')
+      .constraintSize({ maxWidth: 400 })
+  }
+
+  @Builder
+  private SettingsDialog() {
+    Column() {
+      Row() {
+        Text($r('app.string.settings'))
+          .fontSize(18)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#FFFFFF')
+        Blank()
+        Button() {
+          Image($rawfile('ic_close.svg'))
+            .width(20)
+            .height(20)
+            .fillColor(Color.White)
+        }
+        .width(32)
+          .height(32)
+          .backgroundColor('rgba(128, 128, 128, 0.2)')
+          .borderRadius(16)
+          .onClick(() => {
+            // 开始退出动画
+            animateTo({
+              duration: 150,
+              curve: Curve.EaseIn
+            }, () => {
+              this.settingsDialogScale = 0.8
+              this.settingsDialogOpacity = 0
+            })
+            // 动画完成后关闭对话框
+            setTimeout(() => {
+              this.showSettingsDialog = false
+            }, 150)
+          })
+      }
+      .width('100%')
+        .margin({ bottom: 20 })
+
+      // 长按时间设置
+      Row() {
+        Column() {
+          Text(this.currentLanguage.startsWith('zh') ? '长按时间' : 'Long Press Duration')
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#FFFFFF')
+            .margin({ bottom: 8 })
+          Text(`${this.sliderValue}ms`)
+            .fontSize(14)
+            .fontColor('#FFD700')
+        }
+        .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
+      }
+      .width('100%')
+        .padding(16)
+        .backgroundColor('#111111')
+        .borderRadius(8)
+        .margin({ bottom: 8 })
+
+      // 滑块控制
+      Slider({
+        value: this.sliderValue,
+        min: 100,
+        max: 600,
+        step: 25,
+        style: SliderStyle.OutSet
+      })
+        .blockColor('#FFD700')
+        .trackColor('#333333')
+        .selectedColor('#FFD700')
+        .trackThickness(6)
+        .blockSize({ width: 20, height: 20 })
+        .onChange((value: number) => {
+          this.sliderValue = value
+          // 实时更新阈值，但不立即保存
+          this.longPressThreshold = value
+        })
+        .margin({ bottom: 20 })
+
+      // 确定按钮
+      Button($r('app.string.confirm'))
+        .width('100%')
+        .height(48)
+        .backgroundColor('#FFD700')
+        .borderRadius(8)
+        .fontColor(Color.Black)
+        .fontWeight(FontWeight.Bold)
+        .onClick(async () => {
+          // 保存长按时间设置
+          await this.saveLongPressThresholdPreference(this.sliderValue)
+          // 开始退出动画
+          animateTo({
+            duration: 150,
+            curve: Curve.EaseIn
+          }, () => {
+            this.settingsDialogScale = 0.8
+            this.settingsDialogOpacity = 0
+          })
+          // 动画完成后关闭对话框
+          setTimeout(() => {
+            this.showSettingsDialog = false
+          }, 150)
+        })
+    }
+    .padding(20)
+      .backgroundColor('#2A2A2A')
+      .borderRadius(12)
+      .width('90%')
+      .constraintSize({ maxWidth: 400 })
   }
 
 
@@ -526,6 +960,55 @@ export struct PracticePage {
         .height('100%')
         .backgroundColor(Color.Black)
         .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+
+      // 按钮模式选择对话框
+      if (this.showButtonModeDialog) {
+        Stack() {
+          // 半透明背景
+          Column()
+            .width('100%')
+            .height('100%')
+            .backgroundColor('rgba(0, 0, 0, 0.5)')
+            .onClick(() => {
+              // 不允许点击背景关闭，用户必须选择
+            })
+
+          // 对话框内容 - 使用Column居中
+          Column() {
+            this.ButtonModeDialog()
+          }
+          .width('100%')
+            .height('100%')
+            .justifyContent(FlexAlign.Center)
+            .alignItems(HorizontalAlign.Center)
+        }
+        .width('100%')
+          .height('100%')
+      }
+
+      // 设置对话框
+      if (this.showSettingsDialog) {
+        Stack() {
+          // 半透明背景
+          Column()
+            .width('100%')
+            .height('100%')
+            .backgroundColor('rgba(0, 0, 0, 0.5)')
+
+          // 对话框内容 - 使用Column居中
+          Column() {
+            this.SettingsDialog()
+          }
+          .width('100%')
+            .height('100%')
+            .justifyContent(FlexAlign.Center)
+            .alignItems(HorizontalAlign.Center)
+            .scale({ x: this.settingsDialogScale, y: this.settingsDialogScale })
+            .opacity(this.settingsDialogOpacity)
+        }
+        .width('100%')
+          .height('100%')
+      }
     }
   }
 }

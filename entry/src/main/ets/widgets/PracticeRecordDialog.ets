@@ -9,8 +9,8 @@ export struct PracticeRecordDialog {
 
   // 获取已练习数量
   private getPracticedCount(): number {
-    const completionCount = this.vm.getCompletionCount()
-    return Array.from(completionCount.values()).filter(count => count > 0).length
+    const completionCount: Map<number, number> = this.vm.getCompletionCount()
+    return Array.from(completionCount.values()).filter((count: number) => count > 0).length
   }
 
   // 获取总数量
@@ -20,15 +20,15 @@ export struct PracticeRecordDialog {
 
   // 获取芯片背景颜色
   private getChipBackgroundColor(index: number): string {
-    const completionCount = this.vm.getCompletionCount()
-    const hasBeenPracticed = completionCount.has(index) && (completionCount.get(index) || 0) > 0
+    const completionCount: Map<number, number> = this.vm.getCompletionCount()
+    const hasBeenPracticed: boolean = completionCount.has(index) && (completionCount.get(index) || 0) > 0
     return hasBeenPracticed ? 'rgba(76, 175, 80, 0.3)' : 'rgba(153, 153, 153, 0.2)'
   }
 
   // 获取芯片边框
   private getChipBorder(index: number): BorderOptions {
-    const hadIncorrect = this.vm.getHadIncorrectOnCompletion()
-    const showIncorrectBadge = hadIncorrect.get(index) === true
+    const hadIncorrect: Map<number, boolean> = this.vm.getHadIncorrectOnCompletion()
+    const showIncorrectBadge: boolean = hadIncorrect.get(index) === true
     return showIncorrectBadge
       ? { width: 1.2, color: 'rgba(255, 215, 0, 0.8)' }
       : { width: 0, color: Color.Transparent }
@@ -36,8 +36,8 @@ export struct PracticeRecordDialog {
 
   // 获取芯片文字颜色
   private getChipTextColor(index: number): string {
-    const completionCount = this.vm.getCompletionCount()
-    const hasBeenPracticed = completionCount.has(index) && (completionCount.get(index) || 0) > 0
+    const completionCount: Map<number, number> = this.vm.getCompletionCount()
+    const hasBeenPracticed: boolean = completionCount.has(index) && (completionCount.get(index) || 0) > 0
     return hasBeenPracticed ? '#4CAF50' : '#999999'
   }
 
@@ -70,7 +70,7 @@ export struct PracticeRecordDialog {
       .width('100%')
         .justifyContent(FlexAlign.SpaceBetween)
         .alignItems(VerticalAlign.Center)
-        .padding({ left: 20, right: 20, top: 20 })
+        .padding({ left: 20, right: 20, top: 12 })
 
       Blank().height(16)
 

@@ -5,29 +5,29 @@ import { FavoritesStore } from '../store/FavoritesStore'
 
 @Observed
 export class PracticeViewModel {
-  // Game state
+  // Core game state (UI-tracked)
   @Track currentCharacter: string = ''
   @Track currentMorse: string = ''
   @Track userInput: string = ''
   @Track isCorrect: boolean = false
   @Track showResult: boolean = false
-  @Track hintRevealed: boolean = false
   @Track showCorrectAnswer: boolean = false
   @Track showHint: boolean = false
   @Track isFavorite: boolean = false
-  @Track correctCount: number = 0 // Track correct attempts for current character
-  @Track difficulty: string = '简单'
-  @Track hasIncorrectAttempt: boolean = false // Track if user made incorrect attempt
-  @Track characterChangeId: number = 0 // 用于触发字符变化动画的唯一ID
-  @Track isCurrentCharacterInMistakes: boolean = false // Track if current character is in mistakes
-
-  private checkTimer: number | null = null
-  private hintTimer: number | null = null
+  @Track hasIncorrectAttempt: boolean = false
+  @Track characterChangeId: number = 0
+  @Track correctCount: number = 0
   @Track currentCodes: MorseCode[] = []
-  private currentIndex: number = 0
   @Track completionCount: Map<number, number> = new Map()
   @Track hadIncorrectOnCompletion: Map<number, boolean> = new Map()
+
+  // Internal state
+  private checkTimer: number | null = null
+  private hintTimer: number | null = null
+  private currentIndex: number = 0
+  private difficulty: string = '简单'
   private favoritesStore: FavoritesStore = FavoritesStore.getInstance()
+  private autoCheckDelay: number = 600
 
   // Derived values (methods for compatibility with existing pages)
   getProgress(): number {
@@ -50,25 +50,12 @@ export class PracticeViewModel {
   getRequiredAttempts(): number {
     return this.hasIncorrectAttempt ? 2 : 1
   }
-  getCurrentCodes(): MorseCode[] {
-    return this.currentCodes
-  }
-  getCompletionCount(): Map<number, number> {
-    return this.completionCount
-  }
-  getHadIncorrectOnCompletion(): Map<number, boolean> {
-    return this.hadIncorrectOnCompletion
-  }
 
   // 获取当前字符的连续正确次数
   getConsecutiveCorrectCount(): number {
     return this.favoritesStore.getConsecutiveCorrectCount(this.currentCharacter)
   }
 
-  // 检查当前字符是否在错题本中
-  isInMistakes(): boolean {
-    return this.isCurrentCharacterInMistakes
-  }
   getCharacterChangeId(): number {
     return this.characterChangeId
   }
@@ -78,13 +65,14 @@ export class PracticeViewModel {
   getUserInput(): string { return this.userInput }
   getIsCorrect(): boolean { return this.isCorrect }
   getShowResult(): boolean { return this.showResult }
-  getHintRevealed(): boolean { return this.hintRevealed }
   getIsFavorite(): boolean { return this.isFavorite }
-  getCorrectCount(): number { return this.correctCount }
-  getDifficulty(): string { return this.difficulty }
   getShowCorrectAnswer(): boolean { return this.showCorrectAnswer }
   getHasIncorrectAttempt(): boolean { return this.hasIncorrectAttempt }
   getShowHint(): boolean { return this.showHint }
+  getCorrectCount(): number { return this.correctCount }
+  getCurrentCodes(): MorseCode[] { return this.currentCodes }
+  getCompletionCount(): Map<number, number> { return this.completionCount }
+  getHadIncorrectOnCompletion(): Map<number, boolean> { return this.hadIncorrectOnCompletion }
 
   // Initialize practice session
   init(difficulty: string = '简单'): void {
@@ -125,10 +113,9 @@ export class PracticeViewModel {
       // Default fallback
       this.currentCodes = MorseCodeData.englishAlphabet
     }
-    // Reset session completion tracking when loading new code set
+    this.currentIndex = -1
     this.completionCount = new Map()
     this.hadIncorrectOnCompletion = new Map()
-    this.currentIndex = -1
     this.generateNewCharacter()
   }
 
@@ -137,10 +124,9 @@ export class PracticeViewModel {
     const allCodes = [...MorseCodeData.englishAlphabet, ...MorseCodeData.numbers, ...MorseCodeData.punctuation]
     this.currentCodes = allCodes.filter(code => characters.includes(code.character))
 
-    // Reset session completion tracking when loading new code set
+    this.currentIndex = -1
     this.completionCount = new Map()
     this.hadIncorrectOnCompletion = new Map()
-    this.currentIndex = -1
     this.generateNewCharacter()
   }
 
@@ -156,11 +142,8 @@ export class PracticeViewModel {
     this.userInput = ''
     this.showResult = false
     this.isCorrect = false
-    this.hintRevealed = false
     // 初始化收藏状态为当前字符在收藏夹中的真实状态
     this.isFavorite = this.favoritesStore.isFavorite(this.currentCharacter)
-    // 更新错题本状态
-    this.isCurrentCharacterInMistakes = this.favoritesStore.isMistake(this.currentCharacter)
     this.correctCount = 0 // Reset correct count for new character
     this.showCorrectAnswer = false
     this.hasIncorrectAttempt = false // Reset incorrect attempt flag
@@ -172,24 +155,29 @@ export class PracticeViewModel {
   addDot(): void {
     // TODO: Add vibration feedback
     this.userInput += '.'
-    this.startAutoCheck()
+    this.scheduleAutoCheck()
   }
 
   // Add dash to user input
   addDash(): void {
     // TODO: Add vibration feedback
     this.userInput += '-'
-    this.startAutoCheck()
+    this.scheduleAutoCheck()
   }
 
-  // Start auto-check timer
-  private startAutoCheck(): void {
+  // Schedule auto-check timer (resets on each input)
+  private scheduleAutoCheck(): void {
     if (this.checkTimer !== null) {
       clearTimeout(this.checkTimer)
     }
     this.checkTimer = setTimeout(() => {
       this.checkAnswer()
-    }, 600)
+    }, this.autoCheckDelay)
+  }
+
+  // Set auto-check delay for different modes
+  setAutoCheckDelay(delay: number): void {
+    this.autoCheckDelay = delay
   }
 
   // Check if the answer is correct
@@ -212,8 +200,6 @@ export class PracticeViewModel {
         // 检查是否应该从错题本移除
         if (this.favoritesStore.tryRemoveFromMistakes(this.currentCharacter)) {
           console.log(`Character ${this.currentCharacter} removed from mistakes after 3 consecutive correct answers`)
-          // 更新错题本状态
-          this.isCurrentCharacterInMistakes = false
           // 显示移除提示
           promptAction.showToast({
             message: `🎉 ${this.currentCharacter} ${$r('app.string.removed_from_mistakes')}`,

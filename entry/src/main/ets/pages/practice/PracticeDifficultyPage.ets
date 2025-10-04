@@ -255,9 +255,20 @@ export struct PracticeDifficultyPage {
           .width('100%')
         }, (item: DifficultyItem) => item.key)
 
+        // 分隔线
+        Column() {
+          Blank().height(20)
+          Divider()
+            .color('#333333')
+            .strokeWidth(1)
+            .width('50%')
+          Blank().height(20)
+        }
+        .width('100%')
+          .alignItems(HorizontalAlign.Center)
+
         // 收藏和错题本卡片
         Column() {
-          Blank().height(24)
           this.FavoritesCard()
           Blank().height(16)
           this.MistakesCard()

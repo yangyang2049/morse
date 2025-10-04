@@ -1,7 +1,6 @@
 import { LessonConfig } from '../data/LessonConfig'
 import { progressStore } from '../store/ProgressStoreSingleton'
 import { LessonItem } from '../types/Types'
-import Context from '@ohos.app.ability.common'
 
 @Observed
 export class LearnViewModel {
@@ -148,6 +147,7 @@ export class LearnViewModel {
     const currentLanguage = AppStorage.get<string>('currentLanguage') || 'zh-CN'
     const isChinese = currentLanguage.startsWith('zh')
     console.log(`[LearnViewModel] rebuildLessons: currentLanguage=${currentLanguage}, isChinese=${isChinese}`)
+    console.log(`[LearnViewModel] AppStorage currentLanguage: ${AppStorage.get<string>('currentLanguage')}`)
 
     // 测试第一个课程的标题
     const testTitle = this.getLessonTitle(1)

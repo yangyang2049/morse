@@ -529,10 +529,6 @@
       "value": "Copied to clipboard"
     },
     {
-      "name": "opening_app_gallery",
-      "value": "Opening App Gallery..."
-    },
-    {
       "name": "opened_via_browser",
       "value": "Opened App Gallery via browser"
     },
@@ -803,6 +799,50 @@
     {
       "name": "font_digital",
       "value": "Digital"
+    },
+    {
+      "name": "practice_input_mode",
+      "value": "Practice Input Mode"
+    },
+    {
+      "name": "select_practice_input_mode",
+      "value": "Practice Input Mode"
+    },
+    {
+      "name": "dual_button_mode",
+      "value": "Dual Button"
+    },
+    {
+      "name": "dual_button_mode_desc",
+      "value": "Tap dot and dash buttons separately"
+    },
+    {
+      "name": "single_button_mode",
+      "value": "Single Button"
+    },
+    {
+      "name": "single_button_mode_desc",
+      "value": "Short press for dot, long press for dash"
+    },
+    {
+      "name": "short_press_dot",
+      "value": "Short press: · (dot)"
+    },
+    {
+      "name": "long_press_dash",
+      "value": "Long press: — (dash)"
+    },
+    {
+      "name": "qq_group_number_copied",
+      "value": "QQ group number copied"
+    },
+    {
+      "name": "long_press_duration",
+      "value": "Long Press Duration"
+    },
+    {
+      "name": "can_change_in_settings",
+      "value": "You can change this in settings"
     }
   ]
 }

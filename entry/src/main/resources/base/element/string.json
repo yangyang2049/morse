@@ -85,10 +85,6 @@
       "value": "已复制到剪贴板"
     },
     {
-      "name": "opening_app_gallery",
-      "value": "正在打开应用市场…"
-    },
-    {
       "name": "opened_via_browser",
       "value": "已通过浏览器打开应用市场"
     },
@@ -799,6 +795,50 @@
     {
       "name": "font_digital",
       "value": "数字"
+    },
+    {
+      "name": "practice_input_mode",
+      "value": "练习输入模式"
+    },
+    {
+      "name": "select_practice_input_mode",
+      "value": "练习输入模式"
+    },
+    {
+      "name": "dual_button_mode",
+      "value": "双按钮"
+    },
+    {
+      "name": "dual_button_mode_desc",
+      "value": "分别点击点和划按钮"
+    },
+    {
+      "name": "single_button_mode",
+      "value": "单按钮"
+    },
+    {
+      "name": "single_button_mode_desc",
+      "value": "短按输入点，长按输入划"
+    },
+    {
+      "name": "short_press_dot",
+      "value": "短按：· (点)"
+    },
+    {
+      "name": "long_press_dash",
+      "value": "长按：— (划)"
+    },
+    {
+      "name": "qq_group_number_copied",
+      "value": "QQ群号已复制"
+    },
+    {
+      "name": "long_press_duration",
+      "value": "长按时间"
+    },
+    {
+      "name": "can_change_in_settings",
+      "value": "可在设置中更改此选项"
     }
   ]
 }

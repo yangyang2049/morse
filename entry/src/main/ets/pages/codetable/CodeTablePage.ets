@@ -84,6 +84,13 @@ export struct CodeTablePage {
   @Builder
   private TitleBar() {
     Row() {
+      // 左侧占位盒子 - 只在英文环境下显示，用于平衡布局
+
+      Column()
+        .width(40)
+        .height(40)
+
+
       Text($r('app.string.code_table'))
         .fontSize(20)
         .fontWeight(FontWeight.Bold)
@@ -107,6 +114,11 @@ export struct CodeTablePage {
               url: 'pages/codetable/ChineseTelegraphCodePage'
             })
           })
+      } else {
+        // 英文环境下的右侧占位盒子
+        Column()
+          .width(40)
+          .height(40)
       }
     }
     .height(56)

@@ -3,7 +3,6 @@ import { LessonConfig } from '../../data/LessonConfig'
 import { LessonItem } from '../../types/Types'
 import { router } from '@kit.ArkUI'
 import { eventHub, Events } from '../../utils/EventHub'
-import { i18n } from '@kit.LocalizationKit'
 
 @Component
 export struct LearnPage {
@@ -11,7 +10,7 @@ export struct LearnPage {
   @State vm: LearnViewModel = new LearnViewModel()
   @State private isInitialized: boolean = false
   @State private isLanguageReady: boolean = false
-  @StorageLink('currentLanguage') @Watch('onLanguageChange') currentLanguage: string = this.getInitialLanguage()
+  @StorageLink('currentLanguage') @Watch('onLanguageChange') currentLanguage: string = ''
   private lessonCompletedCallback: ((data?: Object) => void) | null = null
 
   onLanguageChange(): void {
@@ -19,23 +18,6 @@ export struct LearnPage {
     this.vm.refreshLessons()
   }
 
-  // 获取初始语言
-  private getInitialLanguage(): string {
-    try {
-      const currentLocale = i18n.System.getSystemLocale()
-      console.log(`[LearnPage] System locale: ${currentLocale}`)
-      // 将系统locale转换为我们的语言代码格式
-      if (currentLocale.startsWith('zh')) {
-        return 'zh-CN'
-      } else if (currentLocale.startsWith('en')) {
-        return 'en-US'
-      }
-      return 'zh-CN' // 默认中文
-    } catch (error) {
-      console.error('[LearnPage] Failed to get initial language:', error)
-      return 'zh-CN' // 默认中文
-    }
-  }
 
   async aboutToAppear(): Promise<void> {
     const uiContext = this.getUIContext()
@@ -53,28 +35,25 @@ export struct LearnPage {
 
       await this.vm.init(hostContext)
 
-      // Add 600ms delay for smooth rendering
+      // Add 200ms delay for smooth rendering
       setTimeout(() => {
         this.isInitialized = true
-      }, 600)
+      }, 200)
     }
   }
 
   // Wait for language to be ready from AppStorage
   private async waitForLanguageReady(): Promise<void> {
     return new Promise((resolve) => {
-      const checkLanguage = () => {
+      // Add 200ms delay to ensure EntryAbility has set the language
+      setTimeout(() => {
         const lang = AppStorage.get<string>('currentLanguage')
-        if (lang) {
-          console.log(`[LearnPage] Language ready: ${lang}`)
-          this.isLanguageReady = true
-          resolve()
-        } else {
-          // Check again after 50ms
-          setTimeout(checkLanguage, 50)
-        }
-      }
-      checkLanguage()
+        console.log(`[LearnPage] Language after 200ms delay: ${lang}`)
+        // Update currentLanguage to match AppStorage
+        this.currentLanguage = lang || 'zh-CN'
+        this.isLanguageReady = true
+        resolve()
+      }, 200)
     })
   }
 
@@ -417,17 +396,12 @@ export struct LearnPage {
           .layoutWeight(1)
           .padding({ left: 16, right: 16, top: 16, bottom: 24 })
       } else {
-        // Loading state
+        // Loading state - Pure black screen
         Column() {
-          Text($r('app.string.loading'))
-            .fontSize(16)
-            .fontColor(Color.White)
-            .margin({ top: 200 })
         }
         .width('100%')
           .height('100%')
-          .justifyContent(FlexAlign.Center)
-          .alignItems(HorizontalAlign.Center)
+          .backgroundColor(Color.Black)
       }
     }
     .width('100%')

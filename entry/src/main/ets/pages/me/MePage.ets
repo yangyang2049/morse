@@ -3,6 +3,7 @@ import { common, Want } from '@kit.AbilityKit'
 import pasteboard from '@ohos.pasteboard'
 import { resourceManager, i18n } from '@kit.LocalizationKit'
 import { BusinessError } from '@kit.BasicServicesKit'
+import preferences from '@ohos.data.preferences'
 
 // 语言选项接口
 interface LanguageOption {
@@ -20,8 +21,11 @@ const SUPPORTED_LANGUAGES: LanguageOption[] = [
 export struct MePage {
   @State appVersion: string = '1.1.0'
   @StorageLink('currentLanguage') currentLanguage: string = this.getInitialLanguage()
+  @State useSingleButton: boolean = false // 是否使用单按钮模式
+  @State showButtonModeDialog: boolean = false // 是否显示按钮模式选择对话框
   // 资源管理器
   private resourceMgr: resourceManager.ResourceManager | null = null
+  private preferencesStore: preferences.Preferences | null = null
 
   async aboutToAppear() {
     // 初始化资源管理器
@@ -30,6 +34,11 @@ export struct MePage {
     } catch (error) {
       console.error('[MePage] Failed to get resource manager:', error)
     }
+
+    // 初始化偏好设置存储
+    await this.initPreferences()
+    // 加载按钮模式偏好设置
+    await this.loadButtonModePreference()
 
     this.loadAppInfo()
   }
@@ -126,6 +135,44 @@ export struct MePage {
 
   private loadAppInfo() {
     this.appVersion = '1.1.0'
+  }
+
+  // 初始化偏好设置存储
+  private async initPreferences(): Promise<void> {
+    try {
+      const context = getContext(this)
+      this.preferencesStore = await preferences.getPreferences(context, 'practice_preferences')
+      console.log('[MePage] Preferences store initialized')
+    } catch (error) {
+      console.error('[MePage] Failed to initialize preferences:', error)
+    }
+  }
+
+  // 加载按钮模式偏好设置
+  private async loadButtonModePreference(): Promise<void> {
+    try {
+      if (this.preferencesStore) {
+        this.useSingleButton = await this.preferencesStore.get('use_single_button', false) as boolean
+        console.log(`[MePage] Loaded button mode preference: ${this.useSingleButton}`)
+      }
+    } catch (error) {
+      console.error('[MePage] Failed to load button mode preference:', error)
+    }
+  }
+
+  // 保存按钮模式偏好设置
+  private async saveButtonModePreference(useSingle: boolean): Promise<void> {
+    try {
+      if (this.preferencesStore) {
+        await this.preferencesStore.put('use_single_button', useSingle)
+        await this.preferencesStore.put('has_set_button_mode', true)
+        await this.preferencesStore.flush()
+        this.useSingleButton = useSingle
+        console.log(`[MePage] Saved button mode preference: ${useSingle}`)
+      }
+    } catch (error) {
+      console.error('[MePage] Failed to save button mode preference:', error)
+    }
   }
 
   // 获取当前语言的显示名称
@@ -245,6 +292,115 @@ export struct MePage {
   }
 
   @State private showLanguageDialog: boolean = false
+
+  @Builder ButtonModeSelectorDialog() {
+    Column() {
+      Row() {
+        Text($r('app.string.select_practice_input_mode'))
+          .fontSize(18)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#FFFFFF')
+        Blank()
+        Button() {
+          Image($rawfile('ic_close.svg'))
+            .width(20)
+            .height(20)
+            .fillColor('#FFFFFF')
+        }
+        .width(32)
+          .height(32)
+          .backgroundColor('rgba(128, 128, 128, 0.2)')
+          .borderRadius(16)
+          .onClick(() => {
+            this.showButtonModeDialog = false
+          })
+      }
+      .width('100%')
+        .margin({ bottom: 20 })
+
+      // 双按钮模式选项
+      Row() {
+        Column() {
+          Text($r('app.string.dual_button_mode'))
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#FFFFFF')
+            .margin({ bottom: 8 })
+          Text($r('app.string.dual_button_mode_desc'))
+            .fontSize(12)
+            .fontColor('#999999')
+        }
+        .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
+
+        if (!this.useSingleButton) {
+          Circle()
+            .width(16)
+            .height(16)
+            .fill(Color.Transparent)
+            .stroke('#FFD700')
+            .strokeWidth(2)
+        }
+      }
+      .width('100%')
+        .padding(16)
+        .backgroundColor('#111111')
+        .borderRadius(8)
+        .margin({ bottom: 8 })
+        .border({
+          width: !this.useSingleButton ? 1 : 0.5,
+          color: !this.useSingleButton ? '#FFD700' : '#222222',
+          radius: 8
+        })
+        .onClick(() => {
+          this.saveButtonModePreference(false)
+          this.showButtonModeDialog = false
+        })
+
+      // 单按钮模式选项
+      Row() {
+        Column() {
+          Text($r('app.string.single_button_mode'))
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#FFFFFF')
+            .margin({ bottom: 8 })
+          Text($r('app.string.single_button_mode_desc'))
+            .fontSize(12)
+            .fontColor('#999999')
+        }
+        .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
+
+        if (this.useSingleButton) {
+          Circle()
+            .width(16)
+            .height(16)
+            .fill(Color.Transparent)
+            .stroke('#FFD700')
+            .strokeWidth(2)
+        }
+      }
+      .width('100%')
+        .padding(16)
+        .backgroundColor('#111111')
+        .borderRadius(8)
+        .border({
+          width: this.useSingleButton ? 1 : 0.5,
+          color: this.useSingleButton ? '#FFD700' : '#222222',
+          radius: 8
+        })
+        .onClick(() => {
+          this.saveButtonModePreference(true)
+          this.showButtonModeDialog = false
+        })
+    }
+    .padding(20)
+      .backgroundColor('#2A2A2A')
+      .borderRadius(12)
+      .width('90%')
+      .constraintSize({ maxWidth: 400, maxHeight: '60%' })
+  }
 
   @Builder LanguageSelectorDialog() {
     Column() {
@@ -417,6 +573,34 @@ export struct MePage {
       })
   }
 
+  @Builder ButtonModeSettingsItem() {
+    Row() {
+      Column() {
+        Text($r('app.string.practice_input_mode'))
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#FFFFFF')
+          .textAlign(TextAlign.Start)
+          .width('100%')
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
+
+      Image($rawfile('ic_arrow_right.svg'))
+        .width(16)
+        .height(16)
+        .fillColor('#666666')
+    }
+    .width('100%')
+      .height(56)
+      .padding({ left: 16, right: 16 })
+      .onClick(() => {
+        this.showButtonModeDialog = true
+      })
+  }
+
   @Builder OtherAppsSection() {
     // 其他应用部分
     Column() {
@@ -511,6 +695,10 @@ export struct MePage {
             Column() {
               // 盒子容器
               Column() {
+                // 练习输入模式设置
+                this.ButtonModeSettingsItem()
+                Divider().strokeWidth(1).color('#222222')
+
                 // 语言切换条目
                 this.LanguageSettingsItem()
                 Divider().strokeWidth(1).color('#222222')
@@ -535,6 +723,37 @@ export struct MePage {
 
             // 底部版权信息 - 现在在滚动内容的底部
             Column() {
+              // QQ群信息 - 仅在中文环境下显示
+              if (this.currentLanguage.startsWith('zh')) {
+                Row() {
+                  Text('QQ群：825096333 ')
+                    .fontSize(12)
+                    .fontColor('#999999')
+
+                  Image($rawfile('ic_copy.svg'))
+                    .width(16)
+                    .height(16)
+                    .margin({ left: 4 })
+                }
+                .width('100%')
+                  .justifyContent(FlexAlign.Center)
+                  .alignItems(VerticalAlign.Center)
+                  .padding({ bottom: 20 })
+                  .onClick(async () => {
+                    try {
+                      const sysPB = pasteboard.getSystemPasteboard()
+                      const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, '825096333')
+                      await sysPB.setPasteData(pasteData)
+                      promptAction.showToast({
+                        message: $r('app.string.qq_group_number_copied').toString(),
+                        duration: 2000
+                      })
+                    } catch (error) {
+                      console.error('[MePage] Failed to copy QQ group number:', error)
+                    }
+                  })
+              }
+
               Text($r('app.string.copyright'))
                 .fontSize(12)
                 .fontColor('#999999')
@@ -569,6 +788,31 @@ export struct MePage {
             // 对话框内容 - 使用Column居中
             Column() {
               this.LanguageSelectorDialog()
+            }
+            .width('100%')
+              .height('100%')
+              .justifyContent(FlexAlign.Center)
+              .alignItems(HorizontalAlign.Center)
+          }
+          .width('100%')
+            .height('100%')
+        }
+
+        // 按钮模式选择对话框
+        if (this.showButtonModeDialog) {
+          Stack() {
+            // 半透明背景
+            Column()
+              .width('100%')
+              .height('100%')
+              .backgroundColor('rgba(0, 0, 0, 0.5)')
+              .onClick(() => {
+                this.showButtonModeDialog = false
+              })
+
+            // 对话框内容 - 使用Column居中
+            Column() {
+              this.ButtonModeSelectorDialog()
             }
             .width('100%')
               .height('100%')
