@@ -19,7 +19,7 @@ const SUPPORTED_LANGUAGES: LanguageOption[] = [
 
 @Component
 export struct MePage {
-  @State appVersion: string = '1.1.0'
+  @State appVersion: string = '1.1.1'
   @StorageLink('currentLanguage') currentLanguage: string = this.getInitialLanguage()
   @State useSingleButton: boolean = false // 是否使用单按钮模式
   @State showButtonModeDialog: boolean = false // 是否显示按钮模式选择对话框
@@ -134,7 +134,7 @@ export struct MePage {
   }
 
   private loadAppInfo() {
-    this.appVersion = '1.1.0'
+    this.appVersion = '1.1.1'
   }
 
   // 初始化偏好设置存储
@@ -188,14 +188,33 @@ export struct MePage {
     try {
       const shareText = await this.getStringResource('share_text')
 
+      // 复制到剪贴板
       const sysPB = pasteboard.getSystemPasteboard()
       const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, shareText)
       await sysPB.setPasteData(pasteData)
 
-      // 分享成功，无需toast提示
+      // 显示成功提示
+      try {
+        promptAction.showToast({
+          message: this.currentLanguage.startsWith('zh') ? '分享内容已复制到剪贴板' : 'Share content copied to clipboard',
+          duration: 2000,
+          bottom: '80%'
+        })
+      } catch (toastError) {
+        console.error('[MePage] Failed to show success toast:', toastError)
+      }
     } catch (error) {
       console.error('[MePage] Failed to share app:', error)
-      // 复制失败，无需toast提示
+      // 显示失败提示
+      try {
+        promptAction.showToast({
+          message: this.currentLanguage.startsWith('zh') ? '分享失败' : 'Share failed',
+          duration: 1500,
+          bottom: '80%'
+        })
+      } catch (toastError) {
+        console.error('[MePage] Failed to show error toast:', toastError)
+      }
     }
   }
 
@@ -314,6 +333,8 @@ export struct MePage {
           .onClick(() => {
             this.showButtonModeDialog = false
           })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
       }
       .width('100%')
         .margin({ bottom: 20 })
@@ -356,6 +377,8 @@ export struct MePage {
           this.saveButtonModePreference(false)
           this.showButtonModeDialog = false
         })
+        .hoverEffect(HoverEffect.Scale)
+        .focusable(true)
 
       // 单按钮模式选项
       Row() {
@@ -394,6 +417,8 @@ export struct MePage {
           this.saveButtonModePreference(true)
           this.showButtonModeDialog = false
         })
+        .hoverEffect(HoverEffect.Scale)
+        .focusable(true)
     }
     .padding(20)
       .backgroundColor('#2A2A2A')
@@ -423,6 +448,8 @@ export struct MePage {
           .onClick(() => {
             this.showLanguageDialog = false
           })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
       }
       .width('100%')
         .margin({ bottom: 20 })
@@ -463,6 +490,8 @@ export struct MePage {
               console.log(`[LANG_SELECT] Current language after change: ${this.currentLanguage}`)
               this.showLanguageDialog = false
             })
+            .hoverEffect(HoverEffect.Scale)
+            .focusable(true)
         })
       }
       .width('100%')
@@ -514,6 +543,8 @@ export struct MePage {
       .onClick(() => {
         this.showLanguageDialog = true
       })
+      .hoverEffect(HoverEffect.Scale)
+      .focusable(true)
   }
 
 
@@ -543,6 +574,8 @@ export struct MePage {
       .onClick(() => {
         this.openAppGallery()
       })
+      .hoverEffect(HoverEffect.Scale)
+      .focusable(true)
   }
 
   @Builder ShareSettingsItem() {
@@ -571,6 +604,8 @@ export struct MePage {
       .onClick(() => {
         this.shareApp()
       })
+      .hoverEffect(HoverEffect.Scale)
+      .focusable(true)
   }
 
   @Builder ButtonModeSettingsItem() {
@@ -599,6 +634,8 @@ export struct MePage {
       .onClick(() => {
         this.showButtonModeDialog = true
       })
+      .hoverEffect(HoverEffect.Scale)
+      .focusable(true)
   }
 
   @Builder OtherAppsSection() {
@@ -645,6 +682,8 @@ export struct MePage {
         .onClick(() => {
           this.openPeriodicTableApp()
         })
+        .hoverEffect(HoverEffect.Scale)
+        .focusable(true)
     }
     .width('100%')
       .alignItems(HorizontalAlign.Start)

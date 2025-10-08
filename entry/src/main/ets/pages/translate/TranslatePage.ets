@@ -3,6 +3,7 @@ import { PinyinService } from '../../services/PinyinService'
 import { promptAction } from '@kit.ArkUI'
 import { resourceManager, i18n } from '@kit.LocalizationKit'
 import { pasteboard } from '@kit.BasicServicesKit'
+import { AudioService } from '../../services/AudioService'
 
 @Component
 export struct TranslatePage {
@@ -14,6 +15,9 @@ export struct TranslatePage {
   @State currentLanguage: string = 'zh-CN'
   // 资源管理器
   private resourceMgr: resourceManager.ResourceManager | null = null
+  // 音频服务
+  private audioService: AudioService = AudioService.getInstance()
+  @State isPlaying: boolean = false
 
   async aboutToAppear(): Promise<void> {
     // 初始化资源管理器
@@ -32,11 +36,19 @@ export struct TranslatePage {
     const hostContext = uiContext.getHostContext()
     if (hostContext) {
       PinyinService.load(hostContext)
+
+      // 初始化音频服务
+      try {
+        await this.audioService.init(hostContext)
+      } catch (error) {
+        console.error('[TranslatePage] Failed to init audio service:', error)
+      }
     }
   }
 
   aboutToDisappear() {
-    // 清理资源
+    // 停止音频播放
+    this.audioService.stopAudio()
   }
 
   // 获取当前系统语言
@@ -115,6 +127,58 @@ export struct TranslatePage {
     }
   }
 
+  // 播放摩尔斯电码声音
+  private async playMorseSound() {
+    if (this.isPlaying) {
+      // 如果正在播放，停止播放
+      this.audioService.stopAudio()
+      this.isPlaying = false
+      return
+    }
+
+    let contentToPlay = ''
+
+    if (this.isTextToMorse) {
+      // 文本转摩尔斯：播放转换后的摩尔斯电码（使用标准点）
+      contentToPlay = MorseCodeData.textToMorseForPlay(this.textInput)
+    } else {
+      // 摩尔斯转文本：播放输入的摩尔斯电码
+      contentToPlay = this.morseInput
+    }
+
+    if (contentToPlay.length === 0) {
+      // 没有内容可播放
+      try {
+        promptAction.showToast({
+          message: this.currentLanguage.startsWith('zh') ? '没有内容可播放' : 'No content to play',
+          duration: 1500,
+          bottom: '80%'
+        })
+      } catch (error) {
+        console.error('[TranslatePage] Failed to show toast:', error)
+      }
+      return
+    }
+
+    try {
+      this.isPlaying = true
+      await this.audioService.playMorseSequence(contentToPlay)
+    } catch (error) {
+      console.error('[TranslatePage] Failed to play morse sound:', error)
+      try {
+        promptAction.showToast({
+          message: this.currentLanguage.startsWith('zh') ? '播放失败' : 'Playback failed',
+          duration: 1500,
+          bottom: '80%'
+        })
+      } catch (toastError) {
+        console.error('[TranslatePage] Failed to show error toast:', toastError)
+      }
+    } finally {
+      this.isPlaying = false
+    }
+  }
+
   // 获取输入/输出框的高度
   private getBoxHeight(): number | string {
     return '25%'
@@ -146,6 +210,8 @@ export struct TranslatePage {
         .padding({ left: 14, right: 14 })
         .margin({ right: 8 })
         .border({ width: 1, color: '#333333' })
+        .hoverEffect(HoverEffect.Scale)
+        .focusable(true)
 
       // 电码 → 文本
       Button($r('app.string.morse_to_text'))
@@ -155,6 +221,8 @@ export struct TranslatePage {
         .borderRadius(16)
         .padding({ left: 14, right: 14 })
         .border({ width: 1, color: '#333333' })
+        .hoverEffect(HoverEffect.Scale)
+        .focusable(true)
     }
     .justifyContent(FlexAlign.Center)
       .padding(12)
@@ -212,6 +280,8 @@ export struct TranslatePage {
             }
             // 清除输入后，输出也会自动更新为空
           })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
           .zIndex(1)
       }
     }
@@ -239,35 +309,58 @@ export struct TranslatePage {
         .maxLines(6)
         .id('output_area')
 
-      // 复制按钮（右下角浮动，仅当有输出时显示）
+      // 操作按钮区域（右下角浮动，仅当有输出时显示）
       if (this.getOutput().length > 0) {
-        Button() {
-          Image($rawfile('ic_copy.svg'))
-            .width(20)
-            .height(20)
-        }
-        .width(36)
-          .height(36)
-          .backgroundColor(Color.Transparent)
-          .borderRadius(18)
-          .alignRules({
-            bottom: { anchor: 'output_area', align: VerticalAlign.Bottom },
-            right: { anchor: 'output_area', align: HorizontalAlign.End }
-          })
-          .margin({ right: -4, bottom: 8 })
-          .onClick(() => {
-            // 复制输出内容到剪贴板
-            const outputText = this.getOutput()
-            const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, outputText)
-            const systemPasteboard = pasteboard.getSystemPasteboard()
-            systemPasteboard.setData(pasteData)
+        Column() {
+          // 播放按钮（仅在文本转摩尔斯模式下显示）
+          if (this.isTextToMorse) {
+            Button() {
+              Image($rawfile(this.isPlaying ? 'ic_pause.svg' : 'ic_play.svg'))
+                .width(20)
+                .height(20)
+            }
+            .width(36)
+              .height(36)
+              .backgroundColor(Color.Transparent)
+              .borderRadius(18)
+              .onClick(() => {
+                this.playMorseSound()
+              })
+              .hoverEffect(HoverEffect.Scale)
+              .focusable(true)
+          }
 
-            promptAction.showToast({
-              message: $r('app.string.copied'),
-              duration: 1500,
-              bottom: '80%'
+          // 复制按钮
+          Button() {
+            Image($rawfile('ic_copy.svg'))
+              .width(20)
+              .height(20)
+          }
+          .width(36)
+            .height(36)
+            .backgroundColor(Color.Transparent)
+            .borderRadius(18)
+            .onClick(() => {
+              // 复制输出内容到剪贴板
+              const outputText = this.getOutput()
+              const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, outputText)
+              const systemPasteboard = pasteboard.getSystemPasteboard()
+              systemPasteboard.setData(pasteData)
+
+              promptAction.showToast({
+                message: $r('app.string.copied'),
+                duration: 1500,
+                bottom: '80%'
+              })
             })
-          })
+            .hoverEffect(HoverEffect.Scale)
+            .focusable(true)
+        }
+        .alignRules({
+          top: { anchor: 'output_area', align: VerticalAlign.Top },
+          right: { anchor: 'output_area', align: HorizontalAlign.End }
+        })
+          .margin({ right: -4, top: 8 })
           .zIndex(1)
       }
     }
@@ -295,6 +388,8 @@ export struct TranslatePage {
           .borderRadius(0)
           .border({ width: 1, color: '#333333' })
           .onClick(() => this.addSlash())
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
           .layoutWeight(1)
 
         Blank().width(8)
@@ -311,6 +406,8 @@ export struct TranslatePage {
           .borderRadius(0)
           .border({ width: 1, color: '#333333' })
           .onClick(() => this.addSpace())
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
           .layoutWeight(1)
 
         Blank().width(8)
@@ -327,6 +424,8 @@ export struct TranslatePage {
           .borderRadius(0)
           .border({ width: 1, color: '#333333' })
           .onClick(() => this.deleteLast())
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
           .layoutWeight(1)
       }
       .padding({ left: 20, right: 20 })
@@ -343,7 +442,19 @@ export struct TranslatePage {
           .backgroundColor('#1A1A1A')
           .borderRadius(this.pillRadius)
           .border({ width: 1, color: '#333333' })
-          .onClick(() => this.addDot())
+          .onClick(async () => {
+            this.addDot()
+            // 播放点音
+            if (this.morseInput.length > 0) {
+              try {
+                await this.audioService.playDit()
+              } catch (error) {
+                console.error('[TranslatePage] Failed to play dit:', error)
+              }
+            }
+          })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
           .layoutWeight(1)
 
         Blank().width(20)
@@ -356,7 +467,19 @@ export struct TranslatePage {
           .backgroundColor('#1A1A1A')
           .borderRadius(this.pillRadius)
           .border({ width: 1, color: '#333333' })
-          .onClick(() => this.addDash())
+          .onClick(async () => {
+            this.addDash()
+            // 播放划音
+            if (this.morseInput.length > 0) {
+              try {
+                await this.audioService.playDah()
+              } catch (error) {
+                console.error('[TranslatePage] Failed to play dah:', error)
+              }
+            }
+          })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
           .layoutWeight(1)
       }
       .padding({ left: 20, right: 20, bottom: 60 })

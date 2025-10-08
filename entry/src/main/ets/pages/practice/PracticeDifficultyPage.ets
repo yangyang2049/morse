@@ -82,7 +82,6 @@ export struct PracticeDifficultyPage {
   }
 
   private openPractice(difficulty: string): void {
-    console.error(`[PracticeDifficulty] opening practice page with difficulty=${difficulty}`)
     router.push({
       url: 'pages/practice/PracticePage',
       params: {
@@ -94,11 +93,15 @@ export struct PracticeDifficultyPage {
   private openFavorites(): void {
     const favorites = this.favoritesStore.getFavoriteCharacters()
     if (favorites.length === 0) {
-      promptAction.showToast({
-        message: $r('app.string.favorites_empty'),
-        duration: 2000,
-        bottom: '80%'
-      })
+      try {
+        promptAction.showToast({
+          message: $r('app.string.favorites_empty'),
+          duration: 2000,
+          bottom: '80%'
+        })
+      } catch (error) {
+        console.error('[PracticeDifficulty] Failed to show toast:', error)
+      }
       return
     }
 
@@ -114,11 +117,15 @@ export struct PracticeDifficultyPage {
   private openMistakes(): void {
     const mistakes = this.favoritesStore.getMistakeCharacters()
     if (mistakes.length === 0) {
-      promptAction.showToast({
-        message: $r('app.string.mistakes_empty'),
-        duration: 2000,
-        bottom: '80%'
-      })
+      try {
+        promptAction.showToast({
+          message: $r('app.string.mistakes_empty'),
+          duration: 2000,
+          bottom: '80%'
+        })
+      } catch (error) {
+        console.error('[PracticeDifficulty] Failed to show toast:', error)
+      }
       return
     }
 

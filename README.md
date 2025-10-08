@@ -7,4 +7,4 @@
 [ ] Flashlight for text to code
 [x] Sound
 [ ] Settings
-[ ] Review in lessons
+[x] Review in lessons

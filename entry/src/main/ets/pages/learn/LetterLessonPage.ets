@@ -130,9 +130,21 @@ export struct LetterLessonPage {
         .width(48)
           .height(48)
           .backgroundColor(Color.Transparent)
+          .borderRadius(24)
           .onClick(() => {
             router.back()
           })
+          .onHover((isHovered: boolean) => {
+            // 悬浮时显示视觉反馈
+          })
+          .onFocus(() => {
+            // 获得焦点时的视觉反馈
+          })
+          .onBlur(() => {
+            // 失去焦点时的视觉反馈
+          })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
 
         Blank().width(20)
 
@@ -159,9 +171,12 @@ export struct LetterLessonPage {
             .width(22).height(22)
         }
         .backgroundColor(Color.Transparent)
+          .borderRadius(24)
           .onClick(() => {
             this.viewModel.showSettingsDialog = true
           })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
       }
       .height(56)
         .padding({ left: 16, right: 16 })
@@ -242,6 +257,8 @@ export struct LetterLessonPage {
         // 点击提示框本身进行显隐切换
         this.viewModel.showMorseCode = !this.viewModel.showMorseCode
       })
+      .hoverEffect(HoverEffect.Scale)
+      .focusable(true)
   }
 
 
@@ -303,6 +320,8 @@ export struct LetterLessonPage {
               await audioService.playDit()
             }
           })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
           .layoutWeight(1)
 
         Blank().width(8)
@@ -325,6 +344,8 @@ export struct LetterLessonPage {
               await audioService.playSpace()
             }
           })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
 
         Blank().width(8)
 
@@ -342,6 +363,8 @@ export struct LetterLessonPage {
               await audioService.playDah()
             }
           })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
           .layoutWeight(1)
       } else {
         // 其他课程：两个按钮（点、划），平均分配宽度
@@ -359,6 +382,8 @@ export struct LetterLessonPage {
               await audioService.playDit()
             }
           })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
           .layoutWeight(1)
 
         Blank().width(20)
@@ -377,6 +402,8 @@ export struct LetterLessonPage {
               await audioService.playDah()
             }
           })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
           .layoutWeight(1)
       }
     }
@@ -470,6 +497,8 @@ export struct LetterLessonPage {
               // 课程已经在最后一个字母完成时标记了，这里不需要重复标记
               router.back()
             })
+            .hoverEffect(HoverEffect.Scale)
+            .focusable(true)
 
           Blank().width(12)
 
@@ -488,6 +517,8 @@ export struct LetterLessonPage {
               // 课程已经在最后一个字母完成时标记了，这里不需要重复标记
               this.viewModel.restartLesson()
             })
+            .hoverEffect(HoverEffect.Scale)
+            .focusable(true)
         }
         .width('100%')
       }
@@ -560,6 +591,8 @@ export struct LetterLessonPage {
               const count = this.viewModel.practiceCount.get(this.viewModel.currentIndex) || 0
               this.viewModel.progressVisual = Math.min(count / this.viewModel.REQUIRED_PRACTICE_COUNT, 1)
             })
+            .hoverEffect(HoverEffect.Scale)
+            .focusable(true)
 
           Blank().width(12)
 
@@ -583,6 +616,8 @@ export struct LetterLessonPage {
               const count = this.viewModel.practiceCount.get(this.viewModel.currentIndex) || 0
               this.viewModel.progressVisual = Math.min(count / this.viewModel.REQUIRED_PRACTICE_COUNT, 1)
             })
+            .hoverEffect(HoverEffect.Scale)
+            .focusable(true)
         }
         .height(44)
           .alignItems(VerticalAlign.Center)
@@ -600,6 +635,8 @@ export struct LetterLessonPage {
           .backgroundColor('#FFD700')
           .borderRadius(8)
           .onClick(() => { this.viewModel.showSettingsDialog = false })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
       }
       .width(320)
         .padding(20)

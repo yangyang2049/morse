@@ -117,18 +117,18 @@ export class MorseCodeData {
     if (!text || text.trim().length === 0) {
       return ''
     }
-    
+
     const codes = MorseCodeData.getAllCodes()
     const result: string[] = []
-    
+
     for (let i = 0; i < text.length; i++) {
       const ch = text[i]
-      
+
       if (ch === ' ') {
         result.push('/')
         continue
       }
-      
+
       // 检查是否为中文字符
       if (MorseCodeData.isChinese(ch)) {
         const pinyin = MorseCodeData.chineseToPinyinString(ch)
@@ -164,7 +164,7 @@ export class MorseCodeData {
           result.push(ch)
         }
       }
-      
+
       // 添加字符间隔
       if (i < text.length - 1 && text[i + 1] !== ' ') {
         result.push(' ')
@@ -173,11 +173,73 @@ export class MorseCodeData {
     return result.join('')
   }
 
+  // 获取用于播放的摩尔斯电码（使用标准点）
+  static textToMorseForPlay(text: string, onChineseNotFound?: (char: string) => void): string {
+    if (!text || text.trim().length === 0) {
+      return ''
+    }
+
+    const codes = MorseCodeData.getAllCodes()
+    const result: string[] = []
+
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i]
+
+      if (ch === ' ') {
+        result.push('/')
+        continue
+      }
+
+      // 检查是否为中文字符
+      if (MorseCodeData.isChinese(ch)) {
+        const pinyin = MorseCodeData.chineseToPinyinString(ch)
+        if (pinyin) {
+          // 将拼音转换为摩斯码
+          const pinyinMorse: string[] = []
+          for (let j = 0; j < pinyin.length; j++) {
+            const pinyinChar = pinyin[j]
+            const found = codes.find(c => c.character === pinyinChar)
+            if (found) {
+              pinyinMorse.push(found.morse) // 使用标准点，不替换
+            }
+          }
+          if (pinyinMorse.length > 0) {
+            result.push(pinyinMorse.join(' '))
+          } else {
+            result.push(ch) // 如果拼音无法转换，保持原字符
+          }
+        } else {
+          // 中文字符不在拼音表中，保持原样并触发回调
+          result.push(ch)
+          if (onChineseNotFound) {
+            onChineseNotFound(ch)
+          }
+        }
+      } else {
+        // 处理英文字符
+        const searchChar = ch.toUpperCase()
+        const found = codes.find(c => c.character === searchChar)
+        if (found) {
+          result.push(found.morse) // 使用标准点，不替换
+        } else {
+          result.push(ch)
+        }
+      }
+
+      // 添加字符间隔
+      if (i < text.length - 1 && text[i + 1] !== ' ') {
+        result.push(' ')
+      }
+    }
+
+    return result.join(' ')
+  }
+
   static morseToText(morse: string): string {
     if (!morse || morse.trim().length === 0) {
       return ''
     }
-    
+
     const codes = MorseCodeData.getAllCodes()
     const normalized = morse.split('·').join('.')
     const words = normalized.split('/')

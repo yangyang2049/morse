@@ -37,7 +37,7 @@ export struct PracticePage {
     alignment: DialogAlignment.Center,
     customStyle: false
   })
-  private difficulty: Resource | string = '简单'
+  @State difficulty: Resource | string = 'easy'
   private lastCharacterChangeId: number = -1
   private animationTimer: number | null = null
   private readonly pillRadius: number = 20
@@ -82,6 +82,7 @@ export struct PracticePage {
       const params: Record<string, Object> = (router.getParams?.() as Record<string, Object>) ?? {}
       const diff = (params['difficulty'] as string) || ''
       const characters = (params['characters'] as string[]) || []
+
       this.difficulty = diff && typeof diff === 'string' ? diff : 'easy'
 
       // 如果是收藏或错题本模式，使用指定的字符列表
@@ -90,11 +91,11 @@ export struct PracticePage {
       } else {
         this.vm.init(this.difficulty as string)
       }
-    } catch {
+    } catch (error) {
+      console.error(`[PracticePage] Error in route params:`, error)
       this.difficulty = 'easy'
       this.vm.init(this.difficulty as string)
     }
-    console.error(`[PracticePage] aboutToAppear: difficulty=${this.difficulty}`)
     this.displayCharacter = this.vm.getCurrentCharacter() // 初始化显示字符
     this.lastCharacterChangeId = this.vm.getCharacterChangeId()
     this.startAnimationCheck()
@@ -256,21 +257,21 @@ export struct PracticePage {
     if (typeof this.difficulty === 'string') {
       // 处理特殊模式
       if (this.difficulty === 'favorites') {
-        return $r('app.string.favorites')
+        return this.currentLanguage.startsWith('zh') ? '收藏' : 'Favorites'
       }
       if (this.difficulty === 'mistakes') {
-        return $r('app.string.mistakes')
+        return this.currentLanguage.startsWith('zh') ? '错题本' : 'Mistakes'
       }
 
       // 处理难度级别
       if (this.difficulty === 'easy' || this.difficulty === '简单') {
-        return $r('app.string.easy')
+        return this.currentLanguage.startsWith('zh') ? '简单' : 'Easy'
       }
       if (this.difficulty === 'medium' || this.difficulty === '中等') {
-        return $r('app.string.medium')
+        return this.currentLanguage.startsWith('zh') ? '中等' : 'Medium'
       }
       if (this.difficulty === 'hard' || this.difficulty === '困难') {
-        return $r('app.string.hard')
+        return this.currentLanguage.startsWith('zh') ? '困难' : 'Hard'
       }
 
       // 如果是已经本地化的字符串，直接返回
@@ -350,9 +351,12 @@ export struct PracticePage {
       .width(48)
         .height(48)
         .backgroundColor(Color.Transparent)
+        .borderRadius(24)
         .onClick(() => {
           router.back()
         })
+        .hoverEffect(HoverEffect.Scale)
+        .focusable(true)
 
       Text(this.getFormattedTitle())
         .fontSize(20)
@@ -367,6 +371,7 @@ export struct PracticePage {
       .width(48)
         .height(48)
         .backgroundColor(Color.Transparent)
+        .borderRadius(24)
         .onClick(() => {
           // 每次打开前重新创建对话框控制器，确保语言状态是最新的
           this.dialogController = new CustomDialogController({
@@ -379,6 +384,8 @@ export struct PracticePage {
           })
           this.dialogController.open()
         })
+        .hoverEffect(HoverEffect.Scale)
+        .focusable(true)
     }
     .height(56)
       .width('100%')
@@ -559,6 +566,9 @@ export struct PracticePage {
       })
         .width(48).height(48)
         .backgroundColor(Color.Transparent)
+        .borderRadius(24)
+        .hoverEffect(HoverEffect.Scale)
+        .focusable(true)
 
       Blank().width(40)
 
@@ -572,6 +582,9 @@ export struct PracticePage {
       })
         .width(48).height(48)
         .backgroundColor(Color.Transparent)
+        .borderRadius(24)
+        .hoverEffect(HoverEffect.Scale)
+        .focusable(true)
 
       Blank().width(40)
 
@@ -582,6 +595,9 @@ export struct PracticePage {
         .onClick(() => this.vm.passCharacter())
         .width(48).height(48)
         .backgroundColor(Color.Transparent)
+        .borderRadius(24)
+        .hoverEffect(HoverEffect.Scale)
+        .focusable(true)
     }
     .justifyContent(FlexAlign.Center)
       .padding({ left: 20, right: 20 })
@@ -642,6 +658,8 @@ export struct PracticePage {
               })
             }, 10)
           })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
       }
       .width('100%')
         .justifyContent(FlexAlign.SpaceBetween)
@@ -665,6 +683,8 @@ export struct PracticePage {
               await audioService.playDit()
             }
           })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
           .layoutWeight(1)
 
         Blank().width(20)
@@ -684,6 +704,8 @@ export struct PracticePage {
               await audioService.playDah()
             }
           })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
           .layoutWeight(1)
       }
       .padding({ left: 20, right: 20, bottom: 12 })
