@@ -1,6 +1,7 @@
 import { MorseCode, MorseCodeData } from '../models/MorseCode'
 import { promptAction } from '@kit.ArkUI'
 import { FavoritesStore } from '../store/FavoritesStore'
+import { i18n } from '@kit.LocalizationKit'
 // 使用$r()函数替代I18n
 
 @Observed
@@ -201,11 +202,19 @@ export class PracticeViewModel {
         if (this.favoritesStore.tryRemoveFromMistakes(this.currentCharacter)) {
           console.log(`Character ${this.currentCharacter} removed from mistakes after 3 consecutive correct answers`)
           // 显示移除提示
-          promptAction.showToast({
-            message: `🎉 ${this.currentCharacter} ${$r('app.string.removed_from_mistakes')}`,
-            duration: 2000,
-            bottom: '70%'
-          })
+          try {
+            const currentLocale = i18n.System.getSystemLocale()
+            const message = currentLocale.startsWith('zh')
+              ? `🎉 ${this.currentCharacter} 已从错题本移除！`
+              : `🎉 ${this.currentCharacter} Removed from mistakes!`
+            promptAction.showToast({
+              message: message,
+              duration: 2000,
+              bottom: '70%'
+            })
+          } catch (error) {
+            console.error('[PracticeViewModel] Failed to show toast:', error)
+          }
         }
       }
 
@@ -232,11 +241,17 @@ export class PracticeViewModel {
       }
     } else {
       // Wrong answer, show system toast at top of screen
-      promptAction.showToast({
-        message: '再试一次',
-        duration: 1500,
-        bottom: '80%'
-      })
+      try {
+        const currentLocale = i18n.System.getSystemLocale()
+        const message = currentLocale.startsWith('zh') ? '再试一次' : 'Try again'
+        promptAction.showToast({
+          message: message,
+          duration: 1500,
+          bottom: '80%'
+        })
+      } catch (error) {
+        console.error('[PracticeViewModel] Failed to show toast:', error)
+      }
 
       // Add to mistakes if not already there
       this.favoritesStore.addToMistakes(this.currentCharacter)

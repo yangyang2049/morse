@@ -745,7 +745,7 @@ export struct MePage {
                       const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, '825096333')
                       await sysPB.setPasteData(pasteData)
                       promptAction.showToast({
-                        message: $r('app.string.qq_group_number_copied').toString(),
+                        message: $r('app.string.qq_group_number_copied'),
                         duration: 2000
                       })
                     } catch (error) {

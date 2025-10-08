@@ -2,6 +2,7 @@ import { MorseCodeData } from '../../models/MorseCode'
 import { PinyinService } from '../../services/PinyinService'
 import { promptAction } from '@kit.ArkUI'
 import { resourceManager, i18n } from '@kit.LocalizationKit'
+import { pasteboard } from '@kit.BasicServicesKit'
 
 @Component
 export struct TranslatePage {
@@ -255,8 +256,14 @@ export struct TranslatePage {
           })
           .margin({ right: -4, bottom: 8 })
           .onClick(() => {
+            // 复制输出内容到剪贴板
+            const outputText = this.getOutput()
+            const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, outputText)
+            const systemPasteboard = pasteboard.getSystemPasteboard()
+            systemPasteboard.setData(pasteData)
+
             promptAction.showToast({
-              message: $r('app.string.copied').toString(),
+              message: $r('app.string.copied'),
               duration: 1500,
               bottom: '80%'
             })
