@@ -4,10 +4,10 @@ import { FavoritesStore } from '../../store/FavoritesStore'
 import { promptAction } from '@kit.ArkUI'
 import { resourceManager, i18n } from '@kit.LocalizationKit'
 
-interface DifficultyItem {
+interface ModeItem {
   key: string
-  label: Resource
-  desc: Resource
+  titleRes: Resource
+  descRes: Resource
 }
 
 
@@ -19,7 +19,23 @@ export struct PracticeDifficultyPage {
   // 资源管理器
   private resourceMgr: resourceManager.ResourceManager | null = null
 
-  private difficulties: DifficultyItem[] = []
+  private modes: ModeItem[] = [
+    {
+      key: 'text_to_code',
+      titleRes: $r('app.string.text_to_code_title'),
+      descRes: $r('app.string.text_to_code_desc')
+    },
+    {
+      key: 'code_to_text',
+      titleRes: $r('app.string.code_to_text_title'),
+      descRes: $r('app.string.code_to_text_desc')
+    },
+    {
+      key: 'sound_to_text',
+      titleRes: $r('app.string.sound_to_text_title'),
+      descRes: $r('app.string.sound_to_text_desc')
+    }
+  ]
 
   async aboutToAppear(): Promise<void> {
     // 初始化资源管理器
@@ -31,9 +47,6 @@ export struct PracticeDifficultyPage {
 
     // 获取当前系统语言
     this.currentLanguage = this.getCurrentLanguage()
-
-    // 初始化难度列表
-    this.buildDifficulties()
   }
 
   aboutToDisappear() {
@@ -72,20 +85,12 @@ export struct PracticeDifficultyPage {
     }
   }
 
-  // 构建难度列表
-  private buildDifficulties(): void {
-    this.difficulties = [
-      { key: 'easy', label: $r('app.string.easy'), desc: $r('app.string.easy_desc') },
-      { key: 'medium', label: $r('app.string.medium'), desc: $r('app.string.medium_desc') },
-      { key: 'hard', label: $r('app.string.hard'), desc: $r('app.string.hard_desc') }
-    ]
-  }
-
-  private openPractice(difficulty: string): void {
+  private openPractice(mode: string): void {
+    // 直接导航到练习页面
     router.push({
       url: 'pages/practice/PracticePage',
       params: {
-        difficulty: difficulty
+        mode: mode
       }
     })
   }
@@ -105,11 +110,13 @@ export struct PracticeDifficultyPage {
       return
     }
 
+    // 导航到混合模式练习页面
     router.push({
       url: 'pages/practice/PracticePage',
       params: {
-        difficulty: 'favorites',
-        characters: favorites
+        mode: 'text_to_code', // 起始模式
+        characters: favorites,
+        mixedMode: true // 标记为混合模式
       }
     })
   }
@@ -129,37 +136,33 @@ export struct PracticeDifficultyPage {
       return
     }
 
+    // 导航到混合模式练习页面
     router.push({
       url: 'pages/practice/PracticePage',
       params: {
-        difficulty: 'mistakes',
-        characters: mistakes
+        mode: 'text_to_code', // 起始模式
+        characters: mistakes,
+        mixedMode: true // 标记为混合模式
       }
     })
   }
 
   @Builder
-  private DifficultyCard(item: DifficultyItem) {
+  private ModeCard(item: ModeItem) {
     // 居中文本的卡片项
     Column() {
       // 内容垂直居中对齐
       Column() {
-        Text(item.label)
+        Text(item.titleRes)
           .fontSize(18)
           .fontWeight(FontWeight.Bold)
           .fontColor(Color.White)
           .textAlign(TextAlign.Center)
-
-        Text(item.desc)
-          .fontSize(12)
-          .fontColor('#CCCCCC')
-          .textAlign(TextAlign.Center)
-          .margin({ top: 6 })
       }
       .alignItems(HorizontalAlign.Center)
         .justifyContent(FlexAlign.Center)
         .width('100%')
-        .padding({ left: 16, right: 16, top: 18, bottom: 18 })
+        .padding({ left: 16, right: 16, top: 28, bottom: 28 })
     }
     .width('100%')
       .backgroundColor('#1A1A1A')
@@ -171,18 +174,18 @@ export struct PracticeDifficultyPage {
   }
 
   @Builder
-  private FavoritesCard() {
-    // 收藏卡片
+  private SpecialModeCard(title: Resource, desc: Resource, mode: string, onClick: () => void) {
+    // 特殊模式卡片（收藏和错题本）
     Column() {
       // 内容垂直居中对齐
       Column() {
-        Text($r('app.string.favorites'))
+        Text(title)
           .fontSize(18)
           .fontWeight(FontWeight.Bold)
           .fontColor(Color.White)
           .textAlign(TextAlign.Center)
 
-        Text($r('app.string.practice_favorites'))
+        Text(desc)
           .fontSize(12)
           .fontColor('#CCCCCC')
           .textAlign(TextAlign.Center)
@@ -197,22 +200,20 @@ export struct PracticeDifficultyPage {
       .backgroundColor('#1A1A1A')
       .borderRadius(14)
       .border({ width: 1, color: '#333333' })
-      .onClick(() => this.openFavorites())
+      .onClick(onClick)
   }
 
   @Builder
-  private MistakesCard() {
-    // 错题本卡片
+  private SingleModeCard(title: Resource, desc: Resource, onClick: () => void) {
     Column() {
-      // 内容垂直居中对齐
       Column() {
-        Text($r('app.string.mistakes'))
+        Text(title)
           .fontSize(18)
           .fontWeight(FontWeight.Bold)
           .fontColor(Color.White)
           .textAlign(TextAlign.Center)
 
-        Text($r('app.string.mistakes_desc'))
+        Text(desc)
           .fontSize(12)
           .fontColor('#CCCCCC')
           .textAlign(TextAlign.Center)
@@ -227,7 +228,7 @@ export struct PracticeDifficultyPage {
       .backgroundColor('#1A1A1A')
       .borderRadius(14)
       .border({ width: 1, color: '#333333' })
-      .onClick(() => this.openMistakes())
+      .onClick(onClick)
   }
 
   @Builder
@@ -250,44 +251,58 @@ export struct PracticeDifficultyPage {
       this.TitleBar()
 
       // 内容区域 - 响应式宽度，最大480vp
-      Column() {
-        // 难度选择卡片
-        ForEach(this.difficulties, (item: DifficultyItem, index: number) => {
-          Column() {
-            this.DifficultyCard(item)
-            if (index < this.difficulties.length - 1) {
-              Blank().height(16)
+      Scroll() {
+        Column() {
+          Blank().height(20)
+
+          // 练习模式卡片
+          ForEach(this.modes, (item: ModeItem, index: number) => {
+            Column() {
+              this.ModeCard(item)
+              if (index < this.modes.length - 1) {
+                Blank().height(16)
+              }
             }
+            .width('100%')
+          }, (item: ModeItem) => item.key)
+
+          // 分隔线
+          Column() {
+            Blank().height(20)
+            Divider()
+              .color('#333333')
+              .strokeWidth(1)
+              .width('50%')
+            Blank().height(20)
           }
           .width('100%')
-        }, (item: DifficultyItem) => item.key)
+            .alignItems(HorizontalAlign.Center)
 
-        // 分隔线
-        Column() {
-          Blank().height(20)
-          Divider()
-            .color('#333333')
-            .strokeWidth(1)
-            .width('50%')
-          Blank().height(20)
-        }
-        .width('100%')
-          .alignItems(HorizontalAlign.Center)
+          // 收藏练习 - 混合模式
+          this.SingleModeCard(
+            $r('app.string.favorites'),
+            $r('app.string.favorites_mixed_mode_desc'),
+            () => this.openFavorites()
+          )
 
-        // 收藏和错题本卡片
-        Column() {
-          this.FavoritesCard()
           Blank().height(16)
-          this.MistakesCard()
+
+          // 错题本练习 - 混合模式
+          this.SingleModeCard(
+            $r('app.string.mistakes'),
+            $r('app.string.mistakes_mixed_mode_desc'),
+            () => this.openMistakes()
+          )
+
+          Blank().height(20)
         }
         .width('100%')
       }
       .width('100%')
         .constraintSize({ maxWidth: 480 })
-        .padding({ left: 20, right: 20, top: 20 })
+        .padding({ left: 20, right: 20 })
         .layoutWeight(1)
-        .justifyContent(FlexAlign.Center)
-        .alignItems(HorizontalAlign.Center)
+        .align(Alignment.Center)
     }
     .width('100%')
       .height('100%')

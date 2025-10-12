@@ -1,6 +1,7 @@
 import { MorseCode, MorseCodeData } from '../models/MorseCode'
 import { promptAction } from '@kit.ArkUI'
 import { FavoritesStore } from '../store/FavoritesStore'
+import { PracticeProgressStore } from '../store/PracticeProgressStore'
 import { i18n } from '@kit.LocalizationKit'
 // 使用$r()函数替代I18n
 
@@ -28,6 +29,7 @@ export class PracticeViewModel {
   private currentIndex: number = 0
   private difficulty: string = '简单'
   private favoritesStore: FavoritesStore = FavoritesStore.getInstance()
+  private practiceProgressStore: PracticeProgressStore = PracticeProgressStore.getInstance()
   private autoCheckDelay: number = 600
 
   // Derived values (methods for compatibility with existing pages)
@@ -131,12 +133,19 @@ export class PracticeViewModel {
     this.generateNewCharacter()
   }
 
+  // Set current codes (for category filtering)
+  setCurrentCodes(codes: MorseCode[]): void {
+    this.currentCodes = codes
+    this.currentIndex = -1
+    this.generateNewCharacter()
+  }
+
   // Generate new character for practice
   generateNewCharacter(): void {
     if (this.currentCodes.length === 0) return
 
-    // Pick a random index and remember it so we can mark practiced later
-    this.currentIndex = Math.floor(Math.random() * this.currentCodes.length)
+    // 使用加权随机选择
+    this.currentIndex = this.weightedRandomSelection()
     const randomCode = this.currentCodes[this.currentIndex]
     this.currentCharacter = randomCode.character
     this.currentMorse = randomCode.morse
@@ -150,6 +159,33 @@ export class PracticeViewModel {
     this.hasIncorrectAttempt = false // Reset incorrect attempt flag
     this.showHint = false
     this.characterChangeId++ // 增加字符变化ID以触发动画
+  }
+
+  // 加权随机选择字符索引
+  private weightedRandomSelection(): number {
+    if (this.currentCodes.length === 0) return 0
+
+    // 计算每个字符的权重
+    const weights: number[] = []
+    let totalWeight = 0
+
+    for (const code of this.currentCodes) {
+      const weight = this.practiceProgressStore.getCharacterWeight(code.character)
+      weights.push(weight)
+      totalWeight += weight
+    }
+
+    // 使用权重进行随机选择
+    let random = Math.random() * totalWeight
+    for (let i = 0; i < weights.length; i++) {
+      random -= weights[i]
+      if (random <= 0) {
+        return i
+      }
+    }
+
+    // 备用方案（理论上不应该到达这里）
+    return Math.floor(Math.random() * this.currentCodes.length)
   }
 
   // Add dot to user input
@@ -192,6 +228,9 @@ export class PracticeViewModel {
     if (isCorrect) {
       this.correctCount++
       const requiredCount = this.hasIncorrectAttempt ? 2 : 1
+
+      // 记录正确答案到练习进度
+      this.practiceProgressStore.recordCorrect(this.currentCharacter)
 
       // 增加连续正确次数（仅在错题本中时）
       if (this.favoritesStore.isMistake(this.currentCharacter)) {
@@ -240,6 +279,9 @@ export class PracticeViewModel {
         }, 1500)
       }
     } else {
+      // 记录错误答案到练习进度
+      this.practiceProgressStore.recordIncorrect(this.currentCharacter)
+
       // Wrong answer, show system toast at top of screen
       try {
         const currentLocale = i18n.System.getSystemLocale()

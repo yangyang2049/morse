@@ -79,15 +79,22 @@ export struct LearnPage {
   // 处理课程点击事件
   private async handleLessonClick(item: LessonItem): Promise<void> {
     // Block navigation for placeholder lessons
-    if (item.title === '占位') { return }
+    if (this.isPlaceholderLesson(this.getLessonTitle(item))) { return }
 
     if (item.key === 'intro_1') {
       // Navigate to lesson page for the 2nd intro lesson (Chinese)
       // Use hardcoded strings for title
       const currentLanguage = AppStorage.get<string>('currentLanguage') || 'zh-CN'
-      const isChinese = currentLanguage.startsWith('zh')
-      const title = isChinese ? '中文摩斯电码' : 'Chinese Morse Code'
-      const testTitle = isChinese ? '中文摩斯电码测试' : 'Chinese Code Test'
+      let title = '中文摩斯电码'
+      let testTitle = '中文摩斯电码测试'
+
+      if (currentLanguage.startsWith('en')) {
+        title = 'Chinese Morse Code'
+        testTitle = 'Chinese Code Test'
+      } else if (currentLanguage === 'zh-HK' || currentLanguage === 'zh-TW') {
+        title = '中文摩斯電碼'
+        testTitle = '中文摩斯電碼測試'
+      }
 
       router.push({
         url: 'pages/learn/KnowledgeLessonPage',
@@ -102,9 +109,16 @@ export struct LearnPage {
       // Navigate to lesson page for the 1st intro lesson (Basics)
       // Use hardcoded strings for title
       const currentLanguage = AppStorage.get<string>('currentLanguage') || 'zh-CN'
-      const isChinese = currentLanguage.startsWith('zh')
-      const title = isChinese ? '摩斯电码基础' : 'Morse Code Basics'
-      const testTitle = isChinese ? '基础测试' : 'Basics Test'
+      let title = '摩斯电码基础'
+      let testTitle = '基础测试'
+
+      if (currentLanguage.startsWith('en')) {
+        title = 'Morse Code Basics'
+        testTitle = 'Basics Test'
+      } else if (currentLanguage === 'zh-HK' || currentLanguage === 'zh-TW') {
+        title = '摩斯電碼基礎'
+        testTitle = '基礎測試'
+      }
 
       router.push({
         url: 'pages/learn/KnowledgeLessonPage',
@@ -190,10 +204,14 @@ export struct LearnPage {
     return (typeof item.subtitle === 'string' ? item.subtitle : '') || ''
   }
 
+  // 检查是否为占位课程（支持简体和繁体）
+  private isPlaceholderLesson(title: string): boolean {
+    return title === '占位' || title === '佔位'
+  }
+
   // 获取本地化标题
   private getLocalizedTitle(titleKey: string): string {
     const currentLanguage = AppStorage.get<string>('currentLanguage') || 'zh-CN'
-    const isChinese = currentLanguage.startsWith('zh')
 
     // 硬编码本地化字符串
     const localizedStrings: Record<string, Record<string, string>> = {
@@ -204,6 +222,20 @@ export struct LearnPage {
         'punctuation_lesson': '标点符号',
         'word_lesson': '单词'
       },
+      'zh-HK': {
+        'morse_code_basics': '摩斯電碼基礎',
+        'alphabet_lesson': '字母',
+        'number_lesson': '數字',
+        'punctuation_lesson': '標點符號',
+        'word_lesson': '單詞'
+      },
+      'zh-TW': {
+        'morse_code_basics': '摩斯電碼基礎',
+        'alphabet_lesson': '字母',
+        'number_lesson': '數字',
+        'punctuation_lesson': '標點符號',
+        'word_lesson': '單詞'
+      },
       'en-US': {
         'morse_code_basics': 'Basics',
         'alphabet_lesson': 'Letters',
@@ -213,7 +245,16 @@ export struct LearnPage {
       }
     }
 
-    const langKey = isChinese ? 'zh-CN' : 'en-US'
+    // 根据语言选择对应的字符串集
+    let langKey = 'zh-CN'
+    if (currentLanguage.startsWith('en')) {
+      langKey = 'en-US'
+    } else if (currentLanguage === 'zh-HK') {
+      langKey = 'zh-HK'
+    } else if (currentLanguage === 'zh-TW') {
+      langKey = 'zh-TW'
+    }
+
     return localizedStrings[langKey]?.[titleKey] || titleKey
   }
 
@@ -223,7 +264,7 @@ export struct LearnPage {
   private LessonCard(item: LessonItem, unitLocked: boolean) {
     Stack({ alignContent: Alignment.Center }) {
       // 占位课程不显示任何内容
-      if (item.title !== '占位') {
+      if (!this.isPlaceholderLesson(this.getLessonTitle(item))) {
         // 中间内容：标题/副标题始终居中
         Column() {
           Text(this.getLessonTitle(item))
@@ -264,8 +305,11 @@ export struct LearnPage {
     }
     .width('100%')
       .padding(16)
-      .backgroundColor(item.title === '占位' ? Color.Transparent : '#1A1A1A')
-      .border({ width: item.title === '占位' ? 0 : 1, color: item.title === '占位' ? Color.Transparent : '#333333' })
+      .backgroundColor(this.isPlaceholderLesson(this.getLessonTitle(item)) ? Color.Transparent : '#1A1A1A')
+      .border({
+        width: this.isPlaceholderLesson(this.getLessonTitle(item)) ? 0 : 1,
+        color: this.isPlaceholderLesson(this.getLessonTitle(item)) ? Color.Transparent : '#333333'
+      })
       .borderRadius(12)
   }
 
@@ -327,9 +371,9 @@ export struct LearnPage {
                 this.LessonCard(l, false) // All lessons are unlocked
                 if (idx < this.getLessonsForUnit(unitKey).length - 1) { Blank().height(12) }
               }
-              .opacity(l.title === '占位' ? 0.0 : 1.0)
+              .opacity(this.isPlaceholderLesson(this.getLessonTitle(l)) ? 0.0 : 1.0)
                 .onClick(async () => {
-                  if (l.title !== '占位') {
+                  if (!this.isPlaceholderLesson(this.getLessonTitle(l))) {
                     await this.handleLessonClick(l)
                   }
                 })

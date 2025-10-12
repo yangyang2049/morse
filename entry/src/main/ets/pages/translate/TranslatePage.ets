@@ -4,6 +4,8 @@ import { promptAction } from '@kit.ArkUI'
 import { resourceManager, i18n } from '@kit.LocalizationKit'
 import { pasteboard } from '@kit.BasicServicesKit'
 import { AudioService } from '../../services/AudioService'
+import { flashlightService } from '../../services/FlashlightService'
+import { common } from '@kit.AbilityKit'
 
 @Component
 export struct TranslatePage {
@@ -18,6 +20,9 @@ export struct TranslatePage {
   // 音频服务
   private audioService: AudioService = AudioService.getInstance()
   @State isPlaying: boolean = false
+  // 手电筒服务
+  @State flashlightInitialized: boolean = false
+  @State isPlayingFlashlight: boolean = false
 
   async aboutToAppear(): Promise<void> {
     // 初始化资源管理器
@@ -43,12 +48,20 @@ export struct TranslatePage {
       } catch (error) {
         console.error('[TranslatePage] Failed to init audio service:', error)
       }
+
+      // 手电筒服务改为延迟初始化（首次点击时才初始化）
     }
   }
 
   aboutToDisappear() {
     // 停止音频播放
     this.audioService.stopAudio()
+
+    // 停止手电筒播放
+    if (this.isPlayingFlashlight) {
+      flashlightService.stopPlaying()
+      this.isPlayingFlashlight = false
+    }
   }
 
   // 获取当前系统语言
@@ -176,6 +189,166 @@ export struct TranslatePage {
       }
     } finally {
       this.isPlaying = false
+    }
+  }
+
+  // 播放摩尔斯码手电筒
+  private async playMorseFlashlight(): Promise<void> {
+    // 如果正在播放，则停止
+    if (this.isPlayingFlashlight) {
+      flashlightService.stopPlaying()
+      this.isPlayingFlashlight = false
+      return
+    }
+
+    // 如果未初始化，先初始化（这里会请求权限）
+    if (!this.flashlightInitialized) {
+      try {
+        console.info('[TranslatePage] Initializing flashlight service on first use...')
+        const uiContext = this.getUIContext()
+        const hostContext = uiContext.getHostContext()
+
+        if (!hostContext) {
+          throw new Error('Failed to get host context')
+        }
+
+        await flashlightService.init(hostContext as common.BaseContext)
+        this.flashlightInitialized = true
+        console.info('[TranslatePage] Flashlight service initialized successfully')
+      } catch (error) {
+        console.error('[TranslatePage] Failed to init flashlight service:', error)
+        this.flashlightInitialized = false
+
+        // 显示权限提示
+        const errorMsg = String(error)
+        if (errorMsg.includes('permission')) {
+          try {
+            promptAction.showToast({
+              message: this.currentLanguage.startsWith('zh') ?
+                '需要相机权限才能使用手电筒功能' :
+                'Camera permission required for flashlight',
+              duration: 3000,
+              bottom: '80%'
+            })
+          } catch (toastError) {
+            console.error('[TranslatePage] Failed to show permission toast:', toastError)
+          }
+        } else {
+          try {
+            promptAction.showToast({
+              message: this.currentLanguage.startsWith('zh') ?
+                '手电筒初始化失败' :
+                'Failed to initialize flashlight',
+              duration: 2000,
+              bottom: '80%'
+            })
+          } catch (toastError) {
+            console.error('[TranslatePage] Failed to show toast:', toastError)
+          }
+        }
+        return
+      }
+    }
+
+    let contentToPlay = ''
+    if (this.isTextToMorse) {
+      contentToPlay = MorseCodeData.textToMorseForPlay(this.textInput)
+    } else {
+      contentToPlay = this.morseInput
+    }
+
+    if (contentToPlay.length === 0) {
+      try {
+        promptAction.showToast({
+          message: this.currentLanguage.startsWith('zh') ? '没有内容可播放' : 'No content to play',
+          duration: 1500,
+          bottom: '80%'
+        })
+      } catch (error) {
+        console.error('[TranslatePage] Failed to show toast:', error)
+      }
+      return
+    }
+
+    try {
+      this.isPlayingFlashlight = true
+      await flashlightService.playMorseCode(contentToPlay)
+    } catch (error) {
+      console.error('[TranslatePage] Failed to play morse flashlight:', error)
+      try {
+        promptAction.showToast({
+          message: this.currentLanguage.startsWith('zh') ? '手电筒播放失败' : 'Flashlight playback failed',
+          duration: 2000,
+          bottom: '80%'
+        })
+      } catch (toastError) {
+        console.error('[TranslatePage] Failed to show toast:', toastError)
+      }
+    } finally {
+      this.isPlayingFlashlight = false
+    }
+  }
+
+  // 播放SOS信号（保留但未在UI中使用）
+  private async playSOS(): Promise<void> {
+    if (this.isPlayingFlashlight) {
+      flashlightService.stopPlaying()
+      this.isPlayingFlashlight = false
+      return
+    }
+
+    // 如果未初始化，先初始化（这里会请求权限）
+    if (!this.flashlightInitialized) {
+      try {
+        console.info('[TranslatePage] Initializing flashlight service for SOS...')
+        const uiContext = this.getUIContext()
+        const hostContext = uiContext.getHostContext()
+
+        if (!hostContext) {
+          throw new Error('Failed to get host context')
+        }
+
+        await flashlightService.init(hostContext as common.BaseContext)
+        this.flashlightInitialized = true
+        console.info('[TranslatePage] Flashlight service initialized successfully')
+      } catch (error) {
+        console.error('[TranslatePage] Failed to init flashlight service:', error)
+        this.flashlightInitialized = false
+
+        const errorMsg = String(error)
+        if (errorMsg.includes('permission')) {
+          try {
+            promptAction.showToast({
+              message: this.currentLanguage.startsWith('zh') ?
+                '需要相机权限才能使用手电筒功能' :
+                'Camera permission required for flashlight',
+              duration: 3000,
+              bottom: '80%'
+            })
+          } catch (toastError) {
+            console.error('[TranslatePage] Failed to show toast:', toastError)
+          }
+        }
+        return
+      }
+    }
+
+    try {
+      this.isPlayingFlashlight = true
+      await flashlightService.playSOS()
+      try {
+        promptAction.showToast({
+          message: 'SOS',
+          duration: 1500,
+          bottom: '80%'
+        })
+      } catch (toastError) {
+        console.error('[TranslatePage] Failed to show toast:', toastError)
+      }
+    } catch (error) {
+      console.error('[TranslatePage] Failed to play SOS:', error)
+    } finally {
+      this.isPlayingFlashlight = false
     }
   }
 
@@ -328,6 +501,22 @@ export struct TranslatePage {
               })
               .hoverEffect(HoverEffect.Scale)
               .focusable(true)
+
+            // 手电筒按钮
+            Button() {
+              Text(this.isPlayingFlashlight ? '⏸' : '🔦')
+                .fontSize(20)
+            }
+            .width(36)
+              .height(36)
+              .backgroundColor(Color.Transparent)
+              .borderRadius(18)
+              .margin({ top: 4 })
+              .onClick(() => {
+                this.playMorseFlashlight()
+              })
+              .hoverEffect(HoverEffect.Scale)
+              .focusable(true)
           }
 
           // 复制按钮
@@ -340,6 +529,7 @@ export struct TranslatePage {
             .height(36)
             .backgroundColor(Color.Transparent)
             .borderRadius(18)
+            .margin({ top: 4 })
             .onClick(() => {
               // 复制输出内容到剪贴板
               const outputText = this.getOutput()

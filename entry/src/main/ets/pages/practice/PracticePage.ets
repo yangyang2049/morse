@@ -1,283 +1,119 @@
-import { PracticeViewModel } from '../../viewmodel/PracticeViewModel'
 import { router, promptAction } from '@kit.ArkUI'
-import { PracticeRecordDialog } from '../../widgets/PracticeRecordDialog'
-import { FavoritesStore } from '../../store/FavoritesStore'
 import { audioService } from '../../services/AudioService'
-import { resourceManager, i18n } from '@kit.LocalizationKit'
+import { MorseCode, MorseCodeData } from '../../models/MorseCode'
+import { FavoritesStore } from '../../store/FavoritesStore'
+import { PracticeViewModel } from '../../viewmodel/PracticeViewModel'
+import { PracticeProgressStore } from '../../store/PracticeProgressStore'
 import preferences from '@ohos.data.preferences'
+
+// 练习模式类型
+type PracticeMode = 'text_to_code' | 'code_to_text' | 'sound_to_text'
+// 类别类型
+type Category = 'letters' | 'numbers' | 'punctuation'
 
 @Entry
 @Component
 export struct PracticePage {
-  @State vm: PracticeViewModel = new PracticeViewModel()
-  @State circleScale: number = 1.0 // 控制圆圈和字符的缩放动画
-  @State displayCharacter: string = '' // 用于显示的字符，控制动画时序
-  // 可视化进度（0~1），用于平滑填充进度弧
-  @State progressVisual: number = 0
+  @State mode: PracticeMode = 'text_to_code'
+  @State category: Category = 'letters'
+  @State soundEnabled: boolean = true
   @State favoritesStore: FavoritesStore = FavoritesStore.getInstance()
-  @State soundEnabled: boolean = true // 声音开关状态
-  @State currentLanguage: string = 'zh-CN'
-  @State useSingleButton: boolean = false // 是否使用单按钮模式
-  @State showButtonModeDialog: boolean = false // 是否显示按钮模式选择对话框
-  @State selectedButtonMode: boolean = false // 用户在对话框中选择的模式（不自动高亮）
-  @State showSettingsDialog: boolean = false // 是否显示设置对话框
-  @State sliderValue: number = 300 // 滑块值状态
-  @State settingsDialogScale: number = 0.8 // 设置对话框缩放动画
-  @State settingsDialogOpacity: number = 0 // 设置对话框透明度动画
-  // 资源管理器
-  private resourceMgr: resourceManager.ResourceManager | null = null
+  @State practiceProgressStore: PracticeProgressStore = PracticeProgressStore.getInstance()
+
+  // 通用状态（使用ViewModel）
+  @State vm: PracticeViewModel = new PracticeViewModel()
+  @State circleScale: number = 1.0
+  @State displayCharacter: string = ''
+  @State progressVisual: number = 0
+  @State useSingleButton: boolean = false
+  @State showButtonModeDialog: boolean = false
+  @State selectedButtonMode: boolean = false
+  @State showSettingsDialog: boolean = false
+  @State sliderValue: number = 300
+  @State settingsDialogScale: number = 0.8
+  @State settingsDialogOpacity: number = 0
+
+  // 代码转文本和声音转文本模式的候选字符
+  @State candidateChars: string[] = []
+  @State selectedChar: string = ''
+  @State isPlayingSound: boolean = false
+  @State playProgress: number = 0
+  @State isMixedMode: boolean = false
+  @State showHintText: boolean = false
+  @State hintTextColor: string = ''
+  @State hintTextOpacity: number = 0
+  @State showCandidateGrid: boolean = true
+
   private preferencesStore: preferences.Preferences | null = null
   private progressTimer: number | null = null
   private targetProgress: number = 0
-  private dialogController: CustomDialogController = new CustomDialogController({
-    builder: PracticeRecordDialog({
-      vm: this.vm
-    }),
-    autoCancel: true,
-    alignment: DialogAlignment.Center,
-    customStyle: false
-  })
-  @State difficulty: Resource | string = 'easy'
   private lastCharacterChangeId: number = -1
   private animationTimer: number | null = null
   private readonly pillRadius: number = 20
-  // 单按钮模式相关
   private pressStartTime: number = 0
-  private longPressThreshold: number = 300 // 长按阈值：300ms
+  private longPressThreshold: number = 300
   private longPressTimer: number | null = null
+  private isCustomCharacterSet: boolean = false
+  private allAvailableCodes: MorseCode[] = [] // 存储所有可用字符
+  private playProgressTimer: number | null = null
 
   async aboutToAppear(): Promise<void> {
-    // 初始化资源管理器
-    try {
-      this.resourceMgr = getContext(this).resourceManager
-    } catch (error) {
-      console.error('[PracticePage] Failed to get resource manager:', error)
-    }
-
-    // 初始化偏好设置存储
-    await this.initPreferences()
-
-    // 获取当前语言 - 优先从AppStorage获取，否则从系统获取
-    const storedLanguage = AppStorage.get<string>('currentLanguage')
-    if (storedLanguage) {
-      this.currentLanguage = storedLanguage
-      console.log(`[PracticePage] Using stored language: ${this.currentLanguage}`)
-    } else {
-      this.currentLanguage = this.getCurrentLanguage()
-      console.log(`[PracticePage] Using system language: ${this.currentLanguage}`)
-      AppStorage.setOrCreate('currentLanguage', this.currentLanguage)
-    }
-
-    // 加载按钮模式偏好设置
-    await this.loadButtonModePreference()
-
-    // 加载长按时间偏好设置
-    await this.loadLongPressThresholdPreference()
-
-    // 根据按钮模式设置自动检查延迟
-    this.vm.setAutoCheckDelay(this.useSingleButton ? 1500 : 600) // 单按钮模式1.5秒，双按钮模式600ms
-
-    // 从路由参数获取难度和字符列表（容错处理，避免无参数时崩溃）
+    // 获取路由参数
     try {
       const params: Record<string, Object> = (router.getParams?.() as Record<string, Object>) ?? {}
-      const diff = (params['difficulty'] as string) || ''
-      const characters = (params['characters'] as string[]) || []
+      this.mode = (params['mode'] as PracticeMode) || 'text_to_code'
+      this.isMixedMode = (params['mixedMode'] as boolean) || false
 
-      this.difficulty = diff && typeof diff === 'string' ? diff : 'easy'
+      // 初始化练习进度store
+      const context = getContext(this)
+      await this.practiceProgressStore.init(context)
+
+      // 初始化偏好设置
+      await this.initPreferences()
+      await this.loadButtonModePreference()
+      await this.loadLongPressThresholdPreference()
+
+      this.vm.setAutoCheckDelay(this.useSingleButton ? 1500 : 600)
 
       // 如果是收藏或错题本模式，使用指定的字符列表
-      if ((this.difficulty === 'favorites' || this.difficulty === 'mistakes') && characters && Array.isArray(characters)) {
-        this.vm.initWithCharacters(this.difficulty, characters)
+      const characters = (params['characters'] as string[]) || []
+      if (characters && Array.isArray(characters) && characters.length > 0) {
+        this.isCustomCharacterSet = true
+        const allCodes = [...MorseCodeData.englishAlphabet, ...MorseCodeData.numbers, ...MorseCodeData.punctuation]
+        this.allAvailableCodes = allCodes.filter(code => characters.includes(code.character))
       } else {
-        this.vm.init(this.difficulty as string)
+        this.isCustomCharacterSet = false
+        this.allAvailableCodes = [
+          ...MorseCodeData.englishAlphabet,
+          ...MorseCodeData.numbers,
+          ...MorseCodeData.punctuation
+        ]
       }
+
+      // 根据当前类别过滤字符
+      this.updateCurrentCategory()
+
+      this.displayCharacter = this.vm.getCurrentCharacter()
+      this.lastCharacterChangeId = this.vm.getCharacterChangeId()
+
+      // 为代码转文本和声音转文本模式生成候选字符
+      if (this.mode === 'code_to_text' || this.mode === 'sound_to_text') {
+        this.generateCandidates()
+        this.showCandidateGrid = true
+      }
+
+      // 如果是声音模式，延迟播放确保字符已正确加载
+      if (this.mode === 'sound_to_text') {
+        setTimeout(() => {
+          console.log(`[PracticePage] Initial play for character: ${this.vm.getCurrentCharacter()}, morse: ${this.vm.getCurrentMorse()}`)
+          this.playMorse()
+        }, 800)
+      }
+
+      this.startAnimationCheck()
     } catch (error) {
-      console.error(`[PracticePage] Error in route params:`, error)
-      this.difficulty = 'easy'
-      this.vm.init(this.difficulty as string)
+      console.error('[PracticePage] Error in aboutToAppear:', error)
     }
-    this.displayCharacter = this.vm.getCurrentCharacter() // 初始化显示字符
-    this.lastCharacterChangeId = this.vm.getCharacterChangeId()
-    this.startAnimationCheck()
-  }
-
-  // 获取当前系统语言
-  private getCurrentLanguage(): string {
-    try {
-      const currentLocale = i18n.System.getSystemLocale()
-      // 将系统locale转换为我们的语言代码格式
-      if (currentLocale.startsWith('zh')) {
-        return 'zh-CN'
-      } else if (currentLocale.startsWith('en')) {
-        return 'en-US'
-      }
-      return 'zh-CN' // 默认中文
-    } catch (error) {
-      console.error('[PracticePage] Failed to get current language:', error)
-      return 'zh-CN' // 默认中文
-    }
-  }
-
-  // 获取系统资源字符串
-  private async getStringResource(key: string): Promise<string> {
-    try {
-      if (this.resourceMgr) {
-        // 使用资源ID获取字符串
-        const resourceId = await this.resourceMgr.getStringByName(key)
-        return resourceId
-      }
-      return key
-    } catch (error) {
-      console.error(`[PracticePage] Failed to get string resource for key: ${key}`, error)
-      return key
-    }
-  }
-
-  // 初始化偏好设置存储
-  private async initPreferences(): Promise<void> {
-    try {
-      const context = getContext(this)
-      this.preferencesStore = await preferences.getPreferences(context, 'practice_preferences')
-      console.log('[PracticePage] Preferences store initialized')
-    } catch (error) {
-      console.error('[PracticePage] Failed to initialize preferences:', error)
-    }
-  }
-
-  // 加载按钮模式偏好设置
-  private async loadButtonModePreference(): Promise<void> {
-    try {
-      if (this.preferencesStore) {
-        const hasSetPreference = await this.preferencesStore.get('has_set_button_mode', false) as boolean
-        if (hasSetPreference) {
-          this.useSingleButton = await this.preferencesStore.get('use_single_button', false) as boolean
-          console.log(`[PracticePage] Loaded button mode preference: ${this.useSingleButton}`)
-        } else {
-          // 首次使用，显示选择对话框，不预选任何选项
-          this.selectedButtonMode = false
-          this.showButtonModeDialog = true
-          console.log('[PracticePage] First time user, showing button mode dialog')
-        }
-      }
-    } catch (error) {
-      console.error('[PracticePage] Failed to load button mode preference:', error)
-      this.selectedButtonMode = false
-      this.showButtonModeDialog = true
-    }
-  }
-
-  // 保存按钮模式偏好设置
-  private async saveButtonModePreference(useSingle: boolean): Promise<void> {
-    try {
-      if (this.preferencesStore) {
-        await this.preferencesStore.put('use_single_button', useSingle)
-        await this.preferencesStore.put('has_set_button_mode', true)
-        await this.preferencesStore.flush()
-        this.useSingleButton = useSingle
-        console.log(`[PracticePage] Saved button mode preference: ${useSingle}`)
-
-        // 更新自动检查延迟
-        this.vm.setAutoCheckDelay(this.useSingleButton ? 1500 : 600)
-
-        // 重新启动动画检查定时器以使用新的间隔
-        if (this.animationTimer) {
-          clearInterval(this.animationTimer)
-        }
-        this.startAnimationCheck()
-      }
-    } catch (error) {
-      console.error('[PracticePage] Failed to save button mode preference:', error)
-    }
-  }
-
-  // 加载长按时间偏好设置
-  private async loadLongPressThresholdPreference(): Promise<void> {
-    try {
-      if (this.preferencesStore) {
-        this.longPressThreshold = await this.preferencesStore.get('long_press_threshold', 300) as number
-        console.log(`[PracticePage] Loaded long press threshold: ${this.longPressThreshold}`)
-      }
-    } catch (error) {
-      console.error('[PracticePage] Failed to load long press threshold preference:', error)
-    }
-  }
-
-  // 保存长按时间偏好设置
-  private async saveLongPressThresholdPreference(threshold: number): Promise<void> {
-    try {
-      if (this.preferencesStore) {
-        await this.preferencesStore.put('long_press_threshold', threshold)
-        await this.preferencesStore.flush()
-        this.longPressThreshold = threshold
-        console.log(`[PracticePage] Saved long press threshold: ${threshold}`)
-      }
-    } catch (error) {
-      console.error('[PracticePage] Failed to save long press threshold preference:', error)
-    }
-  }
-
-  // 单按钮模式：处理按下
-  private handleSingleButtonPress(): void {
-    this.pressStartTime = Date.now()
-
-    // 设置长按定时器
-    this.longPressTimer = setTimeout(() => {
-      this.handleLongPress()
-    }, this.longPressThreshold)
-  }
-
-  // 单按钮模式：处理释放
-  private async handleSingleButtonRelease(): Promise<void> {
-    if (this.longPressTimer) {
-      clearTimeout(this.longPressTimer)
-      this.longPressTimer = null
-    }
-
-    const pressDuration = Date.now() - this.pressStartTime
-    if (pressDuration < this.longPressThreshold) {
-      // 短按：添加点
-      this.vm.addDot()
-      if (this.soundEnabled) {
-        await audioService.playDit()
-      }
-    }
-  }
-
-  // 单按钮模式：处理长按
-  private async handleLongPress(): Promise<void> {
-    // 长按：添加划
-    this.vm.addDash()
-    if (this.soundEnabled) {
-      await audioService.playDah()
-    }
-  }
-
-  // 获取格式化的标题显示
-  private getFormattedTitle(): Resource | string {
-    if (typeof this.difficulty === 'string') {
-      // 处理特殊模式
-      if (this.difficulty === 'favorites') {
-        return this.currentLanguage.startsWith('zh') ? '收藏' : 'Favorites'
-      }
-      if (this.difficulty === 'mistakes') {
-        return this.currentLanguage.startsWith('zh') ? '错题本' : 'Mistakes'
-      }
-
-      // 处理难度级别
-      if (this.difficulty === 'easy' || this.difficulty === '简单') {
-        return this.currentLanguage.startsWith('zh') ? '简单' : 'Easy'
-      }
-      if (this.difficulty === 'medium' || this.difficulty === '中等') {
-        return this.currentLanguage.startsWith('zh') ? '中等' : 'Medium'
-      }
-      if (this.difficulty === 'hard' || this.difficulty === '困难') {
-        return this.currentLanguage.startsWith('zh') ? '困难' : 'Hard'
-      }
-
-      // 如果是已经本地化的字符串，直接返回
-      return this.difficulty
-    }
-    return this.difficulty
   }
 
   aboutToDisappear(): void {
@@ -289,23 +125,427 @@ export struct PracticePage {
       clearInterval(this.progressTimer)
       this.progressTimer = null
     }
+    if (this.playProgressTimer) {
+      clearInterval(this.playProgressTimer)
+      this.playProgressTimer = null
+    }
   }
 
+  // 初始化偏好设置
+  private async initPreferences(): Promise<void> {
+    try {
+      const context = getContext(this)
+      this.preferencesStore = await preferences.getPreferences(context, 'practice_preferences')
+    } catch (error) {
+      console.error('[PracticePage] Failed to initialize preferences:', error)
+    }
+  }
 
-  // Removed onPageShow system bar re-application to avoid flicker
+  // 加载按钮模式偏好
+  private async loadButtonModePreference(): Promise<void> {
+    try {
+      if (this.preferencesStore) {
+        const hasSetPreference = await this.preferencesStore.get('has_set_button_mode', false) as boolean
+        if (hasSetPreference) {
+          this.useSingleButton = await this.preferencesStore.get('use_single_button', false) as boolean
+        } else {
+          this.selectedButtonMode = false
+          this.showButtonModeDialog = this.mode === 'text_to_code' // 只在文本→代码模式显示
+        }
+      }
+    } catch (error) {
+      console.error('[PracticePage] Failed to load button mode preference:', error)
+    }
+  }
 
-  // 开始检查字符变化的定时器
+  // 保存按钮模式偏好
+  private async saveButtonModePreference(useSingle: boolean): Promise<void> {
+    try {
+      if (this.preferencesStore) {
+        await this.preferencesStore.put('use_single_button', useSingle)
+        await this.preferencesStore.put('has_set_button_mode', true)
+        await this.preferencesStore.flush()
+        this.useSingleButton = useSingle
+        this.vm.setAutoCheckDelay(this.useSingleButton ? 1500 : 600)
+
+        if (this.animationTimer) {
+          clearInterval(this.animationTimer)
+        }
+        this.startAnimationCheck()
+      }
+    } catch (error) {
+      console.error('[PracticePage] Failed to save button mode preference:', error)
+    }
+  }
+
+  // 加载长按时间偏好
+  private async loadLongPressThresholdPreference(): Promise<void> {
+    try {
+      if (this.preferencesStore) {
+        this.longPressThreshold = await this.preferencesStore.get('long_press_threshold', 300) as number
+      }
+    } catch (error) {
+      console.error('[PracticePage] Failed to load long press threshold:', error)
+    }
+  }
+
+  // 保存长按时间偏好
+  private async saveLongPressThresholdPreference(threshold: number): Promise<void> {
+    try {
+      if (this.preferencesStore) {
+        await this.preferencesStore.put('long_press_threshold', threshold)
+        await this.preferencesStore.flush()
+        this.longPressThreshold = threshold
+      }
+    } catch (error) {
+      console.error('[PracticePage] Failed to save long press threshold:', error)
+    }
+  }
+
+  // 更新当前类别
+  private updateCurrentCategory(): void {
+    let filtered: MorseCode[] = []
+
+    if (this.category === 'letters') {
+      filtered = this.allAvailableCodes.filter(code =>
+        MorseCodeData.englishAlphabet.some(c => c.character === code.character))
+    } else if (this.category === 'numbers') {
+      filtered = this.allAvailableCodes.filter(code =>
+        MorseCodeData.numbers.some(c => c.character === code.character))
+    } else if (this.category === 'punctuation') {
+      filtered = this.allAvailableCodes.filter(code =>
+        MorseCodeData.punctuation.some(c => c.character === code.character))
+    }
+
+    // 如果当前类别没有字符
+    if (filtered.length === 0) {
+      console.log(`[PracticePage] No characters in category ${this.category}`)
+      // 尝试切换到有字符的类别
+      if (this.category !== 'letters') {
+        const letters = this.allAvailableCodes.filter(code =>
+          MorseCodeData.englishAlphabet.some(c => c.character === code.character))
+        if (letters.length > 0) {
+          this.category = 'letters'
+          filtered = letters
+        }
+      }
+    }
+
+    // 更新ViewModel的当前代码列表
+    if (filtered.length > 0) {
+      this.vm.setCurrentCodes(filtered)
+      console.log(`[PracticePage] Updated to category ${this.category} with ${filtered.length} characters`)
+    }
+  }
+
+  // 切换类别
+  private switchCategory(category: Category): void {
+    console.log(`[PracticePage] Switching from ${this.category} to ${category}`)
+    if (this.category === category) return
+
+    this.category = category
+    this.updateCurrentCategory()
+
+    // 更新显示字符
+    this.displayCharacter = this.vm.getCurrentCharacter()
+
+    if (this.mode === 'code_to_text' || this.mode === 'sound_to_text') {
+      // code_to_text 使用更快的过渡
+      const transitionDelay = this.mode === 'code_to_text' ? 200 : 400
+      const playDelay = this.mode === 'sound_to_text' ? 400 : 0
+
+      // 隐藏网格，然后显示新内容
+      this.showCandidateGrid = false
+      setTimeout(() => {
+        this.generateCandidates()
+        this.showCandidateGrid = true
+
+        if (this.mode === 'sound_to_text') {
+          setTimeout(() => {
+            console.log(`[PracticePage] Playing morse after category switch for: ${this.vm.getCurrentCharacter()}`)
+            this.playMorse()
+          }, playDelay)
+        }
+      }, transitionDelay)
+    }
+  }
+
+  // 生成候选字符
+  private generateCandidates(): void {
+    const currentChar = this.vm.getCurrentCharacter()
+    const allCodes = this.vm.getCurrentCodes()
+    const candidates: string[] = [currentChar]
+    const availableChars = allCodes.filter(code => code.character !== currentChar)
+
+    const count = Math.min(5, availableChars.length)
+    for (let i = 0; i < count; i++) {
+      const randomIndex = Math.floor(Math.random() * availableChars.length)
+      candidates.push(availableChars[randomIndex].character)
+      availableChars.splice(randomIndex, 1)
+    }
+
+    this.candidateChars = candidates.sort(() => Math.random() - 0.5)
+  }
+
+  // 播放摩斯码
+  private async playMorse(): Promise<void> {
+    if (!this.soundEnabled) return
+
+    // 先清除之前可能存在的定时器
+    if (this.playProgressTimer) {
+      clearInterval(this.playProgressTimer)
+      this.playProgressTimer = null
+    }
+
+    this.isPlayingSound = true
+    this.playProgress = 0
+
+    const morse = this.vm.getCurrentMorse().trim() // 去除空格
+    console.log(`[PracticePage] Playing morse: "${morse}" for character: ${this.vm.getCurrentCharacter()}`)
+
+    if (!morse || morse.length === 0) {
+      console.error('[PracticePage] Empty morse code, skipping playback')
+      this.isPlayingSound = false
+      return
+    }
+
+    const codes = morse.split('')
+
+    // 计算实际总时长：
+    // dit: playDit内部100ms + 外部delay 100ms = 200ms
+    // dah: playDah内部300ms + 外部delay 100ms = 400ms
+    // 符号间隔: 200ms
+    let totalDuration = 0
+    for (let i = 0; i < codes.length; i++) {
+      if (codes[i] === '.') {
+        totalDuration += 200 // dit 总时长
+      } else if (codes[i] === '-') {
+        totalDuration += 400 // dah 总时长
+      }
+      // 符号间隔（最后一个符号后不需要间隔）
+      if (i < codes.length - 1) {
+        totalDuration += 200
+      }
+    }
+
+    console.log(`[PracticePage] Total duration calculated: ${totalDuration}ms`)
+    const startTime = Date.now()
+
+    // 启动平滑进度更新定时器
+    this.playProgressTimer = setInterval(() => {
+      const elapsed = Date.now() - startTime
+      this.playProgress = Math.min(elapsed / totalDuration, 1)
+    }, 16) // 60fps更新
+
+    for (let i = 0; i < codes.length; i++) {
+      const code = codes[i]
+      if (code === '.') {
+        await audioService.playDit()
+        await this.delay(100)
+      } else if (code === '-') {
+        await audioService.playDah()
+        await this.delay(100)
+      } else {
+        // 跳过非摩斯码字符
+        console.warn(`[PracticePage] Skipping invalid character in morse: "${code}"`)
+        continue
+      }
+
+      // 符号间隔
+      if (i < codes.length - 1) {
+        await this.delay(200)
+      }
+    }
+
+    // 清除定时器
+    if (this.playProgressTimer) {
+      clearInterval(this.playProgressTimer)
+      this.playProgressTimer = null
+    }
+
+    this.isPlayingSound = false
+    this.playProgress = 0
+    console.log(`[PracticePage] Playback finished, actual duration: ${Date.now() - startTime}ms`)
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms))
+  }
+
+  // 选择字符（代码/声音→文本模式）
+  private selectChar(char: string): void {
+    this.selectedChar = char
+    const isCorrect = char === this.vm.getCurrentCharacter()
+
+    // 记录到练习进度
+    if (isCorrect) {
+      this.practiceProgressStore.recordCorrect(this.vm.getCurrentCharacter())
+    } else {
+      this.practiceProgressStore.recordIncorrect(this.vm.getCurrentCharacter())
+      this.favoritesStore.addToMistakes(this.vm.getCurrentCharacter())
+    }
+
+    // 如果答错，显示提示但不自动进入下一题
+    if (!isCorrect) {
+      // 显示"再试一次"提示
+      try {
+        promptAction.showToast({
+          message: $r('app.string.try_again'),
+          duration: 2000,
+          bottom: '45%'
+        })
+      } catch (error) {
+        console.error('[PracticePage] Failed to show toast:', error)
+      }
+
+      // 在声音转文本模式显示提示文字1500ms
+      if (this.mode === 'sound_to_text') {
+        this.hintTextColor = '#FF0000'
+        this.showHintText = true
+
+        // 淡入动画
+        animateTo({
+          duration: 200,
+          curve: Curve.EaseOut
+        }, () => {
+          this.hintTextOpacity = 1
+        })
+
+        // 1500ms后淡出隐藏
+        setTimeout(() => {
+          animateTo({
+            duration: 200,
+            curve: Curve.EaseIn
+          }, () => {
+            this.hintTextOpacity = 0
+          })
+          // 动画结束后隐藏元素
+          setTimeout(() => {
+            this.showHintText = false
+          }, 200)
+        }, 1500)
+      }
+
+      // 清除选中状态，让用户可以继续选择（code_to_text 更快）
+      const clearDelay = this.mode === 'code_to_text' ? 500 : 500
+      setTimeout(() => {
+        this.selectedChar = ''
+      }, clearDelay)
+
+      return // 答错不进入下一题
+    }
+
+    // 答对了，执行自动进入下一题的逻辑
+    // code_to_text 模式使用更快的过渡
+    const hideDelay = this.mode === 'code_to_text' ? 500 : 500
+    const showDelay = this.mode === 'code_to_text' ? 1000 : 1800
+
+    // 逻辑1: 在声音转文本模式显示提示文字1500ms（同时开始）
+    if (this.mode === 'sound_to_text') {
+      this.hintTextColor = '#00FF00'
+      this.showHintText = true
+
+      // 淡入动画
+      animateTo({
+        duration: 200,
+        curve: Curve.EaseOut
+      }, () => {
+        this.hintTextOpacity = 1
+      })
+
+      // 1500ms后淡出隐藏
+      setTimeout(() => {
+        animateTo({
+          duration: 200,
+          curve: Curve.EaseIn
+        }, () => {
+          this.hintTextOpacity = 0
+        })
+        // 动画结束后隐藏元素
+        setTimeout(() => {
+          this.showHintText = false
+        }, 200)
+      }, 1500)
+    }
+
+    // 逻辑2: 隐藏选择网格（code_to_text=300ms, sound_to_text=500ms）
+    setTimeout(() => {
+      this.showCandidateGrid = false
+      this.selectedChar = ''
+
+      // 如果是混合模式，随机切换模式
+      if (this.isMixedMode) {
+        this.switchToRandomMode()
+      }
+    }, hideDelay)
+
+    // 逻辑3: 更新数据并显示新题目（code_to_text=600ms, sound_to_text=1800ms）
+    setTimeout(() => {
+      this.vm.generateNewCharacter()
+
+      if (this.mode === 'code_to_text' || this.mode === 'sound_to_text') {
+        this.generateCandidates()
+      }
+
+      this.showCandidateGrid = true
+    }, showDelay)
+  }
+
+  // 切换到随机模式（混合模式使用）
+  private switchToRandomMode(): void {
+    const modes: PracticeMode[] = ['text_to_code', 'code_to_text', 'sound_to_text']
+    const currentIndex = modes.indexOf(this.mode)
+    const availableModes = modes.filter((_, index) => index !== currentIndex)
+    const randomIndex = Math.floor(Math.random() * availableModes.length)
+    this.mode = availableModes[randomIndex]
+  }
+
+  // 单按钮模式处理
+  private handleSingleButtonPress(): void {
+    this.pressStartTime = Date.now()
+    this.longPressTimer = setTimeout(() => {
+      this.handleLongPress()
+    }, this.longPressThreshold)
+  }
+
+  private async handleSingleButtonRelease(): Promise<void> {
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer)
+      this.longPressTimer = null
+    }
+    const pressDuration = Date.now() - this.pressStartTime
+    if (pressDuration < this.longPressThreshold) {
+      this.vm.addDot()
+      if (this.soundEnabled) {
+        await audioService.playDit()
+      }
+    }
+  }
+
+  private async handleLongPress(): Promise<void> {
+    this.vm.addDash()
+    if (this.soundEnabled) {
+      await audioService.playDah()
+    }
+  }
+
+  // 动画检查
   private startAnimationCheck(): void {
-    // 根据按钮模式设置不同的检查间隔
-    const checkInterval = this.useSingleButton ? 200 : 100 // 单按钮模式200ms，双按钮模式100ms
-    console.log(`[PracticePage] Animation check interval set to: ${checkInterval}ms (single button: ${this.useSingleButton})`)
-
+    const checkInterval = this.useSingleButton ? 200 : 100
     this.animationTimer = setInterval(() => {
       const currentChangeId = this.vm.getCharacterChangeId()
       if (currentChangeId !== this.lastCharacterChangeId) {
         this.lastCharacterChangeId = currentChangeId
 
-        // 先隐藏当前字母（保持旧字符内容）
+        // 如果是混合模式且答对了题，切换模式
+        if (this.isMixedMode && this.mode === 'text_to_code' && this.vm.getIsCorrect()) {
+          this.switchToRandomMode()
+        }
+
+        // 重置提示文字状态
+        this.showHintText = false
+        this.hintTextOpacity = 0
+
         animateTo({
           duration: 50,
           curve: Curve.EaseIn
@@ -313,22 +553,32 @@ export struct PracticePage {
           this.circleScale = 0.0
         })
 
-        // 等待隐藏动画完成后更新字符内容并显示新字母
         setTimeout(() => {
-          this.displayCharacter = this.vm.getCurrentCharacter() // 更新显示字符
-          // 重置可视化进度
+          this.displayCharacter = this.vm.getCurrentCharacter()
           this.setProgressInstant(0)
 
-          // 立即开始显示新字母的动画
+          // 更新候选字符
+          if (this.mode === 'code_to_text' || this.mode === 'sound_to_text') {
+            this.generateCandidates()
+          }
+
+          // 如果切换到声音模式，延迟播放确保状态稳定
+          if (this.mode === 'sound_to_text') {
+            setTimeout(() => {
+              console.log(`[PracticePage] Playing morse after mode switch to sound_to_text for: ${this.vm.getCurrentCharacter()}`)
+              this.playMorse()
+            }, 500)
+          }
+
           animateTo({
             duration: 100,
             curve: Curve.EaseInOut
           }, () => {
             this.circleScale = 1.0
           })
-        }, 60) // 等待隐藏动画完成
+        }, 60)
       }
-      // 检查进度变化，平滑推进可视化进度
+
       const p = Math.max(0, Math.min(this.vm.getProgress(), 1))
       if (Math.abs(p - this.targetProgress) > 1e-6) {
         this.targetProgress = p
@@ -337,150 +587,14 @@ export struct PracticePage {
     }, checkInterval)
   }
 
-
-
-  @Builder
-  private TitleBar() {
-    Row() {
-      Button() {
-        Image($rawfile('ic_back.svg'))
-          .width(20)
-          .height(20)
-          .fillColor(Color.White)
-      }
-      .width(48)
-        .height(48)
-        .backgroundColor(Color.Transparent)
-        .borderRadius(24)
-        .onClick(() => {
-          router.back()
-        })
-        .hoverEffect(HoverEffect.Scale)
-        .focusable(true)
-
-      Text(this.getFormattedTitle())
-        .fontSize(20)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(Color.White)
-        .layoutWeight(1)
-        .textAlign(TextAlign.Center)
-
-      Button() {
-        Image($rawfile('ic_records.svg')).width(22).height(22).fillColor(Color.White)
-      }
-      .width(48)
-        .height(48)
-        .backgroundColor(Color.Transparent)
-        .borderRadius(24)
-        .onClick(() => {
-          // 每次打开前重新创建对话框控制器，确保语言状态是最新的
-          this.dialogController = new CustomDialogController({
-            builder: PracticeRecordDialog({
-              vm: this.vm
-            }),
-            autoCancel: true,
-            alignment: DialogAlignment.Center,
-            customStyle: false
-          })
-          this.dialogController.open()
-        })
-        .hoverEffect(HoverEffect.Scale)
-        .focusable(true)
-    }
-    .height(56)
-      .width('100%')
-      .padding({ left: 16, right: 16 })
-      .backgroundColor(Color.Black)
-  }
-
-  @Builder
-  private ProgressCircle() {
-    // 使用字符作为唯一key，确保每次字符变化时触发动画
-    Stack({ alignContent: Alignment.Center }) {
-      // 进度圆环：只有在用户出现错误后才显示
-      if (this.vm.getHasIncorrectAttempt()) {
-        // 背景圈（暗色）- 错误后立即显示
-        Circle({ width: 200, height: 200 })
-          .fill(Color.Transparent)
-          .strokeWidth(8)
-          .stroke('#333333')
-
-        // 进度弧 - 从顶部中心开始（12点方向）
-        Circle({ width: 200, height: 200 })
-          .fill(Color.Transparent)
-          .strokeWidth(8)
-          .stroke(this.vm.getProgress() >= 1.0 ? Color.Green : '#FFD700')
-          // 采用 [填充长度, 剩余长度]，绑定可视化进度，避免偏移截断
-          .strokeDashArray([this.getProgressVisualLength(), this.getCircumference() - this.getProgressVisualLength()])
-          // 起点设为周长的1/4，确保从12点方向开始
-          .strokeDashOffset(this.getCircumference() / 4)
-          .strokeLineCap(LineCapStyle.Round)
-          .opacity(this.progressVisual > 0 ? 1 : 0) // 进度为0时完全透明
-      }
-
-      // 内层圆圈（始终显示）- 添加颜色过渡动画
-      Column()
-        .width(180)
-        .height(180)
-        .backgroundColor(
-          this.vm.getShowResult() && !this.vm.getIsCorrect() ? Color.Red :
-            (this.vm.getIsCorrect() ? Color.Green : '#FFD700')
-        )
-        .borderRadius(90)
-        .animation({ duration: 300, curve: Curve.EaseInOut })
-
-      // 主字符 - 使用displayCharacter控制显示时序
-      Text(this.displayCharacter)
-        .fontSize(72)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(Color.Black)
-    }
-    .width(200)
-      .height(200)
-      .scale({ x: this.circleScale, y: this.circleScale }) // 使用状态控制的缩放
-  }
-
-  @Builder
-  private MorseDisplay() {
-    Column() {
-      if (this.vm.getShowHint() || this.vm.getShowCorrectAnswer()) {
-        Text(this.vm.getCurrentMorse().split('.').join('·'))
-          .fontSize(36)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(Color.White)
-          .fontFamily('monospace')
-          .letterSpacing(2)
-          .textAlign(TextAlign.Center)
-          .width('100%')
-      } else {
-        Image($rawfile('ic_eye.svg'))
-          .width(28)
-          .height(28)
-          .fillColor('#FFFFFF')
-      }
-    }
-    .height(60)
-      .width(150)
-      .backgroundColor('#1A1A1A')
-      .borderRadius(this.pillRadius)
-      .justifyContent(FlexAlign.Center)
-      .alignItems(HorizontalAlign.Center)
-      .onClick(() => {
-        this.vm.flashHint()
-      })
-  }
-
   private getCircumference(): number {
-    // 直径200，描边半径近似 90（扣除描边宽度的一半）；对视觉误差不敏感，直接按100半径计算即可
     return 2 * Math.PI * 100
   }
 
-  // 使用可视化进度计算当前弧长
   private getProgressVisualLength(): number {
     return this.getCircumference() * Math.max(0, Math.min(this.progressVisual, 1))
   }
 
-  // 立即设置可视化进度（不动画）
   private setProgressInstant(value: number) {
     if (this.progressTimer) {
       clearInterval(this.progressTimer)
@@ -490,7 +604,6 @@ export struct PracticePage {
     this.targetProgress = this.progressVisual
   }
 
-  // 自定义补间动画至目标进度
   private animateProgressTo(target: number, duration: number = 200) {
     if (this.progressTimer) {
       clearInterval(this.progressTimer)
@@ -519,6 +632,137 @@ export struct PracticePage {
   }
 
   @Builder
+  private TitleBar() {
+    Row() {
+      Button() {
+        Image($rawfile('ic_back.svg'))
+          .width(20)
+          .height(20)
+          .fillColor(Color.White)
+      }
+      .width(48)
+        .height(48)
+        .backgroundColor(Color.Transparent)
+        .borderRadius(24)
+        .onClick(() => {
+          router.back()
+        })
+
+      // 类别tabs放在中间
+      Row() {
+        Text($r('app.string.category_letters'))
+          .fontSize(14)
+          .fontColor(this.category === 'letters' ? '#FFD700' : '#999999')
+          .fontWeight(this.category === 'letters' ? FontWeight.Bold : FontWeight.Normal)
+          .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+          .onClick(() => this.switchCategory('letters'))
+
+        Text('|')
+          .fontSize(14)
+          .fontColor('#333333')
+          .margin({ left: 2, right: 2 })
+
+        Text($r('app.string.category_numbers'))
+          .fontSize(14)
+          .fontColor(this.category === 'numbers' ? '#FFD700' : '#999999')
+          .fontWeight(this.category === 'numbers' ? FontWeight.Bold : FontWeight.Normal)
+          .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+          .onClick(() => this.switchCategory('numbers'))
+
+        Text('|')
+          .fontSize(14)
+          .fontColor('#333333')
+          .margin({ left: 2, right: 2 })
+
+        Text($r('app.string.category_punctuation'))
+          .fontSize(14)
+          .fontColor(this.category === 'punctuation' ? '#FFD700' : '#999999')
+          .fontWeight(this.category === 'punctuation' ? FontWeight.Bold : FontWeight.Normal)
+          .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+          .onClick(() => this.switchCategory('punctuation'))
+      }
+      .layoutWeight(1)
+        .justifyContent(FlexAlign.Center)
+
+      // 右侧占位空间
+      Column().width(48).height(48)
+    }
+    .height(56)
+      .width('100%')
+      .padding({ left: 16, right: 16 })
+      .backgroundColor(Color.Black)
+  }
+
+  @Builder
+  private ProgressCircle() {
+    Stack({ alignContent: Alignment.Center }) {
+      if (this.vm.getHasIncorrectAttempt()) {
+        Circle({ width: 200, height: 200 })
+          .fill(Color.Transparent)
+          .strokeWidth(8)
+          .stroke('#333333')
+
+        Circle({ width: 200, height: 200 })
+          .fill(Color.Transparent)
+          .strokeWidth(8)
+          .stroke(this.vm.getProgress() >= 1.0 ? Color.Green : '#FFD700')
+          .strokeDashArray([this.getProgressVisualLength(), this.getCircumference() - this.getProgressVisualLength()])
+          .strokeDashOffset(this.getCircumference() / 4)
+          .strokeLineCap(LineCapStyle.Round)
+          .opacity(this.progressVisual > 0 ? 1 : 0)
+      }
+
+      Column()
+        .width(180)
+        .height(180)
+        .backgroundColor(
+          this.vm.getShowResult() && !this.vm.getIsCorrect() ? Color.Red :
+            (this.vm.getIsCorrect() ? Color.Green : '#FFD700')
+        )
+        .borderRadius(90)
+        .animation({ duration: 300, curve: Curve.EaseInOut })
+
+      Text(this.displayCharacter)
+        .fontSize(72)
+        .fontWeight(FontWeight.Bold)
+        .fontColor(Color.Black)
+    }
+    .width(200)
+      .height(200)
+      .scale({ x: this.circleScale, y: this.circleScale })
+  }
+
+  @Builder
+  private MorseDisplay() {
+    Column() {
+      if (this.vm.getShowHint() || this.vm.getShowCorrectAnswer()) {
+        Text(this.vm.getCurrentMorse().split('.').join('·'))
+          .fontSize(36)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(Color.White)
+          .fontFamily('monospace')
+          .letterSpacing(2)
+          .textAlign(TextAlign.Center)
+          .width('100%')
+      } else {
+        Image($rawfile('ic_eye.svg'))
+          .width(28)
+          .height(28)
+          .fillColor('#FFFFFF')
+      }
+    }
+    .height(60)
+      .width(250)
+      .backgroundColor('#1A1A1A')
+      .borderRadius(this.pillRadius)
+      .justifyContent(FlexAlign.Center)
+      .alignItems(HorizontalAlign.Center)
+      .onClick(() => {
+        this.vm.flashHint()
+      })
+  }
+
+  @Builder
   private InputDisplay() {
     Column() {
       Text(this.vm.getUserInput().split('.').join('·'))
@@ -534,7 +778,6 @@ export struct PracticePage {
         .textAlign(TextAlign.Center)
         .width('100%')
     }
-    // Fixed size to reserve space even when empty
     .width(400)
       .height(60)
       .justifyContent(FlexAlign.Center)
@@ -544,76 +787,53 @@ export struct PracticePage {
   @Builder
   private ToolButtons() {
     Row() {
-      // 收藏按钮
       Button() {
         Image($rawfile('ic_star.svg')).width(24).height(24)
           .fillColor(this.vm.getIsFavorite() ? '#FFD700' : Color.White)
       }
-        .onClick(async () => {
+      .onClick(() => {
         const currentChar = this.vm.getCurrentCharacter()
-        const wasFavorite = this.favoritesStore.isFavorite(currentChar)
         this.favoritesStore.toggleFavorite(currentChar)
-        // 同步VM中的收藏状态以驱动UI更新
         this.vm.toggleFavorite()
-
-        // 显示toast提示
-        const message = wasFavorite ? await this.getStringResource('favorite_removed') : await this.getStringResource('favorite_added')
-        promptAction.showToast({
-          message: message,
-          duration: 1500,
-          bottom: '80%'
-        })
       })
         .width(48).height(48)
         .backgroundColor(Color.Transparent)
         .borderRadius(24)
-        .hoverEffect(HoverEffect.Scale)
-        .focusable(true)
 
       Blank().width(40)
 
-      // 声音开关按钮
       Button() {
         Image($rawfile(this.soundEnabled ? 'ic_sound_on.svg' : 'ic_sound_off.svg'))
-          .width(24).height(24)
+          .width(24)
+          .height(24)
       }
-        .onClick(() => {
-        this.soundEnabled = !this.soundEnabled
-      })
-        .width(48).height(48)
+      .width(48)
+        .height(48)
         .backgroundColor(Color.Transparent)
         .borderRadius(24)
-        .hoverEffect(HoverEffect.Scale)
-        .focusable(true)
+        .onClick(() => {
+          this.soundEnabled = !this.soundEnabled
+        })
 
       Blank().width(40)
 
-      // 下一个按钮
       Button() {
         Image($rawfile('ic_skip.svg')).width(24).height(24).fillColor(Color.White)
       }
-        .onClick(() => this.vm.passCharacter())
+      .onClick(() => this.vm.passCharacter())
         .width(48).height(48)
         .backgroundColor(Color.Transparent)
         .borderRadius(24)
-        .hoverEffect(HoverEffect.Scale)
-        .focusable(true)
     }
     .justifyContent(FlexAlign.Center)
-      .padding({ left: 20, right: 20 })
   }
 
   @Builder
   private BottomKeys() {
     if (this.useSingleButton) {
-      // 单按钮模式
       Row() {
-        // 左侧占位框
-        Column()
-          .width(48)
-          .height(48)
+        Column().width(48).height(48)
 
-        // 主按钮
         Button() {
           Text('·')
             .fontSize(24)
@@ -632,7 +852,6 @@ export struct PracticePage {
             }
           })
 
-        // 右侧设置按钮
         Button() {
           Image($rawfile('ic_settings.svg'))
             .width(24)
@@ -643,11 +862,9 @@ export struct PracticePage {
           .backgroundColor(Color.Transparent)
           .onClick(() => {
             this.sliderValue = this.longPressThreshold
-            // 重置动画状态
             this.settingsDialogScale = 0.8
             this.settingsDialogOpacity = 0
             this.showSettingsDialog = true
-            // 开始出现动画
             setTimeout(() => {
               animateTo({
                 duration: 200,
@@ -658,17 +875,13 @@ export struct PracticePage {
               })
             }, 10)
           })
-          .hoverEffect(HoverEffect.Scale)
-          .focusable(true)
       }
       .width('100%')
         .justifyContent(FlexAlign.SpaceBetween)
         .alignItems(VerticalAlign.Center)
         .padding({ left: 20, right: 20, bottom: 12 })
     } else {
-      // 双按钮模式
       Row() {
-        // 点 (短音)
         Button() {
           Circle({ width: 20, height: 20 })
             .fill('#FFD700')
@@ -683,13 +896,10 @@ export struct PracticePage {
               await audioService.playDit()
             }
           })
-          .hoverEffect(HoverEffect.Scale)
-          .focusable(true)
           .layoutWeight(1)
 
         Blank().width(20)
 
-        // 划 (长音)
         Button() {
           Rect({ width: 40, height: 12 })
             .fill('#FFD700')
@@ -704,12 +914,230 @@ export struct PracticePage {
               await audioService.playDah()
             }
           })
-          .hoverEffect(HoverEffect.Scale)
-          .focusable(true)
           .layoutWeight(1)
       }
       .padding({ left: 20, right: 20, bottom: 12 })
     }
+  }
+
+  @Builder
+  private TextToCodeMode() {
+    Column() {
+      Blank().height(12)
+
+      Column() {
+        this.ProgressCircle()
+        Blank().height(40)
+        this.MorseDisplay()
+        Blank().height(12)
+        this.InputDisplay()
+      }
+      .width('100%')
+        .justifyContent(FlexAlign.Center)
+        .alignItems(HorizontalAlign.Center)
+
+      Blank().height(12)
+      this.ToolButtons()
+      Blank().height(16)
+      this.BottomKeys()
+    }
+    .width('100%')
+      .constraintSize({ maxWidth: 480 })
+      .padding({ left: 20, right: 20 })
+      .layoutWeight(1)
+      .justifyContent(FlexAlign.Center)
+  }
+
+  @Builder
+  private CodeToTextMode() {
+    Column() {
+      Blank().height(40)
+
+      // 显示摩斯码在圆角矩形框中
+      Column() {
+        if (this.showCandidateGrid) {
+          Text(this.vm.getCurrentMorse().split('.').join(' · ').split('-').join(' - '))
+            .fontSize(28)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(Color.Black)
+            .fontFamily('monospace')
+            .textAlign(TextAlign.Center)
+            .padding({ left: 30, right: 30, top: 20, bottom: 20 })
+        } else {
+          Text('')
+            .fontSize(28)
+            .padding({ left: 30, right: 30, top: 20, bottom: 20 })
+        }
+      }
+      .width('100%')
+        .constraintSize({ minHeight: 100 })
+        .backgroundColor('#FFD700')
+        .borderRadius(16)
+        .justifyContent(FlexAlign.Center)
+
+      Blank().layoutWeight(1)
+
+      // 候选字符网格
+      if (this.showCandidateGrid) {
+        Grid() {
+          ForEach(this.candidateChars, (char: string) => {
+            GridItem() {
+              Column() {
+                Text(char)
+                  .fontSize(24)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor(
+                    this.selectedChar === char && char === this.vm.getCurrentCharacter() ? Color.White :
+                      (this.selectedChar === char ? Color.White :
+                        (this.selectedChar && char === this.vm.getCurrentCharacter() ? Color.White : Color.White))
+                  )
+                  .textAlign(TextAlign.Center)
+              }
+            .width('100%')
+                .height('100%')
+                .justifyContent(FlexAlign.Center)
+                .backgroundColor(
+                  this.selectedChar === char && char === this.vm.getCurrentCharacter() ? Color.Green :
+                    (this.selectedChar === char ? Color.Red :
+                      (this.selectedChar && char === this.vm.getCurrentCharacter() ? Color.Green : '#1A1A1A'))
+                )
+                .borderRadius(12)
+                .border({ width: 1, color: '#333333' })
+                .onClick(() => {
+                  if (!this.selectedChar) {
+                    this.selectChar(char)
+                  }
+                })
+            }
+          })
+        }
+      .columnsTemplate('1fr 1fr 1fr')
+          .rowsTemplate('1fr 1fr')
+          .columnsGap(12)
+          .rowsGap(12)
+          .width('100%')
+          .height(280)
+          .margin({ bottom: 20 })
+      }
+    }
+    .width('100%')
+      .constraintSize({ maxWidth: 480 })
+      .padding({ left: 20, right: 20 })
+      .layoutWeight(1)
+  }
+
+  @Builder
+  private SoundToTextMode() {
+    Column() {
+      Blank().height(40)
+
+      // 播放按钮在圆圈中，带播放进度环
+      Column() {
+        Stack({ alignContent: Alignment.Center }) {
+          if (this.isPlayingSound) {
+            Circle({ width: 200, height: 200 })
+              .fill(Color.Transparent)
+              .strokeWidth(8)
+              .stroke('#333333')
+
+            Circle({ width: 200, height: 200 })
+              .fill(Color.Transparent)
+              .strokeWidth(8)
+              .stroke('#FFD700')
+              .strokeDashArray([2 * Math.PI * 100 * this.playProgress, 2 * Math.PI * 100 * (1 - this.playProgress)])
+              .strokeDashOffset(2 * Math.PI * 100 / 4)
+              .strokeLineCap(LineCapStyle.Round)
+          }
+
+          Column()
+            .width(180)
+            .height(180)
+            .backgroundColor('#FFD700')
+            .borderRadius(90)
+
+          Button() {
+            Image($rawfile('ic_play.svg'))
+              .width(72)
+              .height(72)
+              .fillColor(Color.Black)
+          }
+          .width(140)
+            .height(140)
+            .backgroundColor(Color.Transparent)
+            .borderRadius(70)
+            .onClick(() => this.playMorse())
+        }
+        .width(200)
+          .height(200)
+
+        // 提示文字
+        if (this.showHintText) {
+          Text(this.vm.getCurrentMorse().split('.').join(' · ').split('-').join(' - '))
+            .fontSize(20)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(this.hintTextColor)
+            .fontFamily('monospace')
+            .textAlign(TextAlign.Center)
+            .margin({ top: 12 })
+            .opacity(this.hintTextOpacity)
+        } else {
+          Text(' ')
+            .fontSize(20)
+            .margin({ top: 12 })
+        }
+      }
+      .justifyContent(FlexAlign.Center)
+        .alignItems(HorizontalAlign.Center)
+
+      Blank().layoutWeight(1)
+
+      // 候选字符网格
+      if (this.showCandidateGrid) {
+        Grid() {
+          ForEach(this.candidateChars, (char: string) => {
+            GridItem() {
+              Column() {
+                Text(char)
+                  .fontSize(24)
+                  .fontWeight(FontWeight.Bold)
+                  .fontColor(
+                    this.selectedChar === char && char === this.vm.getCurrentCharacter() ? Color.White :
+                      (this.selectedChar === char ? Color.White :
+                        (this.selectedChar && char === this.vm.getCurrentCharacter() ? Color.White : Color.White))
+                  )
+                  .textAlign(TextAlign.Center)
+              }
+              .width('100%')
+                .height('100%')
+                .justifyContent(FlexAlign.Center)
+                .backgroundColor(
+                  this.selectedChar === char && char === this.vm.getCurrentCharacter() ? Color.Green :
+                    (this.selectedChar === char ? Color.Red :
+                      (this.selectedChar && char === this.vm.getCurrentCharacter() ? Color.Green : '#1A1A1A'))
+                )
+                .borderRadius(12)
+                .border({ width: 1, color: '#333333' })
+                .onClick(() => {
+                  if (!this.selectedChar) {
+                    this.selectChar(char)
+                  }
+                })
+            }
+          })
+        }
+        .columnsTemplate('1fr 1fr 1fr')
+          .rowsTemplate('1fr 1fr')
+          .columnsGap(12)
+          .rowsGap(12)
+          .width('100%')
+          .height(280)
+          .margin({ bottom: 20 })
+      }
+    }
+    .width('100%')
+      .constraintSize({ maxWidth: 480 })
+      .padding({ left: 20, right: 20 })
+      .layoutWeight(1)
   }
 
   @Builder
@@ -722,7 +1150,7 @@ export struct PracticePage {
           .fontColor('#FFFFFF')
           .margin({ bottom: 4 })
 
-        Text(this.currentLanguage.startsWith('zh') ? '可在设置中更改此选项' : 'You can change this in settings')
+        Text('可在设置中更改此选项')
           .fontSize(12)
           .fontColor('#999999')
       }
@@ -730,7 +1158,6 @@ export struct PracticePage {
         .alignItems(HorizontalAlign.Start)
         .margin({ bottom: 20 })
 
-      // 双按钮模式选项
       Row() {
         Column() {
           Text($r('app.string.dual_button_mode'))
@@ -768,7 +1195,6 @@ export struct PracticePage {
           this.selectedButtonMode = false
         })
 
-      // 单按钮模式选项
       Row() {
         Column() {
           Text($r('app.string.single_button_mode'))
@@ -805,7 +1231,6 @@ export struct PracticePage {
           this.selectedButtonMode = true
         })
 
-      // 确认按钮
       Button($r('app.string.confirm'))
         .width('100%')
         .height(48)
@@ -846,7 +1271,6 @@ export struct PracticePage {
           .backgroundColor('rgba(128, 128, 128, 0.2)')
           .borderRadius(16)
           .onClick(() => {
-            // 开始退出动画
             animateTo({
               duration: 150,
               curve: Curve.EaseIn
@@ -854,7 +1278,6 @@ export struct PracticePage {
               this.settingsDialogScale = 0.8
               this.settingsDialogOpacity = 0
             })
-            // 动画完成后关闭对话框
             setTimeout(() => {
               this.showSettingsDialog = false
             }, 150)
@@ -863,10 +1286,9 @@ export struct PracticePage {
       .width('100%')
         .margin({ bottom: 20 })
 
-      // 长按时间设置
       Row() {
         Column() {
-          Text(this.currentLanguage.startsWith('zh') ? '长按时间' : 'Long Press Duration')
+          Text('长按时间')
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
             .fontColor('#FFFFFF')
@@ -884,7 +1306,6 @@ export struct PracticePage {
         .borderRadius(8)
         .margin({ bottom: 8 })
 
-      // 滑块控制
       Slider({
         value: this.sliderValue,
         min: 100,
@@ -899,12 +1320,10 @@ export struct PracticePage {
         .blockSize({ width: 20, height: 20 })
         .onChange((value: number) => {
           this.sliderValue = value
-          // 实时更新阈值，但不立即保存
           this.longPressThreshold = value
         })
         .margin({ bottom: 20 })
 
-      // 确定按钮
       Button($r('app.string.confirm'))
         .width('100%')
         .height(48)
@@ -913,9 +1332,7 @@ export struct PracticePage {
         .fontColor(Color.Black)
         .fontWeight(FontWeight.Bold)
         .onClick(async () => {
-          // 保存长按时间设置
           await this.saveLongPressThresholdPreference(this.sliderValue)
-          // 开始退出动画
           animateTo({
             duration: 150,
             curve: Curve.EaseIn
@@ -923,7 +1340,6 @@ export struct PracticePage {
             this.settingsDialogScale = 0.8
             this.settingsDialogOpacity = 0
           })
-          // 动画完成后关闭对话框
           setTimeout(() => {
             this.showSettingsDialog = false
           }, 150)
@@ -936,66 +1352,31 @@ export struct PracticePage {
       .constraintSize({ maxWidth: 400 })
   }
 
-
-
   build() {
     Stack() {
       Column() {
         this.TitleBar()
 
-        // 内容区域 - 响应式宽度，最大480vp
-        Column() {
-          Blank().height(12)
-
-          // 主要内容（对齐 LetterLessonPage 布局）
-          Column() {
-            // 字符与进度圆圈
-            this.ProgressCircle()
-
-            Blank().height(40)
-
-            // 目标电码/提示显示
-            this.MorseDisplay()
-
-            Blank().height(12)
-
-            // 用户输入显示
-            this.InputDisplay()
-          }
-          .width('100%')
-            .justifyContent(FlexAlign.Center)
-            .alignItems(HorizontalAlign.Center)
-
-          Blank().height(12)
-          this.ToolButtons()
-          Blank().height(16)
-          this.BottomKeys()
+        if (this.mode === 'text_to_code') {
+          this.TextToCodeMode()
+        } else if (this.mode === 'code_to_text') {
+          this.CodeToTextMode()
+        } else {
+          this.SoundToTextMode()
         }
-        .width('100%')
-          .constraintSize({ maxWidth: 480 })
-          .padding({ left: 20, right: 20 })
-          .layoutWeight(1)
-          .justifyContent(FlexAlign.Center)
-          .alignItems(HorizontalAlign.Center)
       }
       .width('100%')
         .height('100%')
         .backgroundColor(Color.Black)
         .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
 
-      // 按钮模式选择对话框
       if (this.showButtonModeDialog) {
         Stack() {
-          // 半透明背景
           Column()
             .width('100%')
             .height('100%')
             .backgroundColor('rgba(0, 0, 0, 0.5)')
-            .onClick(() => {
-              // 不允许点击背景关闭，用户必须选择
-            })
 
-          // 对话框内容 - 使用Column居中
           Column() {
             this.ButtonModeDialog()
           }
@@ -1008,16 +1389,13 @@ export struct PracticePage {
           .height('100%')
       }
 
-      // 设置对话框
       if (this.showSettingsDialog) {
         Stack() {
-          // 半透明背景
           Column()
             .width('100%')
             .height('100%')
             .backgroundColor('rgba(0, 0, 0, 0.5)')
 
-          // 对话框内容 - 使用Column居中
           Column() {
             this.SettingsDialog()
           }

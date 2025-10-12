@@ -10,27 +10,27 @@
     },
     {
       "name": "EntryAbility_label",
-      "value": "摩斯电码通"
+      "value": "摩斯電碼通"
     },
     {
       "name": "app_name",
-      "value": "摩斯电码通"
+      "value": "摩斯電碼通"
     },
     {
       "name": "learn",
-      "value": "学习"
+      "value": "學習"
     },
     {
       "name": "practice",
-      "value": "练习"
+      "value": "練習"
     },
     {
       "name": "translate",
-      "value": "翻译"
+      "value": "翻譯"
     },
     {
       "name": "code_table",
-      "value": "码表"
+      "value": "碼表"
     },
     {
       "name": "me",
@@ -38,23 +38,23 @@
     },
     {
       "name": "rating_feedback",
-      "value": "评分和反馈"
+      "value": "評分和反饋"
     },
     {
       "name": "share_app",
-      "value": "分享应用"
+      "value": "分享應用"
     },
     {
       "name": "other_apps",
-      "value": "其他应用"
+      "value": "其他應用"
     },
     {
       "name": "periodic_table_app",
-      "value": "掌上元素周期表"
+      "value": "掌上元素週期表"
     },
     {
       "name": "language",
-      "value": "语言"
+      "value": "語言"
     },
     {
       "name": "chinese",
@@ -70,27 +70,27 @@
     },
     {
       "name": "share_text",
-      "value": "推荐一款学习摩尔斯电码的应用：\n《摩斯电码通》📡\n\n• 从零学习摩尔斯电码\n• 跟读练习与听力训练\n• 文本与摩斯互相翻译\n\n立即下载：\nhttps://appgallery.huawei.com/app/detail?id=com.douhua.morsecode"
+      "value": "推薦一款學習摩爾斯電碼的應用：\n《摩斯電碼通》📡\n\n• 從零學習摩爾斯電碼\n• 跟讀練習與聽力訓練\n• 文本與摩斯互相翻譯\n\n立即下載：\nhttps://appgallery.huawei.com/app/detail?id=com.douhua.morsecode"
     },
     {
       "name": "share_copied",
-      "value": "分享内容已复制到剪贴板"
+      "value": "分享內容已複製到剪貼簿"
     },
     {
       "name": "copy_failed",
-      "value": "复制失败，请稍后重试"
+      "value": "複製失敗，請稍後重試"
     },
     {
       "name": "copy_success",
-      "value": "已复制到剪贴板"
+      "value": "已複製到剪貼簿"
     },
     {
       "name": "opened_via_browser",
-      "value": "已通过浏览器打开应用市场"
+      "value": "已通過瀏覽器打開應用市場"
     },
     {
       "name": "cannot_open_app_gallery",
-      "value": "无法打开应用市场，请稍后重试"
+      "value": "無法打開應用市場，請稍後重試"
     },
     {
       "name": "version",
@@ -98,19 +98,19 @@
     },
     {
       "name": "tagline",
-      "value": "让学习摩斯电码简单又有趣"
+      "value": "讓學習摩斯電碼簡單又有趣"
     },
     {
       "name": "copyright",
-      "value": "© 2025 重庆豆花科技有限公司"
+      "value": "© 2025 重慶豆花科技有限公司"
     },
     {
       "name": "language_selection_title",
-      "value": "选择语言"
+      "value": "選擇語言"
     },
     {
       "name": "language_selection_content",
-      "value": "选择您偏好的应用界面语言"
+      "value": "選擇您偏好的應用界面語言"
     },
     {
       "name": "cancel",
@@ -118,11 +118,11 @@
     },
     {
       "name": "confirm",
-      "value": "确认"
+      "value": "確認"
     },
     {
       "name": "language_switched_chinese",
-      "value": "语言已切换为中文"
+      "value": "語言已切換為中文"
     },
     {
       "name": "language_switched_english",
@@ -130,7 +130,7 @@
     },
     {
       "name": "language_switch_failed",
-      "value": "语言切换失败，请稍后重试"
+      "value": "語言切換失敗，請稍後重試"
     },
     {
       "name": "favorite_added",
@@ -142,27 +142,27 @@
     },
     {
       "name": "loading",
-      "value": "加载中..."
+      "value": "載入中..."
     },
     {
       "name": "your_score",
-      "value": "你的分数"
+      "value": "你的分數"
     },
     {
       "name": "congratulations_passed",
-      "value": "🎉 恭喜通过！"
+      "value": "🎉 恭喜通過！"
     },
     {
       "name": "keep_trying",
-      "value": "继续努力！"
+      "value": "繼續努力！"
     },
     {
       "name": "mastered_basics",
-      "value": "你已经掌握了摩斯电码的基础知识"
+      "value": "你已經掌握了摩斯電碼的基礎知識"
     },
     {
       "name": "need_100_points",
-      "value": "需要100分才能通过测试"
+      "value": "需要100分才能通過測試"
     },
     {
       "name": "back",
@@ -170,23 +170,23 @@
     },
     {
       "name": "next_lesson",
-      "value": "下一课"
+      "value": "下一課"
     },
     {
       "name": "retake_test",
-      "value": "重新测试"
+      "value": "重新測試"
     },
     {
       "name": "next_question",
-      "value": "下一题"
+      "value": "下一題"
     },
     {
       "name": "view_results",
-      "value": "查看结果"
+      "value": "查看結果"
     },
     {
       "name": "standard_chinese_telegraph_code",
-      "value": "标准中文电码"
+      "value": "標準中文電碼"
     },
     {
       "name": "searching",
@@ -194,19 +194,19 @@
     },
     {
       "name": "chinese_characters",
-      "value": "汉字"
+      "value": "漢字"
     },
     {
       "name": "telegraph_code",
-      "value": "电码"
+      "value": "電碼"
     },
     {
       "name": "load_more",
-      "value": "加载更多"
+      "value": "載入更多"
     },
     {
       "name": "no_data",
-      "value": "暂无数据"
+      "value": "暫無資料"
     },
     {
       "name": "congratulations_completed",
@@ -218,95 +218,95 @@
     },
     {
       "name": "practice_count",
-      "value": "练习次数"
+      "value": "練習次數"
     },
     {
       "name": "practice_again",
-      "value": "再次练习"
+      "value": "再次練習"
     },
     {
       "name": "settings",
-      "value": "设置"
+      "value": "設定"
     },
     {
       "name": "sound",
-      "value": "声音"
+      "value": "聲音"
     },
     {
       "name": "close",
-      "value": "确定"
+      "value": "確定"
     },
     {
       "name": "test_content",
-      "value": "测试内容"
+      "value": "測試內容"
     },
     {
       "name": "true_false_questions",
-      "value": "• 2道判断题（每题20分）"
+      "value": "• 2道判斷題（每題20分）"
     },
     {
       "name": "multiple_choice_questions",
-      "value": "• 3道选择题（每题20分）"
+      "value": "• 3道選擇題（每題20分）"
     },
     {
       "name": "need_100_to_pass",
-      "value": "• 需要100分才能通过"
+      "value": "• 需要100分才能通過"
     },
     {
       "name": "start_test",
-      "value": "开始测试"
+      "value": "開始測試"
     },
     {
       "name": "learning_completed",
-      "value": "完成学习"
+      "value": "完成學習"
     },
     {
       "name": "please_complete_previous_lessons",
-      "value": "请先完成前面的课程"
+      "value": "請先完成前面的課程"
     },
     {
       "name": "lesson_unlocked",
-      "value": "课程已解锁，可以开始学习"
+      "value": "課程已解鎖，可以開始學習"
     },
     {
       "name": "chinese_morse_code",
-      "value": "中文摩斯电码"
+      "value": "中文摩斯電碼"
     },
     {
       "name": "chinese_code_test",
-      "value": "中文摩斯电码测试"
+      "value": "中文摩斯電碼測試"
     },
     {
       "name": "morse_code_basics",
-      "value": "摩斯电码基础"
+      "value": "摩斯電碼基礎"
     },
     {
       "name": "basics_test",
-      "value": "基础测试"
+      "value": "基礎測試"
     },
     {
       "name": "alphabet_lesson",
-      "value": "字母课程"
+      "value": "字母課程"
     },
     {
       "name": "number_lesson",
-      "value": "数字课程"
+      "value": "數字課程"
     },
     {
       "name": "punctuation_lesson",
-      "value": "符号课程"
+      "value": "符號課程"
     },
     {
       "name": "word_lesson",
-      "value": "单词课程"
+      "value": "單詞課程"
     },
     {
       "name": "review_lesson",
-      "value": "复习课程"
+      "value": "複習課程"
     },
     {
       "name": "placeholder",
-      "value": "占位"
+      "value": "佔位"
     },
     {
       "name": "favorites",
@@ -314,23 +314,23 @@
     },
     {
       "name": "practice_favorites",
-      "value": "练习收藏的字母"
+      "value": "練習收藏的字母"
     },
     {
       "name": "favorites_empty",
-      "value": "收藏夹为空，先去练习一些字母吧！"
+      "value": "收藏夾為空，先去練習一些字母吧！"
     },
     {
       "name": "telegraph_code_description",
-      "value": "中文电码表（又称\"汉字电报码\"）是为了在电报传输时代能够准确、快速地发送和接收汉字而设计的编码系统。\\n\\n• 起源与标准化\\n最早由清末盛宣怀主持制定，后来经过民国与新中国的多次修订，形成了较为统一的国家标准。常见的版本是《标准电码本》，收录 7000 余个常用汉字。\\n\\n• 编码方式\\n每个汉字对应一个四位数字编码，范围一般是 0001–9999。\\n例如：\\n• \"中\" = 0029\\n• \"国\" = 0049\\n• \"电\" = 0168\\n• \"码\" = 0203\\n\\n• 使用方式\\n在电报传输中，发送方只需要发送对应的四位数字，接收方就能根据电码本查回原来的汉字。这样既能保证传输准确，也方便跨语言通信（数字是国际通用的）。\\n\\n本页面可按\"汉字\"或\"电码\"搜索，方便快速定位目标。"
+      "value": "中文電碼表（又稱\"漢字電報碼\"）是為了在電報傳輸時代能夠準確、快速地發送和接收漢字而設計的編碼系統。\\n\\n• 起源與標準化\\n最早由清末盛宣懷主持制定，後來經過民國與新中國的多次修訂，形成了較為統一的國家標準。常見的版本是《標準電碼本》，收錄 7000 餘個常用漢字。\\n\\n• 編碼方式\\n每個漢字對應一個四位數字編碼，範圍一般是 0001–9999。\\n例如：\\n• \"中\" = 0029\\n• \"國\" = 0049\\n• \"電\" = 0168\\n• \"碼\" = 0203\\n\\n• 使用方式\\n在電報傳輸中，發送方只需要發送對應的四位數字，接收方就能根據電碼本查回原來的漢字。這樣既能保證傳輸準確，也方便跨語言通信（數字是國際通用的）。\\n\\n本頁面可按\"漢字\"或\"電碼\"搜索，方便快速定位目標。"
     },
     {
       "name": "easy",
-      "value": "简单"
+      "value": "簡單"
     },
     {
       "name": "easy_desc",
-      "value": "仅字母"
+      "value": "僅字母"
     },
     {
       "name": "medium",
@@ -338,159 +338,159 @@
     },
     {
       "name": "medium_desc",
-      "value": "字母 + 数字"
+      "value": "字母 + 數字"
     },
     {
       "name": "hard",
-      "value": "困难"
+      "value": "困難"
     },
     {
       "name": "hard_desc",
-      "value": "所有字符"
+      "value": "所有字元"
     },
     {
       "name": "mistakes_empty",
-      "value": "错题本为空，还没有错题哦！"
+      "value": "錯題本為空，還沒有錯題哦！"
     },
     {
       "name": "mistakes",
-      "value": "错题本"
+      "value": "錯題本"
     },
     {
       "name": "mistakes_desc",
-      "value": "复习做错的字母"
+      "value": "複習做錯的字母"
     },
     {
       "name": "all_codes",
-      "value": "所有码"
+      "value": "所有碼"
     },
     {
       "name": "text_to_morse",
-      "value": "文本 → 电码"
+      "value": "文本 → 電碼"
     },
     {
       "name": "morse_to_text",
-      "value": "电码 → 文本"
+      "value": "電碼 → 文本"
     },
     {
       "name": "input_text_placeholder",
-      "value": "在此输入文本，如: Hello World"
+      "value": "在此輸入文本，如: Hello World"
     },
     {
       "name": "input_morse_placeholder",
-      "value": "在此输入电码，如: ··· --- ···"
+      "value": "在此輸入電碼，如: ··· --- ···"
     },
     {
       "name": "output_text_placeholder",
-      "value": "电码将在此显示"
+      "value": "電碼將在此顯示"
     },
     {
       "name": "output_morse_placeholder",
-      "value": "文本将在此显示，中文电码基于拼音转换"
+      "value": "文本將在此顯示，中文電碼基於拼音轉換"
     },
     {
       "name": "copied",
-      "value": "已复制到剪贴板"
+      "value": "已複製到剪貼簿"
     },
     {
       "name": "removed_from_mistakes",
-      "value": "已从错题本移除！"
+      "value": "已從錯題本移除！"
     },
     {
       "name": "practice_records",
-      "value": "练习记录"
+      "value": "練習記錄"
     },
     {
       "name": "practiced",
-      "value": "已练习"
+      "value": "已練習"
     },
     {
       "name": "total",
-      "value": "总计"
+      "value": "總計"
     },
     {
       "name": "lesson_1",
-      "value": "第 1 课"
+      "value": "第 1 課"
     },
     {
       "name": "lesson_2",
-      "value": "第 2 课"
+      "value": "第 2 課"
     },
     {
       "name": "lesson_3",
-      "value": "第 3 课"
+      "value": "第 3 課"
     },
     {
       "name": "lesson_4",
-      "value": "第 4 课"
+      "value": "第 4 課"
     },
     {
       "name": "lesson_5",
-      "value": "第 5 课"
+      "value": "第 5 課"
     },
     {
       "name": "lesson_6",
-      "value": "第 6 课"
+      "value": "第 6 課"
     },
     {
       "name": "lesson_7",
-      "value": "第 7 课"
+      "value": "第 7 課"
     },
     {
       "name": "lesson_8",
-      "value": "第 8 课"
+      "value": "第 8 課"
     },
     {
       "name": "lesson_9",
-      "value": "第 9 课"
+      "value": "第 9 課"
     },
     {
       "name": "lesson_10",
-      "value": "第 10 课"
+      "value": "第 10 課"
     },
     {
       "name": "lesson_11",
-      "value": "第 11 课"
+      "value": "第 11 課"
     },
     {
       "name": "lesson_12",
-      "value": "第 12 课"
+      "value": "第 12 課"
     },
     {
       "name": "lesson_13",
-      "value": "第 13 课"
+      "value": "第 13 課"
     },
     {
       "name": "lesson_14",
-      "value": "第 14 课"
+      "value": "第 14 課"
     },
     {
       "name": "lesson_15",
-      "value": "第 15 课"
+      "value": "第 15 課"
     },
     {
       "name": "lesson_16",
-      "value": "第 16 课"
+      "value": "第 16 課"
     },
     {
       "name": "lesson_17",
-      "value": "第 17 课"
+      "value": "第 17 課"
     },
     {
       "name": "lesson_18",
-      "value": "第 18 课"
+      "value": "第 18 課"
     },
     {
       "name": "lesson_19",
-      "value": "第 19 课"
+      "value": "第 19 課"
     },
     {
       "name": "lesson_20",
-      "value": "第 20 课"
+      "value": "第 20 課"
     },
     {
       "name": "lesson_21",
-      "value": "第 21 课"
+      "value": "第 21 課"
     },
     {
       "name": "alphabet_abc",
@@ -506,7 +506,7 @@
     },
     {
       "name": "alphabet_review_aj",
-      "value": "复习：A-J"
+      "value": "複習：A-J"
     },
     {
       "name": "alphabet_klmn",
@@ -526,7 +526,7 @@
     },
     {
       "name": "alphabet_review_kz",
-      "value": "复习：K-Z"
+      "value": "複習：K-Z"
     },
     {
       "name": "numbers_123",
@@ -542,7 +542,7 @@
     },
     {
       "name": "numbers_review",
-      "value": "复习：0-9"
+      "value": "複習：0-9"
     },
     {
       "name": "punctuation_basic",
@@ -554,31 +554,31 @@
     },
     {
       "name": "punctuation_review",
-      "value": "复习"
+      "value": "複習"
     },
     {
       "name": "words_3letter",
-      "value": "3字母单词"
+      "value": "3字母單詞"
     },
     {
       "name": "words_4letter",
-      "value": "4字母单词"
+      "value": "4字母單詞"
     },
     {
       "name": "words_5letter",
-      "value": "5字母单词"
+      "value": "5字母單詞"
     },
     {
       "name": "numbers",
-      "value": "数字"
+      "value": "數字"
     },
     {
       "name": "punctuation",
-      "value": "标点符号"
+      "value": "標點符號"
     },
     {
       "name": "morse_code_intro",
-      "value": "摩斯电码是一种以\"点（·）和划（-）\"为基本元素的字符编码系统。通过不同的点划组合来表示字母、数字和符号。"
+      "value": "摩斯電碼是一種以\"點（·）和劃（-）\"為基本元素的字元編碼系統。通過不同的點劃組合來表示字母、數字和符號。"
     },
     {
       "name": "next",
@@ -586,39 +586,39 @@
     },
     {
       "name": "correct",
-      "value": "正确"
+      "value": "正確"
     },
     {
       "name": "wrong",
-      "value": "错误"
+      "value": "錯誤"
     },
     {
       "name": "you_mastered_basics",
-      "value": "你已经掌握了摩斯电码的基础知识"
+      "value": "你已經掌握了摩斯電碼的基礎知識"
     },
     {
       "name": "test_your_mastery",
-      "value": "测试你对本课程的掌握程度"
+      "value": "測試你對本課程的掌握程度"
     },
     {
       "name": "q1_question",
-      "value": "摩斯电码是以\"点（·）和划（-）\"为基本元素的字符编码系统。"
+      "value": "摩斯電碼是以\"點（·）和劃（-）\"為基本元素的字元編碼系統。"
     },
     {
       "name": "q1_options",
-      "value": "正确,错误"
+      "value": "正確,錯誤"
     },
     {
       "name": "q2_question",
-      "value": "SOS信号的摩斯电码是 ··· --- ···，各字符之间需要保持正常的字符间隔。"
+      "value": "SOS信號的摩斯電碼是 ··· --- ···，各字元之間需要保持正常的字元間隔。"
     },
     {
       "name": "q2_options",
-      "value": "正确,错误"
+      "value": "正確,錯誤"
     },
     {
       "name": "q3_question",
-      "value": "摩斯电码的时序规则中，点、划、字符间隔的单位比例是："
+      "value": "摩斯電碼的時序規則中，點、劃、字元間隔的單位比例是："
     },
     {
       "name": "q3_options",
@@ -626,7 +626,7 @@
     },
     {
       "name": "q4_question",
-      "value": "摩斯电码是在哪个年代开发的？"
+      "value": "摩斯電碼是在哪個年代開發的？"
     },
     {
       "name": "q4_options",
@@ -634,31 +634,31 @@
     },
     {
       "name": "q5_question",
-      "value": "学习摩斯电码的建议顺序是："
+      "value": "學習摩斯電碼的建議順序是："
     },
     {
       "name": "q5_options",
-      "value": "数字 → 字母 → 符号,符号 → 字母 → 数字,字母 → 数字 → 符号,随机学习"
+      "value": "數字 → 字母 → 符號,符號 → 字母 → 數字,字母 → 數字 → 符號,隨機學習"
     },
     {
       "name": "cq1_question",
-      "value": "中文摩尔斯电码是专门为中文汉字设计的摩尔斯电码系统。"
+      "value": "中文摩爾斯電碼是專門為中文漢字設計的摩爾斯電碼系統。"
     },
     {
       "name": "cq1_options",
-      "value": "正确,错误"
+      "value": "正確,錯誤"
     },
     {
       "name": "cq2_question",
-      "value": "中文摩尔斯电码的编码长度通常比英文摩尔斯电码短。"
+      "value": "中文摩爾斯電碼的編碼長度通常比英文摩爾斯電碼短。"
     },
     {
       "name": "cq2_options",
-      "value": "正确,错误"
+      "value": "正確,錯誤"
     },
     {
       "name": "cq3_question",
-      "value": "中文摩尔斯电码是在哪个年代开始制定的？"
+      "value": "中文摩爾斯電碼是在哪個年代開始制定的？"
     },
     {
       "name": "cq3_options",
@@ -666,191 +666,191 @@
     },
     {
       "name": "cq4_question",
-      "value": "以下哪个不是中文摩尔斯电码的应用场景？"
+      "value": "以下哪個不是中文摩爾斯電碼的應用場景？"
     },
     {
       "name": "cq4_options",
-      "value": "军事通信,航空通信,网络聊天,航海通信"
+      "value": "軍事通訊,航空通訊,網路聊天,航海通訊"
     },
     {
       "name": "cq5_question",
-      "value": "学习中文摩尔斯电码的建议顺序是："
+      "value": "學習中文摩爾斯電碼的建議順序是："
     },
     {
       "name": "cq5_options",
-      "value": "从复杂汉字开始,从基础汉字开始,随机学习,从标点符号开始"
+      "value": "從複雜漢字開始,從基礎漢字開始,隨機學習,從標點符號開始"
     },
     {
       "name": "exp1_title",
-      "value": "摩斯电码基本元素"
+      "value": "摩斯電碼基本元素"
     },
     {
       "name": "exp1_content",
-      "value": "• 摩斯电码以\"点（·）和划（-）\"为基本元素\n• 通过不同的点划组合表示字母、数字和符号\n• 这是所有摩斯电码的基础，必须熟练掌握"
+      "value": "• 摩斯電碼以\"點（·）和劃（-）\"為基本元素\n• 通過不同的點劃組合表示字母、數字和符號\n• 這是所有摩斯電碼的基礎，必須熟練掌握"
     },
     {
       "name": "exp2_title",
-      "value": "SOS信号的特殊性"
+      "value": "SOS信號的特殊性"
     },
     {
       "name": "exp2_content",
-      "value": "• SOS是紧急求救信号，需要快速识别\n• 紧凑发送：三个字符（··· --- ···）是紧凑发送的，没有正常的字符间隔\n• 标准间隔规则：正常情况下，摩斯电码字符之间应该有3个单位的间隔\n• SOS例外：但SOS作为紧急信号，会忽略这个规则，紧凑发送以提高识别速度"
+      "value": "• SOS是緊急求救信號，需要快速識別\n• 緊湊發送：三個字元（··· --- ···）是緊湊發送的，沒有正常的字元間隔\n• 標準間隔規則：正常情況下，摩斯電碼字元之間應該有3個單位的間隔\n• SOS例外：但SOS作為緊急信號，會忽略這個規則，緊湊發送以提高識別速度"
     },
     {
       "name": "exp3_title",
-      "value": "时序规则的重要性"
+      "value": "時序規則的重要性"
     },
     {
       "name": "exp3_content",
-      "value": "• 1:3:7比例是摩斯电码的核心规则\n• 点=1单位，划=3单位，字符间隔=3单位，单词间隔=7单位\n• 这个精确的时序确保了信息传输的准确性和可读性"
+      "value": "• 1:3:7比例是摩斯電碼的核心規則\n• 點=1單位，劃=3單位，字元間隔=3單位，單詞間隔=7單位\n• 這個精確的時序確保了資訊傳輸的準確性和可讀性"
     },
     {
       "name": "exp4_title",
-      "value": "历史背景"
+      "value": "歷史背景"
     },
     {
       "name": "exp4_content",
-      "value": "• 塞缪尔·摩斯与阿尔弗雷德·韦尔在1830-1840 年代合作开发\n• 最初用于电报系统，后来演化为国际摩斯电码\n• 成为全球标准的无线电通信编码系统"
+      "value": "• 塞繆爾·摩斯與阿爾弗雷德·韋爾在1830-1840 年代合作開發\n• 最初用於電報系統，後來演化為國際摩斯電碼\n• 成為全球標準的無線電通訊編碼系統"
     },
     {
       "name": "exp5_title",
-      "value": "学习策略"
+      "value": "學習策略"
     },
     {
       "name": "exp5_content",
-      "value": "• 字母 → 数字 → 符号的学习顺序最科学\n• 先掌握基础字母，再学习数字和符号\n• 循序渐进，避免信息过载，提高学习效率"
+      "value": "• 字母 → 數字 → 符號的學習順序最科學\n• 先掌握基礎字母，再學習數字和符號\n• 循序漸進，避免資訊過載，提高學習效率"
     },
     {
       "name": "cexp1_title",
-      "value": "中文摩尔斯电码的定义"
+      "value": "中文摩爾斯電碼的定義"
     },
     {
       "name": "cexp1_content",
-      "value": "• 中文摩尔斯电码是专门为中文汉字设计的编码系统\n• 通过点（·）和划（-）的组合表示中文字符\n• 结合了传统摩尔斯电码原理和中文语言特点\n• 为中文通信提供了标准化的编码方案"
+      "value": "• 中文摩爾斯電碼是專門為中文漢字設計的編碼系統\n• 通過點（·）和劃（-）的組合表示中文字元\n• 結合了傳統摩爾斯電碼原理和中文語言特點\n• 為中文通訊提供了標準化的編碼方案"
     },
     {
       "name": "cexp2_title",
-      "value": "编码长度的特点"
+      "value": "編碼長度的特點"
     },
     {
       "name": "cexp2_content",
-      "value": "• 中文摩尔斯电码的编码通常比英文更长\n• 这是因为中文字符数量庞大，需要更多点划组合\n• 每个汉字都有唯一的摩尔斯电码表示\n• 编码长度增加是为了确保字符的唯一性"
+      "value": "• 中文摩爾斯電碼的編碼通常比英文更長\n• 這是因為中文字元數量龐大，需要更多點劃組合\n• 每個漢字都有唯一的摩爾斯電碼表示\n• 編碼長度增加是為了確保字元的唯一性"
     },
     {
       "name": "cexp3_title",
-      "value": "历史发展背景"
+      "value": "歷史發展背景"
     },
     {
       "name": "cexp3_content",
-      "value": "• 1920 年代：初步制定中文摩尔斯电码标准\n• 当时为了适应中文电报通信的需求\n• 国际电信联盟（ITU）参与制定\n• 经过多次优化形成现代标准"
+      "value": "• 1920 年代：初步制定中文摩爾斯電碼標準\n• 當時為了適應中文電報通訊的需求\n• 國際電信聯盟（ITU）參與制定\n• 經過多次優化形成現代標準"
     },
     {
       "name": "cexp4_title",
-      "value": "应用场景分析"
+      "value": "應用場景分析"
     },
     {
       "name": "cexp4_content",
-      "value": "• 军事通信：部队间的秘密通信\n• 航空通信：飞行员与地面控制塔通信\n• 航海通信：船舶间通信\n• 网络聊天不属于传统应用场景"
+      "value": "• 軍事通訊：部隊間的秘密通訊\n• 航空通訊：飛行員與地面控制塔通訊\n• 航海通訊：船舶間通訊\n• 網路聊天不屬於傳統應用場景"
     },
     {
       "name": "cexp5_title",
-      "value": "学习策略建议"
+      "value": "學習策略建議"
     },
     {
       "name": "cexp5_content",
-      "value": "• 从基础汉字开始学习最科学\n• 基础汉字使用频率高，容易记忆\n• 循序渐进，避免信息过载\n• 建立学习信心，提高学习效率"
+      "value": "• 從基礎漢字開始學習最科學\n• 基礎漢字使用頻率高，容易記憶\n• 循序漸進，避免資訊過載\n• 建立學習信心，提高學習效率"
     },
     {
       "name": "morsecode_app",
-      "value": "摩斯电码"
+      "value": "摩斯電碼"
     },
     {
       "name": "theme",
-      "value": "主题"
+      "value": "主題"
     },
     {
       "name": "theme_selection_title",
-      "value": "选择主题"
+      "value": "選擇主題"
     },
     {
       "name": "theme_default",
-      "value": "默认"
+      "value": "預設"
     },
     {
       "name": "theme_retro",
-      "value": "复古"
+      "value": "復古"
     },
     {
       "name": "font",
-      "value": "字体"
+      "value": "字型"
     },
     {
       "name": "font_selection_title",
-      "value": "选择字体"
+      "value": "選擇字型"
     },
     {
       "name": "font_default",
-      "value": "默认"
+      "value": "預設"
     },
     {
       "name": "font_digital",
-      "value": "数字"
+      "value": "數字"
     },
     {
       "name": "practice_input_mode",
-      "value": "练习输入模式"
+      "value": "練習輸入模式"
     },
     {
       "name": "select_practice_input_mode",
-      "value": "练习输入模式"
+      "value": "練習輸入模式"
     },
     {
       "name": "dual_button_mode",
-      "value": "双按钮"
+      "value": "雙按鈕"
     },
     {
       "name": "dual_button_mode_desc",
-      "value": "分别点击点和划按钮"
+      "value": "分別點擊點和劃按鈕"
     },
     {
       "name": "single_button_mode",
-      "value": "单按钮"
+      "value": "單按鈕"
     },
     {
       "name": "single_button_mode_desc",
-      "value": "短按输入点，长按输入划"
+      "value": "短按輸入點，長按輸入劃"
     },
     {
       "name": "short_press_dot",
-      "value": "短按：· (点)"
+      "value": "短按：· (點)"
     },
     {
       "name": "long_press_dash",
-      "value": "长按：— (划)"
+      "value": "長按：— (劃)"
     },
     {
       "name": "qq_group_number_copied",
-      "value": "QQ群号已复制"
+      "value": "QQ群號已複製"
     },
     {
       "name": "long_press_duration",
-      "value": "长按时间"
+      "value": "長按時間"
     },
     {
       "name": "can_change_in_settings",
-      "value": "可在设置中更改此选项"
+      "value": "可在設定中更改此選項"
     },
     {
       "name": "favorites_mixed_mode_desc",
-      "value": "混合3种模式练习"
+      "value": "混合3種模式練習"
     },
     {
       "name": "mistakes_mixed_mode_desc",
-      "value": "混合3种模式练习"
+      "value": "混合3種模式練習"
     },
     {
       "name": "camera_permission_reason",
-      "value": "需要相机权限来控制手电筒闪烁显示摩斯码"
+      "value": "需要相機權限來控制手電筒閃爍顯示摩斯碼"
     },
     {
       "name": "category_letters",
@@ -858,39 +858,39 @@
     },
     {
       "name": "category_numbers",
-      "value": "数字"
+      "value": "數字"
     },
     {
       "name": "category_punctuation",
-      "value": "符号"
+      "value": "符號"
     },
     {
       "name": "text_to_code_title",
-      "value": "文本 → 代码"
+      "value": "文本 → 代碼"
     },
     {
       "name": "text_to_code_desc",
-      "value": "看字符，输入摩斯码"
+      "value": "看字元，輸入摩斯碼"
     },
     {
       "name": "code_to_text_title",
-      "value": "代码 → 文本"
+      "value": "代碼 → 文本"
     },
     {
       "name": "code_to_text_desc",
-      "value": "看摩斯码，选择字符"
+      "value": "看摩斯碼，選擇字元"
     },
     {
       "name": "sound_to_text_title",
-      "value": "声音 → 文本"
+      "value": "聲音 → 文本"
     },
     {
       "name": "sound_to_text_desc",
-      "value": "听摩斯码，选择字符"
+      "value": "聽摩斯碼，選擇字元"
     },
     {
       "name": "try_again",
-      "value": "再试一次"
+      "value": "再試一次"
     }
   ]
 }

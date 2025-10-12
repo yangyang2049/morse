@@ -839,6 +839,58 @@
     {
       "name": "can_change_in_settings",
       "value": "You can change this in settings"
+    },
+    {
+      "name": "favorites_mixed_mode_desc",
+      "value": "Mixed 3 modes practice"
+    },
+    {
+      "name": "mistakes_mixed_mode_desc",
+      "value": "Mixed 3 modes practice"
+    },
+    {
+      "name": "camera_permission_reason",
+      "value": "Camera permission needed to control flashlight for Morse code display"
+    },
+    {
+      "name": "category_letters",
+      "value": "Letter"
+    },
+    {
+      "name": "category_numbers",
+      "value": "Number"
+    },
+    {
+      "name": "category_punctuation",
+      "value": "Punctuation"
+    },
+    {
+      "name": "text_to_code_title",
+      "value": "TEXT → CODE"
+    },
+    {
+      "name": "text_to_code_desc",
+      "value": "See character, input Morse code"
+    },
+    {
+      "name": "code_to_text_title",
+      "value": "CODE → TEXT"
+    },
+    {
+      "name": "code_to_text_desc",
+      "value": "See Morse code, select character"
+    },
+    {
+      "name": "sound_to_text_title",
+      "value": "SOUND → TEXT"
+    },
+    {
+      "name": "sound_to_text_desc",
+      "value": "Hear Morse code, select character"
+    },
+    {
+      "name": "try_again",
+      "value": "Try again"
     }
   ]
 }

@@ -4,6 +4,8 @@ import pasteboard from '@ohos.pasteboard'
 import { resourceManager, i18n } from '@kit.LocalizationKit'
 import { BusinessError } from '@kit.BasicServicesKit'
 import preferences from '@ohos.data.preferences'
+// 手电筒功能已移至翻译页面
+// import { flashlightService } from '../../services/FlashlightService'
 
 // 语言选项接口
 interface LanguageOption {
@@ -13,16 +15,21 @@ interface LanguageOption {
 
 // 支持的语言列表
 const SUPPORTED_LANGUAGES: LanguageOption[] = [
-  { code: 'zh-CN', nativeName: '中文' },
+  { code: 'zh-CN', nativeName: '简体中文' },
+  { code: 'zh-HK', nativeName: '繁體中文' },
   { code: 'en-US', nativeName: 'English' }
 ]
 
 @Component
 export struct MePage {
-  @State appVersion: string = '1.1.1'
+  @State appVersion: string = '1.2.0'
   @StorageLink('currentLanguage') currentLanguage: string = this.getInitialLanguage()
   @State useSingleButton: boolean = false // 是否使用单按钮模式
   @State showButtonModeDialog: boolean = false // 是否显示按钮模式选择对话框
+  // 手电筒相关状态已移除（功能已移至翻译页面）
+  // @State isFlashlightOn: boolean = false
+  // @State flashlightInitialized: boolean = false
+  // @State isPlayingSOS: boolean = false
   // 资源管理器
   private resourceMgr: resourceManager.ResourceManager | null = null
   private preferencesStore: preferences.Preferences | null = null
@@ -40,6 +47,8 @@ export struct MePage {
     // 加载按钮模式偏好设置
     await this.loadButtonModePreference()
 
+    // 手电筒服务初始化已移除（功能已移至翻译页面）
+
     this.loadAppInfo()
   }
 
@@ -50,18 +59,23 @@ export struct MePage {
       console.log(`[MePage] System locale: ${currentLocale}`)
       // 将系统locale转换为我们的语言代码格式
       if (currentLocale.startsWith('zh')) {
-        return 'zh-CN'
+        // 判断是繁体还是简体
+        if (currentLocale.includes('Hant') || currentLocale.includes('HK') || currentLocale.includes('TW') || currentLocale.includes('MO')) {
+          return 'zh-HK' // 繁体中文
+        }
+        return 'zh-CN' // 简体中文
       } else if (currentLocale.startsWith('en')) {
         return 'en-US'
       }
-      return 'zh-CN' // 默认中文
+      return 'zh-CN' // 默认简体中文
     } catch (error) {
       console.error('[MePage] Failed to get initial language:', error)
-      return 'zh-CN' // 默认中文
+      return 'zh-CN' // 默认简体中文
     }
   }
 
   aboutToDisappear() {
+    // 手电筒相关清理已移除（功能已移至翻译页面）
   }
 
   // 获取系统资源字符串
@@ -90,6 +104,8 @@ export struct MePage {
       let preferredLanguage = languageCode
       if (languageCode === 'zh-CN') {
         preferredLanguage = 'zh-Hans-CN' // 简体中文
+      } else if (languageCode === 'zh-HK') {
+        preferredLanguage = 'zh-Hant-HK' // 繁体中文（香港）
       } else if (languageCode === 'en-US') {
         preferredLanguage = 'en-Latn-US' // 美式英语
       }
@@ -122,19 +138,23 @@ export struct MePage {
       const currentLocale = i18n.System.getSystemLocale()
       // 将系统locale转换为我们的语言代码格式
       if (currentLocale.startsWith('zh')) {
-        return 'zh-CN'
+        // 判断是繁体还是简体
+        if (currentLocale.includes('Hant') || currentLocale.includes('HK') || currentLocale.includes('TW') || currentLocale.includes('MO')) {
+          return 'zh-HK' // 繁体中文
+        }
+        return 'zh-CN' // 简体中文
       } else if (currentLocale.startsWith('en')) {
         return 'en-US'
       }
-      return 'zh-CN' // 默认中文
+      return 'zh-CN' // 默认简体中文
     } catch (error) {
       console.error('[MePage] Failed to get current language:', error)
-      return 'zh-CN' // 默认中文
+      return 'zh-CN' // 默认简体中文
     }
   }
 
   private loadAppInfo() {
-    this.appVersion = '1.1.1'
+    this.appVersion = '1.2.0'
   }
 
   // 初始化偏好设置存储
@@ -178,8 +198,13 @@ export struct MePage {
   // 获取当前语言的显示名称
   private getCurrentLanguageDisplayName(): string {
     const language = SUPPORTED_LANGUAGES.find(lang => lang.code === this.currentLanguage)
-    return language ? language.nativeName : '中文'
+    return language ? language.nativeName : '简体中文'
   }
+
+  // 手电筒相关方法已移除（功能已移至翻译页面）
+  // private async initFlashlightService(): Promise<void> { ... }
+  // private async toggleFlashlight(): Promise<void> { ... }
+  // private async playSOS(): Promise<void> { ... }
 
   // 刷新语言状态 - 从AppStorage获取最新状态
 
@@ -638,6 +663,12 @@ export struct MePage {
       .focusable(true)
   }
 
+  // 手电筒测试UI已移除（功能已移至翻译页面）
+  /*
+  @Builder FlashlightTestItem() { ... }
+  @Builder SOSTestItem() { ... }
+  */
+
   @Builder OtherAppsSection() {
     // 其他应用部分
     Column() {
@@ -737,6 +768,14 @@ export struct MePage {
                 // 练习输入模式设置
                 this.ButtonModeSettingsItem()
                 Divider().strokeWidth(1).color('#222222')
+
+                // 手电筒测试功能已移至翻译页面
+                // this.FlashlightTestItem()
+                // Divider().strokeWidth(1).color('#222222')
+
+                // SOS测试功能已移至翻译页面
+                // this.SOSTestItem()
+                // Divider().strokeWidth(1).color('#222222')
 
                 // 语言切换条目
                 this.LanguageSettingsItem()

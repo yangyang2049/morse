@@ -6,6 +6,7 @@ import { MePage } from './me/MePage'
 import { audioService } from '../services/AudioService'
 import { Context } from '@kit.AbilityKit'
 import deviceInfo from '@ohos.deviceInfo'
+import preferences from '@ohos.data.preferences'
 // Window system bar properties are managed globally in EntryAbility
 
 @Entry
@@ -20,15 +21,58 @@ import deviceInfo from '@ohos.deviceInfo'
 
   @State pageRebuildKey: number = 0
 
-  aboutToAppear() {
+  private preferencesStore: preferences.Preferences | null = null
+
+  async aboutToAppear() {
     // 检查是否为平板设备
     this.checkDeviceType()
+
+    // 初始化偏好设置并加载上次的标签页
+    await this.initPreferences()
+    await this.loadLastTabIndex()
 
     this.initAudioService()
 
     this.watchLanguageChanges()
   }
 
+
+  // 初始化偏好设置
+  private async initPreferences(): Promise<void> {
+    try {
+      const context = getContext(this)
+      this.preferencesStore = await preferences.getPreferences(context, 'app_preferences')
+      console.log('[INDEX] Preferences initialized successfully')
+    } catch (error) {
+      console.error('[INDEX] Failed to initialize preferences:', error)
+    }
+  }
+
+  // 加载上次使用的标签页索引
+  private async loadLastTabIndex(): Promise<void> {
+    try {
+      if (this.preferencesStore) {
+        const lastIndex = await this.preferencesStore.get('last_tab_index', 0) as number
+        this.currentIndex = lastIndex
+        console.log(`[INDEX] Loaded last tab index: ${lastIndex}`)
+      }
+    } catch (error) {
+      console.error('[INDEX] Failed to load last tab index:', error)
+    }
+  }
+
+  // 保存当前标签页索引
+  private async saveCurrentTabIndex(index: number): Promise<void> {
+    try {
+      if (this.preferencesStore) {
+        await this.preferencesStore.put('last_tab_index', index)
+        await this.preferencesStore.flush()
+        console.log(`[INDEX] Saved tab index: ${index}`)
+      }
+    } catch (error) {
+      console.error('[INDEX] Failed to save tab index:', error)
+    }
+  }
 
   // 检查设备类型
   private checkDeviceType() {
@@ -136,6 +180,8 @@ import deviceInfo from '@ohos.deviceInfo'
       .animationDuration(400)
       .onChange((index: number) => {
         this.currentIndex = index
+        // 保存当前标签页索引
+        this.saveCurrentTabIndex(index)
       })
       .width('100%')
       .height('100%')
