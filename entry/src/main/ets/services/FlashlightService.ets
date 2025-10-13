@@ -1,6 +1,6 @@
 import { BusinessError } from '@kit.BasicServicesKit';
 import { camera } from '@kit.CameraKit';
-import { common, abilityAccessCtrl, Permissions } from '@kit.AbilityKit';
+import { common } from '@kit.AbilityKit';
 
 /**
  * 手电筒服务
@@ -24,47 +24,6 @@ export class FlashlightService {
     }
 
     /**
-     * 检查并请求相机权限
-     * @param context 应用上下文
-     */
-    private async checkAndRequestPermission(context: common.BaseContext): Promise<boolean> {
-        const atManager = abilityAccessCtrl.createAtManager()
-        const permission: Permissions = 'ohos.permission.CAMERA'
-
-        try {
-            // 检查权限状态
-            const grantStatus = await atManager.checkAccessToken(
-                (context as common.UIAbilityContext).applicationInfo.accessTokenId,
-                permission
-            )
-
-            if (grantStatus === abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED) {
-                console.info('[FlashlightService] Camera permission already granted')
-                return true
-            }
-
-            // 请求权限
-            console.info('[FlashlightService] Requesting camera permission...')
-            const result = await atManager.requestPermissionsFromUser(
-                context as common.UIAbilityContext,
-                [permission]
-            )
-
-            if (result.authResults[0] === abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED) {
-                console.info('[FlashlightService] Camera permission granted by user')
-                return true
-            } else {
-                console.warn('[FlashlightService] Camera permission denied by user')
-                return false
-            }
-        } catch (error) {
-            const err = error as BusinessError
-            console.error(`[FlashlightService] Permission check/request failed, error code: ${err.code}, message: ${err.message}`)
-            return false
-        }
-    }
-
-    /**
      * 初始化手电筒服务
      * @param context 应用上下文
      */
@@ -73,13 +32,6 @@ export class FlashlightService {
 
         try {
             this.context = context
-
-            // 检查并请求相机权限
-            const hasPermission = await this.checkAndRequestPermission(context)
-            if (!hasPermission) {
-                throw new Error('Camera permission denied')
-            }
-
             this.cameraManager = camera.getCameraManager(context)
             this.isInitialized = true
             console.info('[FlashlightService] Initialization completed successfully')

@@ -27,9 +27,9 @@ Successfully added flashlight service and test functionality to the app.
 **技术实现 / Technical Implementation:**
 - 使用 HarmonyOS Camera Kit 的 `CameraManager.setTorchMode()` API
 - 单例模式设计，确保全局唯一实例
-- **运行时权限请求**：自动检查并请求相机权限
+- **无需运行时权限**：直接使用手电筒API，无需相机权限
 - 完整的错误处理和日志记录
-- 权限被拒绝时显示友好提示
+- 延迟初始化，仅在首次使用时加载
 
 ### 2. 设置页面测试按钮
 
@@ -52,18 +52,13 @@ Successfully added flashlight service and test functionality to the app.
 - 清晰的状态指示
 - 点击即可切换
 
-### 3. 权限配置
+### 3. 无需权限配置
 
-**修改的文件 / Modified Files:**
-- `entry/src/main/module.json5` - 添加相机权限请求
-- `entry/src/main/resources/base/element/string.json` - 简体中文权限说明
-- `entry/src/main/resources/en_US/element/string.json` - 英文权限说明
-- `entry/src/main/resources/zh_HK/element/string.json` - 繁体中文权限说明
-
-**权限说明 / Permission Reason:**
-- 简体中文：需要相机权限以使用手电筒功能
-- English: Camera permission is required to use the flashlight function
-- 繁體中文：需要相機權限以使用手電筒功能
+**✅ 无需任何权限声明**
+- 手电筒API (`setTorchMode`) 可以直接使用
+- 不需要在 `module.json5` 中声明权限
+- 不需要运行时权限请求
+- 用户使用时无需任何授权操作
 
 ## 使用方法 / Usage
 
@@ -112,43 +107,23 @@ If the flashlight feature works well, the next steps will be:
 
 ## 注意事项 / Notes
 
-1. **首次使用时，系统会自动弹出相机权限请求对话框**
-2. 如果用户拒绝权限，会显示友好提示信息
-3. 手电筒功能仅在支持闪光灯的设备上可用
-4. 页面离开时会自动关闭手电筒，避免电量浪费
-5. 所有操作都有完整的错误处理和用户提示
+1. **无需任何权限**：手电筒功能可以直接使用，无需用户授权
+2. 手电筒功能仅在支持闪光灯的设备上可用
+3. 页面离开时会自动关闭手电筒，避免电量浪费
+4. 所有操作都有完整的错误处理和用户提示
+5. 延迟初始化：只在首次点击手电筒按钮时才加载服务
 
-## 权限机制 / Permission Mechanism
+## 无权限设计 / Permission-Free Design
 
-### 权限声明 / Permission Declaration
-在 `module.json5` 中声明了相机权限：
-```json
-"requestPermissions": [
-  {
-    "name": "ohos.permission.CAMERA",
-    "reason": "$string:camera_permission_reason",
-    "usedScene": {
-      "abilities": ["EntryAbility"],
-      "when": "inuse"
-    }
-  }
-]
-```
+**🎉 优势 / Advantages:**
+- ✅ **无需权限声明**：不需要在 `module.json5` 中声明任何权限
+- ✅ **无需用户授权**：不会弹出任何权限请求对话框
+- ✅ **即开即用**：用户点击手电筒按钮即可直接使用
+- ✅ **更好的用户体验**：没有权限相关的中断和提示
+- ✅ **简化实现**：代码更简洁，无需权限检查逻辑
 
-### 运行时权限请求 / Runtime Permission Request
-**延迟初始化策略：**
-- 手电筒服务采用**延迟初始化**设计
-- **不在页面加载时初始化**，避免不必要的权限请求
-- **只在用户首次点击手电筒按钮时才初始化**
-
-`FlashlightService` 在首次使用时会：
-1. 检查相机权限状态
-2. 如果未授权，自动弹出系统权限对话框
-3. 等待用户授权
-4. 根据授权结果初始化或抛出错误
-
-**用户体验优化：**
-- ✅ 用户打开应用或切换到翻译页面时**不会**弹出权限请求
-- ✅ 只有在用户**主动点击手电筒按钮**时才请求权限
-- ✅ 一旦授权成功，后续使用无需再次请求
+**技术说明 / Technical Details:**
+- HarmonyOS 的 `CameraManager.setTorchMode()` API 可以直接控制手电筒
+- 该API属于系统级功能，不需要运行时权限
+- 只需要在初始化时获取 `CameraManager` 实例即可
 

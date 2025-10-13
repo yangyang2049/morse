@@ -219,32 +219,16 @@ export struct TranslatePage {
         console.error('[TranslatePage] Failed to init flashlight service:', error)
         this.flashlightInitialized = false
 
-        // 显示权限提示
-        const errorMsg = String(error)
-        if (errorMsg.includes('permission')) {
-          try {
-            promptAction.showToast({
-              message: this.currentLanguage.startsWith('zh') ?
-                '需要相机权限才能使用手电筒功能' :
-                'Camera permission required for flashlight',
-              duration: 3000,
-              bottom: '80%'
-            })
-          } catch (toastError) {
-            console.error('[TranslatePage] Failed to show permission toast:', toastError)
-          }
-        } else {
-          try {
-            promptAction.showToast({
-              message: this.currentLanguage.startsWith('zh') ?
-                '手电筒初始化失败' :
-                'Failed to initialize flashlight',
-              duration: 2000,
-              bottom: '80%'
-            })
-          } catch (toastError) {
-            console.error('[TranslatePage] Failed to show toast:', toastError)
-          }
+        try {
+          promptAction.showToast({
+            message: this.currentLanguage.startsWith('zh') ?
+              '手电筒初始化失败' :
+              'Failed to initialize flashlight',
+            duration: 2000,
+            bottom: '80%'
+          })
+        } catch (toastError) {
+          console.error('[TranslatePage] Failed to show toast:', toastError)
         }
         return
       }
@@ -315,19 +299,16 @@ export struct TranslatePage {
         console.error('[TranslatePage] Failed to init flashlight service:', error)
         this.flashlightInitialized = false
 
-        const errorMsg = String(error)
-        if (errorMsg.includes('permission')) {
-          try {
-            promptAction.showToast({
-              message: this.currentLanguage.startsWith('zh') ?
-                '需要相机权限才能使用手电筒功能' :
-                'Camera permission required for flashlight',
-              duration: 3000,
-              bottom: '80%'
-            })
-          } catch (toastError) {
-            console.error('[TranslatePage] Failed to show toast:', toastError)
-          }
+        try {
+          promptAction.showToast({
+            message: this.currentLanguage.startsWith('zh') ?
+              '手电筒初始化失败' :
+              'Failed to initialize flashlight',
+            duration: 2000,
+            bottom: '80%'
+          })
+        } catch (toastError) {
+          console.error('[TranslatePage] Failed to show toast:', toastError)
         }
         return
       }
