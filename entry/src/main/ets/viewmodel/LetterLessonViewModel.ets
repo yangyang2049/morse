@@ -164,7 +164,9 @@ export class LetterLessonViewModel {
       if (isCorrect) {
         if (isReviewLesson) {
           // 复习课程：只需要一次正确输入
-          this.completionCount.set(this.currentIndex, 1)
+          const nextCompletion = new Map(this.completionCount)
+          nextCompletion.set(this.currentIndex, 1)
+          this.completionCount = nextCompletion
           this.animateProgressTo(1, 320, () => {
             this.showCompletedColor = true
           })
@@ -175,7 +177,9 @@ export class LetterLessonViewModel {
           // 普通课程：需要多次练习
           const currentPracticeCount = this.practiceCount.get(this.currentIndex) || 0
           const newCount = currentPracticeCount + 1
-          this.practiceCount.set(this.currentIndex, newCount)
+          const nextPractice = new Map(this.practiceCount)
+          nextPractice.set(this.currentIndex, newCount)
+          this.practiceCount = nextPractice
 
           const targetProgress = Math.min(newCount / this.REQUIRED_PRACTICE_COUNT, 1)
           if (newCount >= this.REQUIRED_PRACTICE_COUNT) {
@@ -188,7 +192,9 @@ export class LetterLessonViewModel {
           }
 
           if (newCount >= this.REQUIRED_PRACTICE_COUNT) {
-            this.completionCount.set(this.currentIndex, 1)
+            const nextCompletion = new Map(this.completionCount)
+            nextCompletion.set(this.currentIndex, 1)
+            this.completionCount = nextCompletion
             setTimeout(() => {
               this.moveToNext()
             }, 1000)
@@ -304,9 +310,9 @@ export class LetterLessonViewModel {
     this.showMorseCode = true
     this.showCompletedColor = false
     this.progressVisual = 0
-    this.completionCount.clear()
-    this.practiceCount.clear()
-    this.hintRevealed.clear()
+    this.completionCount = new Map()
+    this.practiceCount = new Map()
+    this.hintRevealed = new Map()
   }
 
 
