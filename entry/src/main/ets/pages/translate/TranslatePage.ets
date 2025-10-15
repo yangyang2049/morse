@@ -40,7 +40,11 @@ export struct TranslatePage {
     const uiContext = this.getUIContext()
     const hostContext = uiContext.getHostContext()
     if (hostContext) {
-      PinyinService.load(hostContext)
+      try {
+        await PinyinService.load(hostContext)
+      } catch (error) {
+        console.error('[TranslatePage] Failed to load pinyin dictionary:', error)
+      }
 
       // 初始化音频服务
       try {

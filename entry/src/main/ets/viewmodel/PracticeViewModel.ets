@@ -208,6 +208,7 @@ export class PracticeViewModel {
       clearTimeout(this.checkTimer)
     }
     this.checkTimer = setTimeout(() => {
+      this.checkTimer = null
       this.checkAnswer()
     }, this.autoCheckDelay)
   }
@@ -230,7 +231,9 @@ export class PracticeViewModel {
       const requiredCount = this.hasIncorrectAttempt ? 2 : 1
 
       // 记录正确答案到练习进度
-      this.practiceProgressStore.recordCorrect(this.currentCharacter)
+      void this.practiceProgressStore.recordCorrect(this.currentCharacter).catch((error: Error) => {
+        console.error('[PracticeViewModel] Failed to record correct attempt:', error)
+      })
 
       // 增加连续正确次数（仅在错题本中时）
       if (this.favoritesStore.isMistake(this.currentCharacter)) {
@@ -262,9 +265,13 @@ export class PracticeViewModel {
         // Mark this character as practiced in this session
         if (this.currentIndex >= 0) {
           const currentCount = this.completionCount.get(this.currentIndex) || 0
-          this.completionCount.set(this.currentIndex, currentCount + 1)
-          // Record whether this completion had an incorrect attempt beforehand
-          this.hadIncorrectOnCompletion.set(this.currentIndex, this.hasIncorrectAttempt)
+          const nextCompletion = new Map(this.completionCount)
+          nextCompletion.set(this.currentIndex, currentCount + 1)
+          this.completionCount = nextCompletion
+
+          const nextIncorrectMap = new Map(this.hadIncorrectOnCompletion)
+          nextIncorrectMap.set(this.currentIndex, this.hasIncorrectAttempt)
+          this.hadIncorrectOnCompletion = nextIncorrectMap
         }
 
         setTimeout(() => {
@@ -280,7 +287,9 @@ export class PracticeViewModel {
       }
     } else {
       // 记录错误答案到练习进度
-      this.practiceProgressStore.recordIncorrect(this.currentCharacter)
+      void this.practiceProgressStore.recordIncorrect(this.currentCharacter).catch((error: Error) => {
+        console.error('[PracticeViewModel] Failed to record incorrect attempt:', error)
+      })
 
       // Wrong answer, show system toast at top of screen
       try {

@@ -65,10 +65,14 @@ export struct CustomDialog {
   private onConfirm?: () => void
   private onCancel?: () => void
   private onClose?: () => void
+  private pollTimer: number | null = null
 
   aboutToAppear() {
     // 监听全局状态变化
-    setInterval(() => {
+    if (this.pollTimer !== null) {
+      clearInterval(this.pollTimer)
+    }
+    this.pollTimer = setInterval(() => {
       if (DialogState.showDialog !== this.showDialog) {
         this.showDialog = DialogState.showDialog
         this.title = DialogState.title
@@ -83,6 +87,13 @@ export struct CustomDialog {
         this.onClose = DialogState.onClose
       }
     }, 100)
+  }
+
+  aboutToDisappear() {
+    if (this.pollTimer !== null) {
+      clearInterval(this.pollTimer)
+      this.pollTimer = null
+    }
   }
 
   private handleConfirm() {
