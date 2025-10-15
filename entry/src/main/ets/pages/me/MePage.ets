@@ -4,6 +4,8 @@ import pasteboard from '@ohos.pasteboard'
 import { resourceManager, i18n } from '@kit.LocalizationKit'
 import { BusinessError } from '@kit.BasicServicesKit'
 import preferences from '@ohos.data.preferences'
+import { systemShare } from '@kit.ShareKit'
+import { uniformTypeDescriptor } from '@kit.ArkData'
 // 手电筒功能已移至翻译页面
 // import { flashlightService } from '../../services/FlashlightService'
 
@@ -22,7 +24,7 @@ const SUPPORTED_LANGUAGES: LanguageOption[] = [
 
 @Component
 export struct MePage {
-  @State appVersion: string = '1.2.0'
+  @State appVersion: string = '1.2.1'
   @StorageLink('currentLanguage') currentLanguage: string = this.getInitialLanguage()
   @State useSingleButton: boolean = false // 是否使用单按钮模式
   @State showButtonModeDialog: boolean = false // 是否显示按钮模式选择对话框
@@ -154,7 +156,7 @@ export struct MePage {
   }
 
   private loadAppInfo() {
-    this.appVersion = '1.2.0'
+    this.appVersion = '1.2.1'
   }
 
   // 初始化偏好设置存储
@@ -208,37 +210,65 @@ export struct MePage {
 
   // 刷新语言状态 - 从AppStorage获取最新状态
 
-  // 分享应用
+  // 分享应用 - 使用 HarmonyOS 标准分享框架
   private async shareApp(): Promise<void> {
     try {
-      const shareText = await this.getStringResource('share_text')
+      // 获取分享文本
+      const isZh = this.currentLanguage.startsWith('zh')
+      const shareText = isZh ? (
+        '推荐一个超棒的摩尔斯电码学习应用！📟✨\n《摩斯电码通》\n\n📱 摩斯电码通\n🎓 从零开始学习摩尔斯电码\n🎮 趣味练习，边玩边学\n🔦 手电筒闪烁显示摩尔斯码\n🌙 支持深色模式，护眼舒适\n🌏 支持简繁英多语言\n\n立即下载体验：\nhttps://appgallery.huawei.com/app/detail?id=com.douhua.morsecode'
+      ) : (
+        'Highly recommend this great Morse code learning app! 📟✨\nMorse Code Trainer\n\n📱 Learn Morse Code from scratch\n🎓 Step-by-step lessons for beginners\n🎮 Fun practice modes\n🔦 Flashlight Morse code display\n🌙 Light and Dark themes\n🌏 Multi-language support\n\nTry it now:\nhttps://appgallery.huawei.com/app/detail?id=com.douhua.morsecode'
+      )
 
-      // 复制到剪贴板
-      const sysPB = pasteboard.getSystemPasteboard()
-      const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, shareText)
-      await sysPB.setPasteData(pasteData)
+      // 获取分享标题
+      const shareTitle = isZh ? '推荐摩斯电码通' : 'Recommend Morse Code Trainer'
 
-      // 显示成功提示
+      // 创建分享数据
+      const shareData: systemShare.SharedData = new systemShare.SharedData({
+        utd: uniformTypeDescriptor.UniformDataType.TEXT,
+        content: shareText,
+        title: shareTitle,
+        description: isZh ? '推荐摩尔斯电码学习应用' : 'Recommend Morse Code Learning App'
+      })
+
+      // 创建分享控制器
+      const controller: systemShare.ShareController = new systemShare.ShareController(shareData)
+      const context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext
+
+      // 显示分享面板
+      await controller.show(context, {
+        selectionMode: systemShare.SelectionMode.SINGLE,
+        previewMode: systemShare.SharePreviewMode.DEFAULT
+      })
+
+      console.info('[MePage] Share panel opened successfully')
+    } catch (error) {
+      const err = error as BusinessError
+      console.error(`[MePage] Failed to share app. code: ${err?.code}, message: ${err?.message}`)
+
+      // 如果分享失败，回退到复制到剪贴板
       try {
+        const isZh = this.currentLanguage.startsWith('zh')
+        const shareText = isZh ? (
+          '推荐一个超棒的摩尔斯电码学习应用！📟✨\n《摩斯电码通》\n\n📱 摩斯电码通\n🎓 从零开始学习摩尔斯电码\n🎮 趣味练习，边玩边学\n🔦 手电筒闪烁显示摩尔斯码\n🌙 支持深色模式，护眼舒适\n🌏 支持简繁英多语言\n\n立即下载体验：\nhttps://appgallery.huawei.com/app/detail?id=com.douhua.morsecode'
+        ) : (
+          'Highly recommend this great Morse code learning app! 📟✨\nMorse Code Trainer\n\n📱 Learn Morse Code from scratch\n🎓 Step-by-step lessons for beginners\n🎮 Fun practice modes\n🔦 Flashlight Morse code display\n🌙 Light and Dark themes\n🌏 Multi-language support\n\nTry it now:\nhttps://appgallery.huawei.com/app/detail?id=com.douhua.morsecode'
+        )
+
+        const sysPB = pasteboard.getSystemPasteboard()
+        const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, shareText)
+        await sysPB.setPasteData(pasteData)
+
+        // 显示复制成功提示
+        const message = isZh ? '分享内容已复制到剪贴板' : 'Share content copied to clipboard'
         promptAction.showToast({
-          message: this.currentLanguage.startsWith('zh') ? '分享内容已复制到剪贴板' : 'Share content copied to clipboard',
+          message: message,
           duration: 2000,
           bottom: '80%'
         })
       } catch (toastError) {
-        console.error('[MePage] Failed to show success toast:', toastError)
-      }
-    } catch (error) {
-      console.error('[MePage] Failed to share app:', error)
-      // 显示失败提示
-      try {
-        promptAction.showToast({
-          message: this.currentLanguage.startsWith('zh') ? '分享失败' : 'Share failed',
-          duration: 1500,
-          bottom: '80%'
-        })
-      } catch (toastError) {
-        console.error('[MePage] Failed to show error toast:', toastError)
+        console.error('[MePage] Toast error:', toastError)
       }
     }
   }
@@ -321,6 +351,52 @@ export struct MePage {
         action: 'ohos.want.action.viewData',
         entities: ['entity.system.browsable'],
         uri: 'https://appgallery.huawei.com/app/detail?id=com.douhua.yuansu'
+      }
+
+      context.startAbility(want).then(() => {
+        // 通过浏览器打开成功，无需toast提示
+      }).catch((error: Error) => {
+        console.error('通过浏览器打开应用市场失败:', error)
+        // 打开失败，无需toast提示
+      })
+    } catch (error) {
+      console.error('通过浏览器打开应用市场异常:', error)
+      // 异常情况，无需toast提示
+    }
+  }
+
+  // 打开全能计分器应用
+  private openIScoreApp(): void {
+    try {
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
+      const want: Want = {
+        bundleName: 'com.huawei.appmarket',
+        abilityName: 'com.huawei.appmarket.MainAbility',
+        parameters: {
+          appId: 'com.douhua.jifen'
+        }
+      }
+
+      context.startAbility(want).then(() => {
+        // 打开应用市场成功，无需toast提示
+      }).catch((error: Error) => {
+        console.error('打开应用市场失败:', error)
+        this.openIScoreAppByBrowser()
+      })
+    } catch (error) {
+      console.error('打开应用市场异常:', error)
+      this.openIScoreAppByBrowser()
+    }
+  }
+
+  // 通过浏览器打开全能计分器应用页面作为备选方案
+  private openIScoreAppByBrowser(): void {
+    try {
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
+      const want: Want = {
+        action: 'ohos.want.action.viewData',
+        entities: ['entity.system.browsable'],
+        uri: 'https://appgallery.huawei.com/app/detail?id=com.douhua.jifen'
       }
 
       context.startAbility(want).then(() => {
@@ -710,8 +786,46 @@ export struct MePage {
         .backgroundColor('#111111')
         .borderRadius(12)
         .border({ width: 1, color: '#222222' })
+        .margin({ bottom: 8 })
         .onClick(() => {
           this.openPeriodicTableApp()
+        })
+        .hoverEffect(HoverEffect.Scale)
+        .focusable(true)
+
+      // 全能计分器应用卡片
+      Row() {
+        Image($rawfile('appicon_jifen.png'))
+          .width(48)
+          .height(48)
+          .borderRadius(8)
+          .margin({ right: 16 })
+
+        Column() {
+          Text(this.currentLanguage.startsWith('zh') ? '全能计分器' : 'iScore')
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#FFFFFF')
+            .textAlign(TextAlign.Start)
+            .width('100%')
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+        }
+        .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
+
+        Image($rawfile('ic_arrow_right.svg'))
+          .width(16)
+          .height(16)
+          .fillColor('#666666')
+      }
+      .width('100%')
+        .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+        .backgroundColor('#111111')
+        .borderRadius(12)
+        .border({ width: 1, color: '#222222' })
+        .onClick(() => {
+          this.openIScoreApp()
         })
         .hoverEffect(HoverEffect.Scale)
         .focusable(true)
