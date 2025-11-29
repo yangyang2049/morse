@@ -65,7 +65,8 @@ morse/
 │   │   ├── services/          # 服务层
 │   │   │   ├── AudioService.ets       # 音频服务
 │   │   │   ├── FlashlightService.ets  # 闪光灯服务
-│   │   │   └── PinyinService.ets      # 拼音服务
+│   │   │   ├── PinyinService.ets      # 拼音服务
+│   │   │   └── VibratorService.ets    # 振动服务
 │   │   ├── store/             # 数据持久化
 │   │   │   ├── FavoritesStore.ets
 │   │   │   ├── PracticeProgressStore.ets
@@ -117,10 +118,13 @@ Tabs({ barPosition: this.isTablet ? BarPosition.Start : BarPosition.End })
 完整的国际化方案，支持简繁英三种语言
 
 ### 4. 音频播放
-使用 AVPlayer 实现摩斯密码音频播放
+使用 SoundPool 实现摩斯密码音频播放
 
 ### 5. 闪光灯控制
 调用系统相机闪光灯 API 实现摩斯密码的闪光展示
+
+### 6. 振动反馈
+使用 Vibrator API 提供触觉反馈，支持输入振动和答题反馈
 
 ## 🚀 快速开始
 
@@ -142,14 +146,25 @@ git clone https://gitee.com/shishizii/morse-code-hos.git
 
 4. 点击运行按钮
 
-## 📝 开发待办
+## 📝 版本历史
 
-- [x] 自动解锁课程
-- [ ] 振动反馈
-- [x] 文本到摩斯密码的闪光灯功能
-- [x] 声音播放
-- [ ] 更多设置选项
-- [x] 课程复习功能
+### v1.2.2 (2024-11-29)
+- ✅ 振动反馈功能
+  - 输入时振动（点短振100ms，划长振300ms）
+  - 选择模式答题反馈振动
+  - 声音播放同步振动
+  - 可在设置中开关
+- ✅ 单按钮输入模式完整实现
+- ✅ 复习模式提示
+- ✅ 数据持久化优化
+- ✅ 性能优化（音频预加载、列表渲染）
+- ✅ UI统一（对话框样式）
+
+### v1.2.1
+- ✅ 自动解锁课程
+- ✅ 文本到摩斯密码的闪光灯功能
+- ✅ 声音播放
+- ✅ 课程复习功能
 
 ## 🤝 交流与支持
 

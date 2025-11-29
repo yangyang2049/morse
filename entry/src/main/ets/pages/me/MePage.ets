@@ -25,7 +25,7 @@ const SUPPORTED_LANGUAGES: LanguageOption[] = [
 
 @Component
 export struct MePage {
-  @State appVersion: string = '1.2.1'
+  @State appVersion: string = '1.2.2'
   @StorageLink('currentLanguage') currentLanguage: string = this.getInitialLanguage()
   @State useSingleButton: boolean = false // 是否使用单按钮模式
   @State showButtonModeDialog: boolean = false // 是否显示按钮模式选择对话框
@@ -160,7 +160,7 @@ export struct MePage {
   }
 
   private loadAppInfo() {
-    this.appVersion = '1.2.1'
+    this.appVersion = '1.2.2'
   }
 
   // 初始化偏好设置存储

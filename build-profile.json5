@@ -28,17 +28,17 @@
     ],
     signingConfigs: [
       {
-        name: "default",
-        type: "HarmonyOS",
-        material: {
-          certpath: "/Users/yangyangshi/.ohos/config/default_morse_Sy15OF2MAvf3gS8046RSidVqmz-wG5nu5zL2br881ls=.cer",
-          keyAlias: "debugKey",
-          keyPassword: "0000001B54E1DAB557A674CE3839EBA3B38005893B0C8747D1D9643CD5C9D0BF9880F5AB11C9B5915C11C1",
-          profile: "/Users/yangyangshi/.ohos/config/default_morse_Sy15OF2MAvf3gS8046RSidVqmz-wG5nu5zL2br881ls=.p7b",
-          signAlg: "SHA256withECDSA",
-          storeFile: "/Users/yangyangshi/.ohos/config/default_morse_Sy15OF2MAvf3gS8046RSidVqmz-wG5nu5zL2br881ls=.p12",
-          storePassword: "0000001B56546A5752FDD609EF455F4303B7094114F102D5C19A26F518DAC5CF6142466BA60F09AA43F4AF",
-        },
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "/Users/yangyangshi/.ohos/config/default_morse_Sy15OF2MAvf3gS8046RSidVqmz-wG5nu5zL2br881ls=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001A137F304F49608151DEF45592FC8CD6282EA3A4197CFBFB1019906B5EEEB361BB64A381F60BC7",
+          "profile": "/Users/yangyangshi/.ohos/config/default_morse_Sy15OF2MAvf3gS8046RSidVqmz-wG5nu5zL2br881ls=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "/Users/yangyangshi/.ohos/config/default_morse_Sy15OF2MAvf3gS8046RSidVqmz-wG5nu5zL2br881ls=.p12",
+          "storePassword": "0000001AAC2E1737FCA6E1CCFA0EFE785C8A0B90BE865CE1B3DC85B8D7BE0A7106554A1ECD1806A772DF"
+        }
       },
       {
         name: "release",
@@ -50,9 +50,9 @@
           keyPassword: "00000038659160C862BB8AADA677F85CAB9FF75A246A3B39779AC8C23C26F0AD7E01ED75A68F73326A88C407996D04B70409E3C05AF9516021B4FD916C72153952A21A781D8DB6C3",
           signAlg: "SHA256withECDSA",
           profile: "/Users/yangyangshi/Documents/huawei_profile/morseRelease.p7b",
-          certpath: "/Users/yangyangshi/Documents/huawei_profile/douhua_release.cer",
-        },
-      },
+          certpath: "/Users/yangyangshi/Documents/huawei_profile/douhua_release.cer"
+        }
+      }
     ],
   },
   modules: [
