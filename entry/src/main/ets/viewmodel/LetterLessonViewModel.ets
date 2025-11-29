@@ -4,6 +4,8 @@ import { progressStore } from '../store/ProgressStoreSingleton'
 import { audioService } from '../services/AudioService'
 import { preferences } from '@kit.ArkData'
 import Context from '@ohos.app.ability.common'
+import { vibratorService } from '../services/VibratorService'
+import { promptAction } from '@kit.ArkUI'
 
 @Observed
 export class LetterLessonViewModel {
@@ -61,12 +63,16 @@ export class LetterLessonViewModel {
 
   // 输入操作
   addDot(): void {
+    // 输入时振动反馈：点短振
+    void vibratorService.vibrateDit()
     this.userInput = this.userInput + '.'
     this.showResult = false
     this.startAutoCheck()
   }
 
   addDash(): void {
+    // 输入时振动反馈：划长振
+    void vibratorService.vibrateDah()
     this.userInput = this.userInput + '-'
     this.showResult = false
     this.startAutoCheck()
@@ -147,11 +153,13 @@ export class LetterLessonViewModel {
     if (this.isReviewMode) {
       // 复习模式：隐藏提示，只需要一次正确输入
       if (isCorrect) {
+        // 课程模式：输入时已有振动，不需要额外答题振动
         // 正确输入，继续下一个
         setTimeout(() => {
           this.moveToNext()
         }, 1000)
       } else {
+        // 课程模式：输入时已有振动，不需要额外答题振动
         // 错误输入，清除输入重新尝试，但不显示提示
         this.showMorseCode = false // 确保隐藏提示
         setTimeout(() => {
@@ -162,6 +170,7 @@ export class LetterLessonViewModel {
       // 正常练习模式
       const isReviewLesson = this.isReviewLesson()
       if (isCorrect) {
+        // 课程模式：输入时已有振动，不需要额外答题振动
         if (isReviewLesson) {
           // 复习课程：只需要一次正确输入
           const nextCompletion = new Map(this.completionCount)
@@ -205,6 +214,7 @@ export class LetterLessonViewModel {
           }
         }
       } else {
+        // 课程模式：输入时已有振动，不需要额外答题振动
         setTimeout(() => {
           this.clearInput()
         }, 1500)
@@ -257,6 +267,13 @@ export class LetterLessonViewModel {
         this.showMorseCode = false // 隐藏提示
         this.clearInput()
         console.log('[LetterLessonViewModel] Entering review mode')
+        
+        // 显示复习模式提示
+        promptAction.showToast({
+          message: $r('app.string.entering_review_mode'),
+          duration: 2000,
+          bottom: '45%'
+        })
       }
     }
   }

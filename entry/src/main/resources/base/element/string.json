@@ -798,11 +798,11 @@
     },
     {
       "name": "practice_input_mode",
-      "value": "练习输入模式"
+      "value": "输入模式"
     },
     {
       "name": "select_practice_input_mode",
-      "value": "练习输入模式"
+      "value": "输入模式"
     },
     {
       "name": "dual_button_mode",
@@ -891,6 +891,18 @@
     {
       "name": "try_again",
       "value": "再试一次"
+    },
+    {
+      "name": "vibrate_permission_reason",
+      "value": "用于在练习和播放摩斯密码时提供触觉反馈"
+    },
+    {
+      "name": "vibration",
+      "value": "振动反馈"
+    },
+    {
+      "name": "entering_review_mode",
+      "value": "复习"
     }
   ]
 }

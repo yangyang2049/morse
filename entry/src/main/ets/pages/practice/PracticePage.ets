@@ -5,6 +5,7 @@ import { FavoritesStore } from '../../store/FavoritesStore'
 import { PracticeViewModel } from '../../viewmodel/PracticeViewModel'
 import { PracticeProgressStore } from '../../store/PracticeProgressStore'
 import preferences from '@ohos.data.preferences'
+import { vibratorService } from '../../services/VibratorService'
 
 // 练习模式类型
 type PracticeMode = 'text_to_code' | 'code_to_text' | 'sound_to_text'
@@ -68,10 +69,14 @@ export struct PracticePage {
       const context = getContext(this)
       await this.practiceProgressStore.init(context)
 
+      // 初始化收藏和错题store
+      await this.favoritesStore.init(context)
+
       // 初始化偏好设置
       await this.initPreferences()
       await this.loadButtonModePreference()
       await this.loadLongPressThresholdPreference()
+      await this.loadVibrationPreference()
 
       this.vm.setAutoCheckDelay(this.useSingleButton ? 1500 : 600)
 
@@ -199,6 +204,25 @@ export struct PracticePage {
       }
     } catch (error) {
       console.error('[PracticePage] Failed to save long press threshold:', error)
+    }
+  }
+
+  // 加载振动偏好设置
+  private async loadVibrationPreference(): Promise<void> {
+    try {
+      if (this.preferencesStore) {
+        const vibrationEnabled = await this.preferencesStore.get('vibration_enabled', true) as boolean
+        vibratorService.setEnabled(vibrationEnabled)
+        console.log(`[PracticePage] ===== Loaded vibration preference: ${vibrationEnabled} =====`)
+        console.log(`[PracticePage] ===== Vibrator service enabled: ${vibratorService.isVibrationEnabled()} =====`)
+      } else {
+        console.warn('[PracticePage] Preferences store not initialized, using default vibration: true')
+        vibratorService.setEnabled(true)
+      }
+    } catch (error) {
+      console.error('[PracticePage] Failed to load vibration preference:', error)
+      // 如果加载失败，确保振动默认开启
+      vibratorService.setEnabled(true)
     }
   }
 
@@ -340,9 +364,13 @@ export struct PracticePage {
     for (let i = 0; i < codes.length; i++) {
       const code = codes[i]
       if (code === '.') {
+        // 声音播放时同步振动：点短振
+        void vibratorService.vibrateDit()
         await audioService.playDit()
         await this.delay(100)
       } else if (code === '-') {
+        // 声音播放时同步振动：划长振
+        void vibratorService.vibrateDah()
         await audioService.playDah()
         await this.delay(100)
       } else {
@@ -377,12 +405,21 @@ export struct PracticePage {
     this.selectedChar = char
     const isCorrect = char === this.vm.getCurrentCharacter()
 
+    // 振动反馈
+    if (isCorrect) {
+      void vibratorService.vibrateSuccess()
+    } else {
+      void vibratorService.vibrateError()
+    }
+
     // 记录到练习进度
     if (isCorrect) {
       this.practiceProgressStore.recordCorrect(this.vm.getCurrentCharacter())
     } else {
       this.practiceProgressStore.recordIncorrect(this.vm.getCurrentCharacter())
-      this.favoritesStore.addToMistakes(this.vm.getCurrentCharacter())
+      void this.favoritesStore.addToMistakes(this.vm.getCurrentCharacter()).catch((error: Error) => {
+        console.error('[PracticePage] Failed to add to mistakes:', error)
+      })
     }
 
     // 如果答错，显示提示但不自动进入下一题
@@ -793,8 +830,11 @@ export struct PracticePage {
       }
       .onClick(() => {
         const currentChar = this.vm.getCurrentCharacter()
-        this.favoritesStore.toggleFavorite(currentChar)
-        this.vm.toggleFavorite()
+        void this.favoritesStore.toggleFavorite(currentChar).then(() => {
+          this.vm.toggleFavorite()
+        }).catch((error: Error) => {
+          console.error('[PracticePage] Failed to toggle favorite:', error)
+        })
       })
         .width(48).height(48)
         .backgroundColor(Color.Transparent)
@@ -891,7 +931,7 @@ export struct PracticePage {
           .borderRadius(this.pillRadius)
           .border({ width: 1, color: '#333333' })
           .onClick(async () => {
-            this.vm.addDot()
+            this.vm.addDot() // addDot 内部已包含振动反馈
             if (this.soundEnabled) {
               await audioService.playDit()
             }

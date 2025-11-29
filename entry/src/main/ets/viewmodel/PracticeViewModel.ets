@@ -3,6 +3,7 @@ import { promptAction } from '@kit.ArkUI'
 import { FavoritesStore } from '../store/FavoritesStore'
 import { PracticeProgressStore } from '../store/PracticeProgressStore'
 import { i18n } from '@kit.LocalizationKit'
+import { vibratorService } from '../services/VibratorService'
 // 使用$r()函数替代I18n
 
 @Observed
@@ -190,14 +191,16 @@ export class PracticeViewModel {
 
   // Add dot to user input
   addDot(): void {
-    // TODO: Add vibration feedback
+    // 输入时振动反馈：点短振
+    void vibratorService.vibrateDit()
     this.userInput += '.'
     this.scheduleAutoCheck()
   }
 
   // Add dash to user input
   addDash(): void {
-    // TODO: Add vibration feedback
+    // 输入时振动反馈：划长振
+    void vibratorService.vibrateDah()
     this.userInput += '-'
     this.scheduleAutoCheck()
   }
@@ -227,6 +230,7 @@ export class PracticeViewModel {
     this.showResult = true
 
     if (isCorrect) {
+      // 输入模式不需要答题振动（已有输入振动）
       this.correctCount++
       const requiredCount = this.hasIncorrectAttempt ? 2 : 1
 
@@ -237,27 +241,32 @@ export class PracticeViewModel {
 
       // 增加连续正确次数（仅在错题本中时）
       if (this.favoritesStore.isMistake(this.currentCharacter)) {
-        const consecutiveCount = this.favoritesStore.incrementConsecutiveCorrect(this.currentCharacter)
-        console.log(`Character ${this.currentCharacter} consecutive correct: ${consecutiveCount}`)
+        void this.favoritesStore.incrementConsecutiveCorrect(this.currentCharacter).then((consecutiveCount: number) => {
+          console.log(`Character ${this.currentCharacter} consecutive correct: ${consecutiveCount}`)
 
-        // 检查是否应该从错题本移除
-        if (this.favoritesStore.tryRemoveFromMistakes(this.currentCharacter)) {
-          console.log(`Character ${this.currentCharacter} removed from mistakes after 3 consecutive correct answers`)
-          // 显示移除提示
-          try {
-            const currentLocale = i18n.System.getSystemLocale()
-            const message = currentLocale.startsWith('zh')
-              ? `🎉 ${this.currentCharacter} 已从错题本移除！`
-              : `🎉 ${this.currentCharacter} Removed from mistakes!`
-            promptAction.showToast({
-              message: message,
-              duration: 2000,
-              bottom: '70%'
-            })
-          } catch (error) {
-            console.error('[PracticeViewModel] Failed to show toast:', error)
+          // 检查是否应该从错题本移除
+          return this.favoritesStore.tryRemoveFromMistakes(this.currentCharacter)
+        }).then((removed: boolean) => {
+          if (removed) {
+            console.log(`Character ${this.currentCharacter} removed from mistakes after 3 consecutive correct answers`)
+            // 显示移除提示
+            try {
+              const currentLocale = i18n.System.getSystemLocale()
+              const message = currentLocale.startsWith('zh')
+                ? `🎉 ${this.currentCharacter} 已从错题本移除！`
+                : `🎉 ${this.currentCharacter} Removed from mistakes!`
+              promptAction.showToast({
+                message: message,
+                duration: 2000,
+                bottom: '70%'
+              })
+            } catch (error) {
+              console.error('[PracticeViewModel] Failed to show toast:', error)
+            }
           }
-        }
+        }).catch((error: Error) => {
+          console.error('[PracticeViewModel] Failed to handle consecutive correct:', error)
+        })
       }
 
       if (this.correctCount >= requiredCount) {
@@ -286,6 +295,8 @@ export class PracticeViewModel {
         }, 1500)
       }
     } else {
+      // 输入模式不需要答题振动（已有输入振动）
+
       // 记录错误答案到练习进度
       void this.practiceProgressStore.recordIncorrect(this.currentCharacter).catch((error: Error) => {
         console.error('[PracticeViewModel] Failed to record incorrect attempt:', error)
@@ -305,10 +316,14 @@ export class PracticeViewModel {
       }
 
       // Add to mistakes if not already there
-      this.favoritesStore.addToMistakes(this.currentCharacter)
+      void this.favoritesStore.addToMistakes(this.currentCharacter).catch((error: Error) => {
+        console.error('[PracticeViewModel] Failed to add to mistakes:', error)
+      })
 
       // 重置连续正确次数（因为答错了）
-      this.favoritesStore.resetConsecutiveCorrect(this.currentCharacter)
+      void this.favoritesStore.resetConsecutiveCorrect(this.currentCharacter).catch((error: Error) => {
+        console.error('[PracticeViewModel] Failed to reset consecutive correct:', error)
+      })
 
       // Mark that user made incorrect attempt (if not already marked)
       if (!this.hasIncorrectAttempt) {

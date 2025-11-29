@@ -798,11 +798,11 @@
     },
     {
       "name": "practice_input_mode",
-      "value": "Practice Input Mode"
+      "value": "Input Mode"
     },
     {
       "name": "select_practice_input_mode",
-      "value": "Practice Input Mode"
+      "value": "Input Mode"
     },
     {
       "name": "dual_button_mode",
@@ -891,6 +891,18 @@
     {
       "name": "try_again",
       "value": "Try again"
+    },
+    {
+      "name": "vibrate_permission_reason",
+      "value": "Used to provide haptic feedback during practice and Morse code playback"
+    },
+    {
+      "name": "vibration",
+      "value": "Vibration"
+    },
+    {
+      "name": "entering_review_mode",
+      "value": "Review"
     }
   ]
 }

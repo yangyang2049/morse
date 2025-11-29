@@ -6,6 +6,7 @@ import { BusinessError } from '@kit.BasicServicesKit'
 import preferences from '@ohos.data.preferences'
 import { systemShare } from '@kit.ShareKit'
 import { uniformTypeDescriptor } from '@kit.ArkData'
+import { vibratorService } from '../../services/VibratorService'
 // 手电筒功能已移至翻译页面
 // import { flashlightService } from '../../services/FlashlightService'
 
@@ -28,6 +29,7 @@ export struct MePage {
   @StorageLink('currentLanguage') currentLanguage: string = this.getInitialLanguage()
   @State useSingleButton: boolean = false // 是否使用单按钮模式
   @State showButtonModeDialog: boolean = false // 是否显示按钮模式选择对话框
+  @State vibrationEnabled: boolean = true // 振动反馈开关
   // 手电筒相关状态已移除（功能已移至翻译页面）
   // @State isFlashlightOn: boolean = false
   // @State flashlightInitialized: boolean = false
@@ -48,6 +50,8 @@ export struct MePage {
     await this.initPreferences()
     // 加载按钮模式偏好设置
     await this.loadButtonModePreference()
+    // 加载振动偏好设置
+    await this.loadVibrationPreference()
 
     // 手电筒服务初始化已移除（功能已移至翻译页面）
 
@@ -194,6 +198,34 @@ export struct MePage {
       }
     } catch (error) {
       console.error('[MePage] Failed to save button mode preference:', error)
+    }
+  }
+
+  // 加载振动偏好设置
+  private async loadVibrationPreference(): Promise<void> {
+    try {
+      if (this.preferencesStore) {
+        this.vibrationEnabled = await this.preferencesStore.get('vibration_enabled', true) as boolean
+        vibratorService.setEnabled(this.vibrationEnabled)
+        console.log(`[MePage] Loaded vibration preference: ${this.vibrationEnabled}`)
+      }
+    } catch (error) {
+      console.error('[MePage] Failed to load vibration preference:', error)
+    }
+  }
+
+  // 保存振动偏好设置
+  private async saveVibrationPreference(enabled: boolean): Promise<void> {
+    try {
+      if (this.preferencesStore) {
+        await this.preferencesStore.put('vibration_enabled', enabled)
+        await this.preferencesStore.flush()
+        this.vibrationEnabled = enabled
+        vibratorService.setEnabled(enabled)
+        console.log(`[MePage] Saved vibration preference: ${enabled}`)
+      }
+    } catch (error) {
+      console.error('[MePage] Failed to save vibration preference:', error)
     }
   }
 
@@ -397,6 +429,52 @@ export struct MePage {
         action: 'ohos.want.action.viewData',
         entities: ['entity.system.browsable'],
         uri: 'https://appgallery.huawei.com/app/detail?id=com.douhua.jifen'
+      }
+
+      context.startAbility(want).then(() => {
+        // 通过浏览器打开成功，无需toast提示
+      }).catch((error: Error) => {
+        console.error('通过浏览器打开应用市场失败:', error)
+        // 打开失败，无需toast提示
+      })
+    } catch (error) {
+      console.error('通过浏览器打开应用市场异常:', error)
+      // 异常情况，无需toast提示
+    }
+  }
+
+  // 打开闪卡应用
+  private openFlashcardApp(): void {
+    try {
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
+      const want: Want = {
+        bundleName: 'com.huawei.appmarket',
+        abilityName: 'com.huawei.appmarket.MainAbility',
+        parameters: {
+          appId: 'com.douhua.flashcards'
+        }
+      }
+
+      context.startAbility(want).then(() => {
+        // 打开应用市场成功，无需toast提示
+      }).catch((error: Error) => {
+        console.error('打开应用市场失败:', error)
+        this.openFlashcardAppByBrowser()
+      })
+    } catch (error) {
+      console.error('打开应用市场异常:', error)
+      this.openFlashcardAppByBrowser()
+    }
+  }
+
+  // 通过浏览器打开闪卡应用页面作为备选方案
+  private openFlashcardAppByBrowser(): void {
+    try {
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
+      const want: Want = {
+        action: 'ohos.want.action.viewData',
+        entities: ['entity.system.browsable'],
+        uri: 'https://appgallery.huawei.com/app/detail?id=com.douhua.flashcards'
       }
 
       context.startAbility(want).then(() => {
@@ -739,6 +817,34 @@ export struct MePage {
       .focusable(true)
   }
 
+  @Builder VibrationSettingsItem() {
+    Row() {
+      Column() {
+        Text($r('app.string.vibration'))
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#FFFFFF')
+          .textAlign(TextAlign.Start)
+          .width('100%')
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
+
+      Toggle({ type: ToggleType.Switch, isOn: this.vibrationEnabled })
+        .selectedColor('#FFD700')
+        .onChange(async (isOn: boolean) => {
+          await this.saveVibrationPreference(isOn)
+        })
+    }
+    .width('100%')
+      .height(56)
+      .padding({ left: 16, right: 16 })
+      .hoverEffect(HoverEffect.Scale)
+      .focusable(true)
+  }
+
   // 手电筒测试UI已移除（功能已移至翻译页面）
   /*
   @Builder FlashlightTestItem() { ... }
@@ -824,8 +930,46 @@ export struct MePage {
         .backgroundColor('#111111')
         .borderRadius(12)
         .border({ width: 1, color: '#222222' })
+        .margin({ bottom: 8 })
         .onClick(() => {
           this.openIScoreApp()
+        })
+        .hoverEffect(HoverEffect.Scale)
+        .focusable(true)
+
+      // 闪卡应用卡片
+      Row() {
+        Image($rawfile('appicon_shanka.svg'))
+          .width(48)
+          .height(48)
+          .borderRadius(8)
+          .margin({ right: 16 })
+
+        Column() {
+          Text(this.currentLanguage.startsWith('zh') ? '闪卡' : 'Flashcard')
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#FFFFFF')
+            .textAlign(TextAlign.Start)
+            .width('100%')
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+        }
+        .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
+
+        Image($rawfile('ic_arrow_right.svg'))
+          .width(16)
+          .height(16)
+          .fillColor('#666666')
+      }
+      .width('100%')
+        .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+        .backgroundColor('#111111')
+        .borderRadius(12)
+        .border({ width: 1, color: '#222222' })
+        .onClick(() => {
+          this.openFlashcardApp()
         })
         .hoverEffect(HoverEffect.Scale)
         .focusable(true)
@@ -881,6 +1025,10 @@ export struct MePage {
               Column() {
                 // 练习输入模式设置
                 this.ButtonModeSettingsItem()
+                Divider().strokeWidth(1).color('#222222')
+
+                // 振动反馈设置
+                this.VibrationSettingsItem()
                 Divider().strokeWidth(1).color('#222222')
 
                 // 手电筒测试功能已移至翻译页面

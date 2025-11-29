@@ -2,6 +2,7 @@ import { BusinessError } from "@kit.BasicServicesKit";
 import { media } from "@kit.MediaKit";
 import { audio } from "@kit.AudioKit";
 import { Context } from '@kit.AbilityKit';
+import { vibratorService } from './VibratorService';
 
 export class AudioService {
   private static instance: AudioService | null = null
@@ -123,16 +124,15 @@ export class AudioService {
       );
       console.info(`[AudioService] Load initiated for ${soundName}, soundId: ${soundId}`);
 
-      // 等待足够长的时间确保加载完成
-      await new Promise<void>((resolve) => {
-        setTimeout(() => {
-          resolve();
-        }, 1500); // 增加到1.5秒确保加载完成
-      });
-
-      this.loadedSounds.set(soundName, soundId);
-      console.info(`[AudioService] Sound ${soundName} ready for playback, soundId: ${soundId}`);
-      return soundId;
+      // SoundPool.load() 返回的 soundId > 0 表示加载成功，可以直接使用
+      // 不需要额外等待，load() 方法本身已经是异步的，会等待加载完成
+      if (soundId > 0) {
+        this.loadedSounds.set(soundName, soundId);
+        console.info(`[AudioService] Sound ${soundName} ready for playback, soundId: ${soundId}`);
+        return soundId;
+      } else {
+        throw new Error(`Failed to load sound ${soundName}, invalid soundId: ${soundId}`);
+      }
     } catch (error) {
       console.error(`[AudioService] Failed to load ${soundName}: ${error}`);
       throw new Error(`Failed to load sound: ${error}`);
@@ -147,12 +147,16 @@ export class AudioService {
   // 播放点音（短音）
   async playDit(): Promise<void> {
     console.log('播放点音 (dit)')
+    // 同步振动
+    void vibratorService.vibrateDit()
     return this.playSound('dit', 100) // 100ms 短音
   }
 
   // 播放划音（长音）
   async playDah(): Promise<void> {
     console.log('播放划音 (dah)')
+    // 同步振动
+    void vibratorService.vibrateDah()
     return this.playSound('dah', 300) // 300ms 长音
   }
 

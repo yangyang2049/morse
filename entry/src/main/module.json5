@@ -48,6 +48,16 @@
           }
         ],
       }
+    ],
+    "requestPermissions": [
+      {
+        "name": "ohos.permission.VIBRATE",
+        "reason": "$string:vibrate_permission_reason",
+        "usedScene": {
+          "abilities": ["EntryAbility"],
+          "when": "inuse"
+        }
+      }
     ]
   }
 }

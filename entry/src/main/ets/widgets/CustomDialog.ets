@@ -252,7 +252,7 @@ export struct CustomDialog {
       }
     }
     .padding(24)
-    .backgroundColor('#1A1A1A')
+    .backgroundColor('#2A2A2A')
     .borderRadius(12)
     .width('85%')
     .constraintSize({ maxWidth: 400, maxHeight: '90%' })

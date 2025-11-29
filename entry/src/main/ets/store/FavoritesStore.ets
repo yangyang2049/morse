@@ -1,4 +1,11 @@
 import { MorseCode, MorseCodeData } from '../models/MorseCode'
+import { preferences } from '@kit.ArkData'
+import { Context } from '@kit.AbilityKit'
+
+const PREFS_NAME = 'favorites_store'
+const KEY_FAVORITES = 'favorite_characters'
+const KEY_MISTAKES = 'mistake_characters'
+const KEY_CONSECUTIVE_CORRECT = 'consecutive_correct_count'
 
 @Observed
 export class FavoritesStore {
@@ -7,6 +14,9 @@ export class FavoritesStore {
   @Track consecutiveCorrectCount: Map<string, number> = new Map() // 跟踪每个字符的连续正确次数
   
   private static instance: FavoritesStore | null = null
+  private preferencesStore: preferences.Preferences | null = null
+  
+  private constructor() {}
   
   static getInstance(): FavoritesStore {
     if (!FavoritesStore.instance) {
@@ -14,27 +24,38 @@ export class FavoritesStore {
     }
     return FavoritesStore.instance
   }
-  
-  // 收藏相关方法
-  addToFavorites(character: string): void {
-    this.favoriteCharacters.add(character)
-    this.saveToStorage()
+
+  // 初始化存储
+  async init(context: Context): Promise<void> {
+    try {
+      this.preferencesStore = await preferences.getPreferences(context, PREFS_NAME)
+      await this.load()
+      console.log('[FavoritesStore] Initialized successfully')
+    } catch (error) {
+      console.error('[FavoritesStore] Failed to initialize:', error)
+    }
   }
   
-  removeFromFavorites(character: string): void {
+  // 收藏相关方法
+  async addToFavorites(character: string): Promise<void> {
+    this.favoriteCharacters.add(character)
+    await this.save()
+  }
+  
+  async removeFromFavorites(character: string): Promise<void> {
     this.favoriteCharacters.delete(character)
-    this.saveToStorage()
+    await this.save()
   }
   
   isFavorite(character: string): boolean {
     return this.favoriteCharacters.has(character)
   }
   
-  toggleFavorite(character: string): void {
+  async toggleFavorite(character: string): Promise<void> {
     if (this.isFavorite(character)) {
-      this.removeFromFavorites(character)
+      await this.removeFromFavorites(character)
     } else {
-      this.addToFavorites(character)
+      await this.addToFavorites(character)
     }
   }
   
@@ -43,14 +64,14 @@ export class FavoritesStore {
   }
   
   // 错题相关方法
-  addToMistakes(character: string): void {
+  async addToMistakes(character: string): Promise<void> {
     this.mistakeCharacters.add(character)
-    this.saveToStorage()
+    await this.save()
   }
   
-  removeFromMistakes(character: string): void {
+  async removeFromMistakes(character: string): Promise<void> {
     this.mistakeCharacters.delete(character)
-    this.saveToStorage()
+    await this.save()
   }
   
   isMistake(character: string): boolean {
@@ -62,17 +83,17 @@ export class FavoritesStore {
   }
   
   // 连续正确次数管理
-  incrementConsecutiveCorrect(character: string): number {
+  async incrementConsecutiveCorrect(character: string): Promise<number> {
     const currentCount = this.consecutiveCorrectCount.get(character) || 0
     const newCount = currentCount + 1
     this.consecutiveCorrectCount.set(character, newCount)
-    this.saveToStorage()
+    await this.save()
     return newCount
   }
   
-  resetConsecutiveCorrect(character: string): void {
+  async resetConsecutiveCorrect(character: string): Promise<void> {
     this.consecutiveCorrectCount.set(character, 0)
-    this.saveToStorage()
+    await this.save()
   }
   
   getConsecutiveCorrectCount(character: string): number {
@@ -85,10 +106,10 @@ export class FavoritesStore {
   }
   
   // 从错题本移除字符（如果连续正确3次）
-  tryRemoveFromMistakes(character: string): boolean {
+  async tryRemoveFromMistakes(character: string): Promise<boolean> {
     if (this.shouldRemoveFromMistakes(character) && this.isMistake(character)) {
-      this.removeFromMistakes(character)
-      this.resetConsecutiveCorrect(character) // 重置计数
+      await this.removeFromMistakes(character)
+      await this.resetConsecutiveCorrect(character) // 重置计数
       return true
     }
     return false
@@ -106,39 +127,64 @@ export class FavoritesStore {
     return allCodes.filter(code => this.mistakeCharacters.has(code.character))
   }
   
-  // 存储到本地存储
-  private saveToStorage(): void {
+  // 从本地存储加载数据
+  private async load(): Promise<void> {
+    if (!this.preferencesStore) return
+
     try {
-      const favoritesData = JSON.stringify(Array.from(this.favoriteCharacters))
-      const mistakesData = JSON.stringify(Array.from(this.mistakeCharacters))
-      const consecutiveCorrectData = JSON.stringify(Array.from(this.consecutiveCorrectCount.entries()))
-      
-      // 这里可以使用preferences或其他存储方式
-      // 暂时使用console.log模拟存储
-      console.log('Saving favorites:', favoritesData)
-      console.log('Saving mistakes:', mistakesData)
-      console.log('Saving consecutive correct counts:', consecutiveCorrectData)
+      // 加载收藏字符
+      const favoritesJson = await this.preferencesStore.get(KEY_FAVORITES, '[]') as string
+      const favoritesArray = JSON.parse(favoritesJson) as string[]
+      this.favoriteCharacters = new Set(favoritesArray)
+
+      // 加载错题字符
+      const mistakesJson = await this.preferencesStore.get(KEY_MISTAKES, '[]') as string
+      const mistakesArray = JSON.parse(mistakesJson) as string[]
+      this.mistakeCharacters = new Set(mistakesArray)
+
+      // 加载连续正确次数
+      const consecutiveJson = await this.preferencesStore.get(KEY_CONSECUTIVE_CORRECT, '[]') as string
+      const consecutiveArray = JSON.parse(consecutiveJson) as [string, number][]
+      this.consecutiveCorrectCount = new Map(consecutiveArray)
+
+      console.log(`[FavoritesStore] Loaded ${this.favoriteCharacters.size} favorites, ${this.mistakeCharacters.size} mistakes`)
     } catch (error) {
-      console.error('Failed to save to storage:', error)
+      console.error('[FavoritesStore] Failed to load from storage:', error)
     }
   }
-  
-  // 从本地存储加载
-  loadFromStorage(): void {
+
+  // 保存数据到本地存储
+  private async save(): Promise<void> {
+    if (!this.preferencesStore) return
+
     try {
-      // 这里可以从preferences加载数据
-      // 暂时使用空数据
-      console.log('Loading from storage')
+      // 保存收藏字符
+      const favoritesArray = Array.from(this.favoriteCharacters)
+      const favoritesJson = JSON.stringify(favoritesArray)
+      await this.preferencesStore.put(KEY_FAVORITES, favoritesJson)
+
+      // 保存错题字符
+      const mistakesArray = Array.from(this.mistakeCharacters)
+      const mistakesJson = JSON.stringify(mistakesArray)
+      await this.preferencesStore.put(KEY_MISTAKES, mistakesJson)
+
+      // 保存连续正确次数
+      const consecutiveArray = Array.from(this.consecutiveCorrectCount.entries())
+      const consecutiveJson = JSON.stringify(consecutiveArray)
+      await this.preferencesStore.put(KEY_CONSECUTIVE_CORRECT, consecutiveJson)
+
+      await this.preferencesStore.flush()
+      console.log('[FavoritesStore] Data saved successfully')
     } catch (error) {
-      console.error('Failed to load from storage:', error)
+      console.error('[FavoritesStore] Failed to save to storage:', error)
     }
   }
   
   // 清空所有数据
-  clearAll(): void {
+  async clearAll(): Promise<void> {
     this.favoriteCharacters.clear()
     this.mistakeCharacters.clear()
     this.consecutiveCorrectCount.clear()
-    this.saveToStorage()
+    await this.save()
   }
 }
