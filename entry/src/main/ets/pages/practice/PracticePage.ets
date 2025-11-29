@@ -883,7 +883,7 @@ export struct PracticePage {
         .height(120)
           .width(120)
           .backgroundColor('#FFD700')
-          .borderRadius(0)
+          .borderRadius(60)
           .onTouch((event) => {
             if (event.type === TouchType.Down) {
               this.handleSingleButtonPress()
