@@ -125,6 +125,7 @@ export struct PracticePage {
     this.vm.destroy()
     if (this.animationTimer) {
       clearInterval(this.animationTimer)
+      this.animationTimer = null
     }
     if (this.progressTimer) {
       clearInterval(this.progressTimer)
@@ -133,6 +134,11 @@ export struct PracticePage {
     if (this.playProgressTimer) {
       clearInterval(this.playProgressTimer)
       this.playProgressTimer = null
+    }
+    // 清理长按定时器
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer)
+      this.longPressTimer = null
     }
   }
 

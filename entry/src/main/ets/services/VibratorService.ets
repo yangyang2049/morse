@@ -8,6 +8,7 @@ import { BusinessError } from '@kit.BasicServicesKit'
 export class VibratorService {
   private static instance: VibratorService | null = null
   private isEnabled: boolean = true // 默认开启
+  private successTimer: number | null = null // 管理成功振动的定时器
 
   private constructor() {}
 
@@ -79,6 +80,13 @@ export class VibratorService {
       console.log('[VibratorService] Vibration disabled, skipping success')
       return
     }
+    
+    // 清理之前的定时器
+    if (this.successTimer) {
+      clearTimeout(this.successTimer)
+      this.successTimer = null
+    }
+    
     try {
       console.log('[VibratorService] Vibrating success...')
       // 第一次短振
@@ -87,13 +95,14 @@ export class VibratorService {
           console.error(`[VibratorService] Failed to vibrate success (1st): code=${error.code}, message=${error.message}`)
         } else {
           // 短暂间隔后第二次振动
-          setTimeout(() => {
+          this.successTimer = setTimeout(() => {
             vibrator.vibrate(50, (error2: BusinessError) => {
               if (error2) {
                 console.error(`[VibratorService] Failed to vibrate success (2nd): code=${error2.code}, message=${error2.message}`)
               } else {
                 console.log('[VibratorService] Success vibration completed')
               }
+              this.successTimer = null
             })
           }, 80)
         }
@@ -124,6 +133,16 @@ export class VibratorService {
       const err = error as BusinessError
       console.error(`[VibratorService] Failed to vibrate error: code=${err.code}, message=${err.message}`)
     }
+  }
+
+  // 销毁服务，清理资源
+  destroy(): void {
+    // 清理成功振动的定时器
+    if (this.successTimer) {
+      clearTimeout(this.successTimer)
+      this.successTimer = null
+    }
+    VibratorService.instance = null
   }
 }
 

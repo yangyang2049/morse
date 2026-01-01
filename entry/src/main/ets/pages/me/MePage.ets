@@ -25,7 +25,7 @@ const SUPPORTED_LANGUAGES: LanguageOption[] = [
 
 @Component
 export struct MePage {
-  @State appVersion: string = '1.2.2'
+  @State appVersion: string = '1.3.0'
   @StorageLink('currentLanguage') currentLanguage: string = this.getInitialLanguage()
   @State useSingleButton: boolean = false // 是否使用单按钮模式
   @State showButtonModeDialog: boolean = false // 是否显示按钮模式选择对话框
@@ -160,7 +160,7 @@ export struct MePage {
   }
 
   private loadAppInfo() {
-    this.appVersion = '1.2.2'
+    this.appVersion = '1.3.0'
   }
 
   // 初始化偏好设置存储
@@ -443,15 +443,15 @@ export struct MePage {
     }
   }
 
-  // 打开闪卡应用
-  private openFlashcardApp(): void {
+  // 打开开发助手应用
+  private openDevAssistantApp(): void {
     try {
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext
       const want: Want = {
         bundleName: 'com.huawei.appmarket',
         abilityName: 'com.huawei.appmarket.MainAbility',
         parameters: {
-          appId: 'com.douhua.flashcards'
+          appId: 'com.douhua.kaifazhushou'
         }
       }
 
@@ -459,22 +459,160 @@ export struct MePage {
         // 打开应用市场成功，无需toast提示
       }).catch((error: Error) => {
         console.error('打开应用市场失败:', error)
-        this.openFlashcardAppByBrowser()
+        this.openDevAssistantAppByBrowser()
       })
     } catch (error) {
       console.error('打开应用市场异常:', error)
-      this.openFlashcardAppByBrowser()
+      this.openDevAssistantAppByBrowser()
     }
   }
 
-  // 通过浏览器打开闪卡应用页面作为备选方案
-  private openFlashcardAppByBrowser(): void {
+  // 通过浏览器打开开发助手应用页面作为备选方案
+  private openDevAssistantAppByBrowser(): void {
     try {
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext
       const want: Want = {
         action: 'ohos.want.action.viewData',
         entities: ['entity.system.browsable'],
-        uri: 'https://appgallery.huawei.com/app/detail?id=com.douhua.flashcards'
+        uri: 'https://appgallery.huawei.com/app/detail?id=com.douhua.kaifazhushou'
+      }
+
+      context.startAbility(want).then(() => {
+        // 通过浏览器打开成功，无需toast提示
+      }).catch((error: Error) => {
+        console.error('通过浏览器打开应用市场失败:', error)
+        // 打开失败，无需toast提示
+      })
+    } catch (error) {
+      console.error('通过浏览器打开应用市场异常:', error)
+      // 异常情况，无需toast提示
+    }
+  }
+
+  // 打开国旗小百科应用
+  private openFlagApp(): void {
+    try {
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
+      const want: Want = {
+        bundleName: 'com.huawei.appmarket',
+        abilityName: 'com.huawei.appmarket.MainAbility',
+        parameters: {
+          appId: 'com.douhua.flag'
+        }
+      }
+
+      context.startAbility(want).then(() => {
+        // 打开应用市场成功，无需toast提示
+      }).catch((error: Error) => {
+        console.error('打开应用市场失败:', error)
+        this.openFlagAppByBrowser()
+      })
+    } catch (error) {
+      console.error('打开应用市场异常:', error)
+      this.openFlagAppByBrowser()
+    }
+  }
+
+  // 通过浏览器打开国旗小百科应用页面作为备选方案
+  private openFlagAppByBrowser(): void {
+    try {
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
+      const want: Want = {
+        action: 'ohos.want.action.viewData',
+        entities: ['entity.system.browsable'],
+        uri: 'https://appgallery.huawei.com/app/detail?id=com.douhua.flag'
+      }
+
+      context.startAbility(want).then(() => {
+        // 通过浏览器打开成功，无需toast提示
+      }).catch((error: Error) => {
+        console.error('通过浏览器打开应用市场失败:', error)
+        // 打开失败，无需toast提示
+      })
+    } catch (error) {
+      console.error('通过浏览器打开应用市场异常:', error)
+      // 异常情况，无需toast提示
+    }
+  }
+
+  // 打开财会工具箱应用
+  private openCaikuaiApp(): void {
+    try {
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
+      const want: Want = {
+        bundleName: 'com.huawei.appmarket',
+        abilityName: 'com.huawei.appmarket.MainAbility',
+        parameters: {
+          appId: 'com.douhua.caikuai'
+        }
+      }
+
+      context.startAbility(want).then(() => {
+        // 打开应用市场成功，无需toast提示
+      }).catch((error: Error) => {
+        console.error('打开应用市场失败:', error)
+        this.openCaikuaiAppByBrowser()
+      })
+    } catch (error) {
+      console.error('打开应用市场异常:', error)
+      this.openCaikuaiAppByBrowser()
+    }
+  }
+
+  // 通过浏览器打开财会工具箱应用页面作为备选方案
+  private openCaikuaiAppByBrowser(): void {
+    try {
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
+      const want: Want = {
+        action: 'ohos.want.action.viewData',
+        entities: ['entity.system.browsable'],
+        uri: 'https://appgallery.huawei.com/app/detail?id=com.douhua.caikuai'
+      }
+
+      context.startAbility(want).then(() => {
+        // 通过浏览器打开成功，无需toast提示
+      }).catch((error: Error) => {
+        console.error('通过浏览器打开应用市场失败:', error)
+        // 打开失败，无需toast提示
+      })
+    } catch (error) {
+      console.error('通过浏览器打开应用市场异常:', error)
+      // 异常情况，无需toast提示
+    }
+  }
+
+  // 打开Rust从入门到放弃应用
+  private openRustApp(): void {
+    try {
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
+      const want: Want = {
+        bundleName: 'com.huawei.appmarket',
+        abilityName: 'com.huawei.appmarket.MainAbility',
+        parameters: {
+          appId: 'com.douhua.rustmaster'
+        }
+      }
+
+      context.startAbility(want).then(() => {
+        // 打开应用市场成功，无需toast提示
+      }).catch((error: Error) => {
+        console.error('打开应用市场失败:', error)
+        this.openRustAppByBrowser()
+      })
+    } catch (error) {
+      console.error('打开应用市场异常:', error)
+      this.openRustAppByBrowser()
+    }
+  }
+
+  // 通过浏览器打开Rust从入门到放弃应用页面作为备选方案
+  private openRustAppByBrowser(): void {
+    try {
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
+      const want: Want = {
+        action: 'ohos.want.action.viewData',
+        entities: ['entity.system.browsable'],
+        uri: 'https://appgallery.huawei.com/app/detail?id=com.douhua.rustmaster'
       }
 
       context.startAbility(want).then(() => {
@@ -861,44 +999,6 @@ export struct MePage {
         .margin({ top: 30, bottom: 12, left: 16 })
         .alignSelf(ItemAlign.Start)
 
-      // 元素周期表应用卡片
-      Row() {
-        Image($r('app.media.appicon_yuansu'))
-          .width(48)
-          .height(48)
-          .borderRadius(8)
-          .margin({ right: 16 })
-
-        Column() {
-          Text($r('app.string.periodic_table_app'))
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#FFFFFF')
-            .textAlign(TextAlign.Start)
-            .width('100%')
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-        }
-        .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
-
-        Image($rawfile('ic_arrow_right.svg'))
-          .width(16)
-          .height(16)
-          .fillColor('#666666')
-      }
-      .width('100%')
-        .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-        .backgroundColor('#111111')
-        .borderRadius(12)
-        .border({ width: 1, color: '#222222' })
-        .margin({ bottom: 8 })
-        .onClick(() => {
-          this.openPeriodicTableApp()
-        })
-        .hoverEffect(HoverEffect.Scale)
-        .focusable(true)
-
       // 全能计分器应用卡片
       Row() {
         Image($rawfile('appicon_jifen.png'))
@@ -937,16 +1037,16 @@ export struct MePage {
         .hoverEffect(HoverEffect.Scale)
         .focusable(true)
 
-      // 闪卡应用卡片
+      // 元素周期表应用卡片
       Row() {
-        Image($rawfile('appicon_shanka.svg'))
+        Image($r('app.media.appicon_yuansu'))
           .width(48)
           .height(48)
           .borderRadius(8)
           .margin({ right: 16 })
 
         Column() {
-          Text(this.currentLanguage.startsWith('zh') ? '闪卡' : 'Flashcard')
+          Text($r('app.string.periodic_table_app'))
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
             .fontColor('#FFFFFF')
@@ -968,8 +1068,161 @@ export struct MePage {
         .backgroundColor('#111111')
         .borderRadius(12)
         .border({ width: 1, color: '#222222' })
+        .margin({ bottom: 8 })
         .onClick(() => {
-          this.openFlashcardApp()
+          this.openPeriodicTableApp()
+        })
+        .hoverEffect(HoverEffect.Scale)
+        .focusable(true)
+
+      // 国旗小百科应用卡片
+      Row() {
+        Image($rawfile('appicon_flag.png'))
+          .width(48)
+          .height(48)
+          .borderRadius(8)
+          .margin({ right: 16 })
+
+        Column() {
+          Text(this.currentLanguage.startsWith('zh') ? '国旗小百科' : 'Flag Wiki')
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#FFFFFF')
+            .textAlign(TextAlign.Start)
+            .width('100%')
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+        }
+        .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
+
+        Image($rawfile('ic_arrow_right.svg'))
+          .width(16)
+          .height(16)
+          .fillColor('#666666')
+      }
+      .width('100%')
+        .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+        .backgroundColor('#111111')
+        .borderRadius(12)
+        .border({ width: 1, color: '#222222' })
+        .margin({ bottom: 8 })
+        .onClick(() => {
+          this.openFlagApp()
+        })
+        .hoverEffect(HoverEffect.Scale)
+        .focusable(true)
+
+      // 开发助手应用卡片
+      Row() {
+        Image($rawfile('appicon_devassistant.png'))
+          .width(48)
+          .height(48)
+          .borderRadius(8)
+          .margin({ right: 16 })
+
+        Column() {
+          Text(this.currentLanguage.startsWith('zh') ? '独立开发助手' : 'Dev Assistant')
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#FFFFFF')
+            .textAlign(TextAlign.Start)
+            .width('100%')
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+        }
+        .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
+
+        Image($rawfile('ic_arrow_right.svg'))
+          .width(16)
+          .height(16)
+          .fillColor('#666666')
+      }
+      .width('100%')
+        .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+        .backgroundColor('#111111')
+        .borderRadius(12)
+        .border({ width: 1, color: '#222222' })
+        .margin({ bottom: 8 })
+        .onClick(() => {
+          this.openDevAssistantApp()
+        })
+        .hoverEffect(HoverEffect.Scale)
+        .focusable(true)
+
+      // 财会工具箱应用卡片
+      Row() {
+        Image($rawfile('appicon_caikuai.png'))
+          .width(48)
+          .height(48)
+          .borderRadius(8)
+          .margin({ right: 16 })
+
+        Column() {
+          Text(this.currentLanguage.startsWith('zh') ? '财会工具箱' : 'Accounting Tools')
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#FFFFFF')
+            .textAlign(TextAlign.Start)
+            .width('100%')
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+        }
+        .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
+
+        Image($rawfile('ic_arrow_right.svg'))
+          .width(16)
+          .height(16)
+          .fillColor('#666666')
+      }
+      .width('100%')
+        .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+        .backgroundColor('#111111')
+        .borderRadius(12)
+        .border({ width: 1, color: '#222222' })
+        .margin({ bottom: 8 })
+        .onClick(() => {
+          this.openCaikuaiApp()
+        })
+        .hoverEffect(HoverEffect.Scale)
+        .focusable(true)
+
+      // Rust从入门到放弃应用卡片
+      Row() {
+        Image($rawfile('appicon_rust.png'))
+          .width(48)
+          .height(48)
+          .borderRadius(8)
+          .margin({ right: 16 })
+
+        Column() {
+          Text(this.currentLanguage.startsWith('zh') ? 'Rust 从入门到放弃' : 'Rust Master')
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#FFFFFF')
+            .textAlign(TextAlign.Start)
+            .width('100%')
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+        }
+        .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
+
+        Image($rawfile('ic_arrow_right.svg'))
+          .width(16)
+          .height(16)
+          .fillColor('#666666')
+      }
+      .width('100%')
+        .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+        .backgroundColor('#111111')
+        .borderRadius(12)
+        .border({ width: 1, color: '#222222' })
+        .margin({ bottom: 8 })
+        .onClick(() => {
+          this.openRustApp()
         })
         .hoverEffect(HoverEffect.Scale)
         .focusable(true)
@@ -978,6 +1231,7 @@ export struct MePage {
       .alignItems(HorizontalAlign.Start)
       .constraintSize({ maxWidth: 400 })
   }
+
 
   build() {
     Column() {

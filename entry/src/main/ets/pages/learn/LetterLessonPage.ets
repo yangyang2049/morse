@@ -47,6 +47,11 @@ export struct LetterLessonPage {
 
   aboutToDisappear() {
     this.viewModel.destroy()
+    // 清理长按定时器
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer)
+      this.longPressTimer = null
+    }
   }
 
   // 初始化偏好设置存储

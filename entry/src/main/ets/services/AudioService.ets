@@ -320,7 +320,14 @@ export class AudioService {
         // 清理已加载的音频
         this.loadedSounds.clear();
         
-        // 释放SoundPool
+        // 正确释放SoundPool资源
+        try {
+          this.soundPool.release();
+          console.info('[AudioService] SoundPool.release() called successfully');
+        } catch (error) {
+          console.error('[AudioService] Error releasing SoundPool:', error);
+        }
+        
         this.soundPool = null;
         console.info('[AudioService] SoundPool released');
       }

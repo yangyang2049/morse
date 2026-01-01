@@ -80,6 +80,9 @@ export struct ChineseTelegraphCodePage {
   private static allDataCache: ChineseTelegraphCode[] | null = null
   private static isDataLoaded: boolean = false
 
+  // 搜索防抖定时器
+  private searchDebounceTimer: number | null = null
+
   aboutToAppear() {
     console.log('ChineseTelegraphCodePage aboutToAppear called')
 
@@ -91,6 +94,14 @@ export struct ChineseTelegraphCodePage {
       console.log('Starting to load Chinese telegraph codes...')
       this.loadFirstPage()
     }, 100)
+  }
+
+  aboutToDisappear() {
+    // 清理搜索防抖定时器
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer)
+      this.searchDebounceTimer = null
+    }
   }
 
   private checkLanguage() {
@@ -194,6 +205,13 @@ export struct ChineseTelegraphCodePage {
 
   private onSearchTextChange(text: string) {
     this.searchText = text
+    
+    // 清除之前的防抖定时器
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer)
+      this.searchDebounceTimer = null
+    }
+    
     if (text.trim() === '') {
       // 清空搜索，恢复分页模式
       this.isSearchMode = false
@@ -205,9 +223,10 @@ export struct ChineseTelegraphCodePage {
       this.isSearchMode = true
       this.isSearching = true
 
-      // 延迟搜索，避免频繁搜索
-      setTimeout(() => {
+      // 防抖搜索：300ms内多次输入只执行最后一次搜索
+      this.searchDebounceTimer = setTimeout(() => {
         this.performSearch(text)
+        this.searchDebounceTimer = null
       }, 300)
     }
   }
