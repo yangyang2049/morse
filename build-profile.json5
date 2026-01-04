@@ -9,7 +9,7 @@
         runtimeOS: "HarmonyOS"
       },
       {
-        name: "prodRelease",
+        name: "release",
         signingConfig: "release",
         targetSdkVersion: "6.0.0(20)",
         compatibleSdkVersion: "6.0.0(20)",
@@ -31,24 +31,24 @@
         "material": {
           "certpath": "/Users/yangyangshi/.ohos/config/default_morse_Sy15OF2MAvf3gS8046RSidVqmz-wG5nu5zL2br881ls=.cer",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001A137F304F49608151DEF45592FC8CD6282EA3A4197CFBFB1019906B5EEEB361BB64A381F60BC7",
+          "keyPassword": "0000001AD947C80932227E3AB67F06E1BE53DA14DC11911B47417451661A82CF509758105114E9427071",
           "profile": "/Users/yangyangshi/.ohos/config/default_morse_Sy15OF2MAvf3gS8046RSidVqmz-wG5nu5zL2br881ls=.p7b",
           "signAlg": "SHA256withECDSA",
           "storeFile": "/Users/yangyangshi/.ohos/config/default_morse_Sy15OF2MAvf3gS8046RSidVqmz-wG5nu5zL2br881ls=.p12",
-          "storePassword": "0000001AAC2E1737FCA6E1CCFA0EFE785C8A0B90BE865CE1B3DC85B8D7BE0A7106554A1ECD1806A772DF"
+          "storePassword": "0000001A6825B2EA796BBA35E7819F3298330B1C3C1A3081E57D4F84F8CE8B19ABFEEADCA7A536D854B2"
         }
       },
       {
-        name: "release",
-        type: "HarmonyOS",
-        material: {
-          storeFile: "/Users/yangyangshi/Documents/huawei_profile/douhua.p12",
-          storePassword: "00000038999CFF36FDA094B2A4FC3AF6DBE46B3C0BB50F0E3BD4FABA2394628C876C74ABDFA2D722F168ACF2440868A1633B5152403745F72181B40863F60AE96B926AECB1E8D85B",
-          keyAlias: "deveco",
-          keyPassword: "00000038659160C862BB8AADA677F85CAB9FF75A246A3B39779AC8C23C26F0AD7E01ED75A68F73326A88C407996D04B70409E3C05AF9516021B4FD916C72153952A21A781D8DB6C3",
-          signAlg: "SHA256withECDSA",
-          profile: "/Users/yangyangshi/Documents/huawei_profile/morseRelease.p7b",
-          certpath: "/Users/yangyangshi/Documents/huawei_profile/douhua_release.cer"
+        "name": "release",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "/Users/yangyangshi/Documents/huawei_profile/douhua_release.cer",
+          "keyAlias": "deveco",
+          "keyPassword": "0000003804A75EB7DC3AEF956A2C59A3D1E8A73F48CE946B1F094B7483A19D9984328A288F35B6CFCBA5ACE94D88D94A96C26C2E53395730BCBC376E829B71208C7FBBB2942CF1A7",
+          "profile": "/Users/yangyangshi/Documents/huawei_profile/morseRelease.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "/Users/yangyangshi/Documents/huawei_profile/douhua.p12",
+          "storePassword": "00000038759453BFDBA140AE93D92D17FE131DD26031D8B086253353457679DDA870CDF5BC4889FD51952299E373C5E3F949BCAB06ACEF7CD66963BA85F5670E39B3831A6030683A"
         }
       }
     ],
@@ -62,7 +62,7 @@
           name: "default",
           applyToProducts: [
             "default",
-            "prodRelease"
+            "release"
           ],
         },
       ],

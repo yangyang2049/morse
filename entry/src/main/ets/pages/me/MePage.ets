@@ -25,7 +25,7 @@ const SUPPORTED_LANGUAGES: LanguageOption[] = [
 
 @Component
 export struct MePage {
-  @State appVersion: string = '1.3.0'
+  @State appVersion: string = '1.3.1'
   @StorageLink('currentLanguage') currentLanguage: string = this.getInitialLanguage()
   @State useSingleButton: boolean = false // 是否使用单按钮模式
   @State showButtonModeDialog: boolean = false // 是否显示按钮模式选择对话框
@@ -37,6 +37,7 @@ export struct MePage {
   // 资源管理器
   private resourceMgr: resourceManager.ResourceManager | null = null
   private preferencesStore: preferences.Preferences | null = null
+  private privacyLink = 'https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1776276266387804160'
 
   async aboutToAppear() {
     // 初始化资源管理器
@@ -160,7 +161,7 @@ export struct MePage {
   }
 
   private loadAppInfo() {
-    this.appVersion = '1.3.0'
+    this.appVersion = '1.3.1'
   }
 
   // 初始化偏好设置存储
@@ -581,6 +582,26 @@ export struct MePage {
     }
   }
 
+  // 打开隐私政策链接
+  private openPrivacyPolicy(): void {
+    try {
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
+      const want: Want = {
+        action: 'ohos.want.action.viewData',
+        entities: ['entity.system.browsable'],
+        uri: this.privacyLink
+      }
+
+      context.startAbility(want).then(() => {
+        // 通过浏览器打开成功
+      }).catch((error: Error) => {
+        console.error('通过浏览器打开隐私政策失败:', error)
+      })
+    } catch (error) {
+      console.error('打开隐私政策异常:', error)
+    }
+  }
+
   // 打开Rust从入门到放弃应用
   private openRustApp(): void {
     try {
@@ -920,6 +941,36 @@ export struct MePage {
       .padding({ left: 16, right: 16 })
       .onClick(() => {
         this.shareApp()
+      })
+      .hoverEffect(HoverEffect.Scale)
+      .focusable(true)
+  }
+
+  @Builder PrivacyPolicySettingsItem() {
+    Row() {
+      Column() {
+        Text($r('app.string.privacy_title'))
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#FFFFFF')
+          .textAlign(TextAlign.Start)
+          .width('100%')
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
+
+      Image($rawfile('ic_arrow_right.svg'))
+        .width(16)
+        .height(16)
+        .fillColor('#666666')
+    }
+    .width('100%')
+      .height(56)
+      .padding({ left: 16, right: 16 })
+      .onClick(() => {
+        this.openPrivacyPolicy()
       })
       .hoverEffect(HoverEffect.Scale)
       .focusable(true)
@@ -1301,6 +1352,9 @@ export struct MePage {
                 Divider().strokeWidth(1).color('#222222')
 
                 this.ShareSettingsItem()
+                Divider().strokeWidth(1).color('#222222')
+
+                this.PrivacyPolicySettingsItem()
               }
               .width('100%')
                 .backgroundColor('#111111')

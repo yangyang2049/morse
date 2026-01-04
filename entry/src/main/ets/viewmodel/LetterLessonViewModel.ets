@@ -385,7 +385,7 @@ export class LetterLessonViewModel {
   }
 
   getCircumference(): number {
-    return 2 * Math.PI * 110
+    return 2 * Math.PI * 80
   }
 
   getProgressVisualLength(): number {

@@ -1,6 +1,8 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
 import { i18n } from '@kit.LocalizationKit';
+import { deviceInfo } from '@kit.BasicServicesKit';
+import preferences from '@ohos.data.preferences';
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
@@ -52,13 +54,8 @@ export default class EntryAbility extends UIAbility {
   }
 
   onWindowStageCreate(windowStage: window.WindowStage): void {
-    // Main window is created, set main page for this ability
-    windowStage.loadContent('pages/Index', (err) => {
-      if (err.code) {
-        return;
-      }
-    });
-
+    let mainPage = 'pages/Index';
+    
     // Set status bar and navigation bar style
     windowStage.getMainWindow().then((windowClass) => {
       // Set status bar and navigation bar properties
@@ -68,6 +65,43 @@ export default class EntryAbility extends UIAbility {
         navigationBarColor: '#000000',
         navigationBarContentColor: '#FFFFFF'
       });
+    });
+
+    try {
+      if (deviceInfo.deviceType === 'wearable') {
+        // Check privacy agreement for wearable
+        preferences.getPreferences(this.context, 'app_settings').then((prefs) => {
+          return prefs.get('privacy_agreed', false);
+        }).then((isAgreed) => {
+          if (isAgreed) {
+            mainPage = 'pages/watch/Index';
+          } else {
+            mainPage = 'pages/watch/PrivacyPage';
+          }
+          this.loadContent(windowStage, mainPage);
+        }).catch((err: Error) => {
+          console.error('[EntryAbility] Failed to get preferences:', err);
+          // Fallback to Privacy Page if check fails for safety
+          mainPage = 'pages/watch/PrivacyPage';
+          this.loadContent(windowStage, mainPage);
+        });
+      } else {
+        // Phone/Tablet logic (default)
+        this.loadContent(windowStage, mainPage);
+      }
+    } catch (err) {
+      console.error('[EntryAbility] Error in onWindowStageCreate:', err);
+      this.loadContent(windowStage, mainPage);
+    }
+  }
+
+  private loadContent(windowStage: window.WindowStage, page: string): void {
+    windowStage.loadContent(page, (err) => {
+      if (err.code) {
+        console.error('Failed to load the content. Cause: ' + JSON.stringify(err) ?? '');
+        return;
+      }
+      console.info('Succeeded in loading the content.');
     });
   }
 

@@ -148,7 +148,7 @@ git clone https://gitee.com/shishizii/morse-code-hos.git
 
 ## 📝 版本历史
 
-### v1.3.0 (2024-11-29)
+### v1.3.1 (2024-11-29)
 - ✅ 振动反馈功能
   - 输入时振动（点短振100ms，划长振300ms）
   - 选择模式答题反馈振动

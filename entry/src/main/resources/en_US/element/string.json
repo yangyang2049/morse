@@ -903,6 +903,214 @@
     {
       "name": "entering_review_mode",
       "value": "Review"
+    },
+    {
+      "name": "app_recommendation_zhaocha",
+      "value": "Find the Difference"
+    },
+    {
+      "name": "app_recommendation_zhaocha_name",
+      "value": "Find the Difference"
+    },
+    {
+      "name": "app_recommendation_zhaocha_desc",
+      "value": "A spot-the-difference game that tests your eyesight"
+    },
+    {
+      "name": "app_recommendation_quannengjifenqi",
+      "value": "iScore"
+    },
+    {
+      "name": "app_recommendation_quannengjifenqi_name",
+      "value": "iScore"
+    },
+    {
+      "name": "app_recommendation_quannengjifenqi_desc",
+      "value": "Score sports on your wrist, so easy"
+    },
+    {
+      "name": "search_zhaocha_in_appgallery",
+      "value": "Search \"Find the Difference\" in AppGallery"
+    },
+    {
+      "name": "search_quannengjifenqi_in_appgallery",
+      "value": "Search \"iScore\" in AppGallery"
+    },
+    {
+      "name": "qr_code_generating",
+      "value": "Generating QR code..."
+    },
+    {
+      "name": "qr_code_generation_failed",
+      "value": "Failed to generate QR code"
+    },
+    {
+      "name": "click_to_close",
+      "value": "Tap to close"
+    },
+    {
+      "name": "watch_learn",
+      "value": "Learn"
+    },
+    {
+      "name": "watch_basics",
+      "value": "Basics"
+    },
+    {
+      "name": "watch_alphabet",
+      "value": "Letters"
+    },
+    {
+      "name": "watch_numbers",
+      "value": "Numbers"
+    },
+    {
+      "name": "watch_practice",
+      "value": "Practice"
+    },
+    {
+      "name": "watch_text_to_code",
+      "value": "Letter → Code"
+    },
+    {
+      "name": "watch_code_to_text",
+      "value": "Code → Letter"
+    },
+    {
+      "name": "watch_code_table",
+      "value": "Code Table"
+    },
+    {
+      "name": "watch_settings",
+      "value": "Settings"
+    },
+    {
+      "name": "watch_vibration_feedback",
+      "value": "Vibration"
+    },
+    {
+      "name": "watch_long_press_duration",
+      "value": "Long Press"
+    },
+    {
+      "name": "watch_phone_version_richer",
+      "value": "Full experience available on Phone"
+    },
+    {
+      "name": "watch_company_name",
+      "value": "Douhua Technology Co., Ltd."
+    },
+    {
+      "name": "watch_delete",
+      "value": "Delete"
+    },
+    {
+      "name": "watch_clear",
+      "value": "Clear"
+    },
+    {
+      "name": "watch_completed",
+      "value": "✓ Completed"
+    },
+    {
+      "name": "watch_next_group",
+      "value": "Next Group"
+    },
+    {
+      "name": "watch_back",
+      "value": "Back"
+    },
+    {
+      "name": "watch_try_again",
+      "value": "X Try again"
+    },
+    {
+      "name": "watch_correct",
+      "value": "✓ Correct"
+    },
+    {
+      "name": "watch_wrong",
+      "value": "✗ Wrong"
+    },
+    {
+      "name": "watch_correct_answer",
+      "value": "Correct Answer:"
+    },
+    {
+      "name": "watch_next_question",
+      "value": "Next"
+    },
+    {
+      "name": "watch_complete_learning",
+      "value": "Complete"
+    },
+    {
+      "name": "watch_already_completed",
+      "value": "Completed"
+    },
+    {
+      "name": "watch_morse_code_basics_title",
+      "value": "Morse Code Basics"
+    },
+    {
+      "name": "watch_select_morse_code_character",
+      "value": "Select the letter or number corresponding to the Morse code."
+    },
+    {
+      "name": "watch_loading_failed",
+      "value": "Load failed"
+    },
+    {
+      "name": "watch_guide_title",
+      "value": "Usage Tips"
+    },
+    {
+      "name": "watch_guide_text_letter_lesson",
+      "value": "Follow the prompt. Short press for ·, long press for -."
+    },
+    {
+      "name": "watch_guide_text_practice_text_to_code",
+      "value": "Follow the prompt. Short press for ·, long press for -."
+    },
+    {
+      "name": "watch_guide_text_practice_code_to_text",
+      "value": "Select the letter or number corresponding to the Morse code."
+    },
+    {
+      "name": "watch_guide_button_got_it",
+      "value": "Got it"
+    },
+    {
+      "name": "watch_mistakes",
+      "value": "Mistakes"
+    },
+    {
+      "name": "watch_mistakes_empty",
+      "value": "Errors from lessons and practice are automatically added here. Keep going!"
+    },
+    {
+      "name": "watch_delete_mistake",
+      "value": "Delete"
+    },
+    {
+      "name": "privacy_title",
+      "value": "Privacy Policy"
+    },
+    {
+      "name": "privacy_content",
+      "value": "Welcome to Morse Code! We value your privacy. This app runs locally and does not collect, upload, or share any of your personal information. Your learning progress and settings are saved only on your device."
+    },
+    {
+      "name": "agree",
+      "value": "Agree"
+    },
+    {
+      "name": "exit_app",
+      "value": "Cancel"
+    },
+    {
+      "name": "scan_to_read",
+      "value": "Scan to read full policy"
     }
   ]
 }

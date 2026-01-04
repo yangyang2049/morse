@@ -903,6 +903,210 @@
     {
       "name": "entering_review_mode",
       "value": "複習"
+    },
+    {
+      "name": "click_to_play_vibrate",
+      "value": "輕觸播放（震動）"
+    },
+    {
+      "name": "watch_learn",
+      "value": "學習"
+    },
+    {
+      "name": "watch_basics",
+      "value": "基礎"
+    },
+    {
+      "name": "watch_alphabet",
+      "value": "字母"
+    },
+    {
+      "name": "watch_numbers",
+      "value": "數字"
+    },
+    {
+      "name": "watch_practice",
+      "value": "練習"
+    },
+    {
+      "name": "watch_text_to_code",
+      "value": "字母 → 代碼"
+    },
+    {
+      "name": "watch_code_to_text",
+      "value": "代碼 → 字母"
+    },
+    {
+      "name": "watch_code_table",
+      "value": "碼表"
+    },
+    {
+      "name": "watch_settings",
+      "value": "設定"
+    },
+    {
+      "name": "watch_vibration_feedback",
+      "value": "震動回饋"
+    },
+    {
+      "name": "watch_long_press_duration",
+      "value": "長按時間"
+    },
+    {
+      "name": "watch_phone_version_richer",
+      "value": "更多功能請在手機端體驗"
+    },
+    {
+      "name": "watch_company_name",
+      "value": "重慶豆花科技有限公司"
+    },
+    {
+      "name": "watch_delete",
+      "value": "刪除"
+    },
+    {
+      "name": "watch_clear",
+      "value": "清空"
+    },
+    {
+      "name": "watch_completed",
+      "value": "✓ 完成"
+    },
+    {
+      "name": "watch_next_group",
+      "value": "下一組"
+    },
+    {
+      "name": "watch_back",
+      "value": "返回"
+    },
+    {
+      "name": "watch_try_again",
+      "value": "X 再試一次"
+    },
+    {
+      "name": "watch_correct",
+      "value": "✓ 正確"
+    },
+    {
+      "name": "watch_wrong",
+      "value": "✗ 錯誤"
+    },
+    {
+      "name": "watch_correct_answer",
+      "value": "正確答案:"
+    },
+    {
+      "name": "watch_next_question",
+      "value": "下一題"
+    },
+    {
+      "name": "watch_complete_learning",
+      "value": "完成學習"
+    },
+    {
+      "name": "watch_already_completed",
+      "value": "已完成"
+    },
+    {
+      "name": "watch_morse_code_basics_title",
+      "value": "摩斯電碼基礎"
+    },
+    {
+      "name": "watch_select_morse_code_character",
+      "value": "選擇摩斯碼對應的字母或數字。"
+    },
+    {
+      "name": "watch_loading_failed",
+      "value": "載入失敗"
+    },
+    {
+      "name": "watch_guide_title",
+      "value": "使用提示"
+    },
+    {
+      "name": "watch_guide_text_letter_lesson",
+      "value": "依照提示碼學習，短按 ·，長按 -。"
+    },
+    {
+      "name": "watch_guide_text_practice_text_to_code",
+      "value": "依照提示碼學習，短按 ·，長按 -。"
+    },
+    {
+      "name": "watch_guide_text_practice_code_to_text",
+      "value": "選擇摩斯碼對應的字母或數字。"
+    },
+    {
+      "name": "watch_guide_button_got_it",
+      "value": "知道了"
+    },
+    {
+      "name": "app_recommendation_zhaocha",
+      "value": "指尖找茬"
+    },
+    {
+      "name": "app_recommendation_zhaocha_name",
+      "value": "指尖找茬"
+    },
+    {
+      "name": "app_recommendation_zhaocha_desc",
+      "value": "考驗眼力的找茬遊戲"
+    },
+    {
+      "name": "app_recommendation_quannengjifenqi",
+      "value": "全能計分器"
+    },
+    {
+      "name": "app_recommendation_quannengjifenqi_name",
+      "value": "全能計分器"
+    },
+    {
+      "name": "app_recommendation_quannengjifenqi_desc",
+      "value": "腕上運動計分，就這麼輕鬆"
+    },
+    {
+      "name": "search_zhaocha_in_appgallery",
+      "value": "在應用市場搜索\"指尖找茬\""
+    },
+    {
+      "name": "search_quannengjifenqi_in_appgallery",
+      "value": "在應用市場搜索\"全能計分器\""
+    },
+    {
+      "name": "qr_code_generating",
+      "value": "二維碼生成中…"
+    },
+    {
+      "name": "qr_code_generation_failed",
+      "value": "二維碼生成失敗"
+    },
+    {
+      "name": "watch_mistakes",
+      "value": "錯題本"
+    },
+    {
+      "name": "watch_mistakes_empty",
+      "value": "練習或課程中的錯題會自動記錄在此，繼續加油！"
+    },
+    {
+      "name": "watch_delete_mistake",
+      "value": "刪除"
+    },
+    {
+      "name": "privacy_title",
+      "value": "私隱政策"
+    },
+    {
+      "name": "privacy_content",
+      "value": "歡迎使用摩斯電碼通！我們非常重視您的私隱保護。本應用僅在本地運行，不會收集、上傳或分享您的任何個人資訊。您的學習進度和設定僅保存在您的設備上。"
+    },
+    {
+      "name": "agree",
+      "value": "同意"
+    },
+    {
+      "name": "scan_to_read",
+      "value": "掃碼閱讀完整政策"
     }
   ]
 }

@@ -1,5 +1,5 @@
 import { MorseCode, MorseCodeData } from '../../models/MorseCode'
-import { router } from '@kit.ArkUI'
+import { router, promptAction } from '@kit.ArkUI'
 import { LetterLessonViewModel } from '../../viewmodel/LetterLessonViewModel'
 import { LessonData } from '../../data/LessonData'
 import { audioService } from '../../services/AudioService'
@@ -43,6 +43,11 @@ export struct LetterLessonPage {
     await this.loadButtonModePreference()
     await this.loadLongPressThresholdPreference()
     await this.loadVibrationPreference()
+
+    // 延迟显示课程编号 toast，确保页面已加载
+    setTimeout(() => {
+      this.showLessonNumberToast(lessonId)
+    }, 300)
   }
 
   aboutToDisappear() {
@@ -51,6 +56,27 @@ export struct LetterLessonPage {
     if (this.longPressTimer) {
       clearTimeout(this.longPressTimer)
       this.longPressTimer = null
+    }
+  }
+
+  // 显示课程编号 toast
+  private showLessonNumberToast(lessonId: string): void {
+    try {
+      console.log(`[LetterLessonPage] showLessonNumberToast: lessonId=${lessonId}`)
+      const lessonNumber = parseInt(lessonId) || 0
+      console.log(`[LetterLessonPage] showLessonNumberToast: lessonNumber=${lessonNumber}`)
+      if (lessonNumber > 0) {
+        promptAction.showToast({
+          message: `第 ${lessonNumber} 课`,
+          duration: 2000,
+          bottom: '45%'
+        })
+        console.log(`[LetterLessonPage] Toast shown: 第 ${lessonNumber} 课`)
+      } else {
+        console.warn(`[LetterLessonPage] Invalid lessonId: ${lessonId}`)
+      }
+    } catch (error) {
+      console.error('[LetterLessonPage] Failed to show lesson number toast:', error)
     }
   }
 
@@ -250,14 +276,14 @@ export struct LetterLessonPage {
       Row() {
         Button() {
           Image($rawfile('ic_back.svg'))
-            .width(20)
-            .height(20)
+            .width(18)
+            .height(18)
             .fillColor(Color.White)
         }
-        .width(48)
-          .height(48)
+        .width(40)
+          .height(40)
           .backgroundColor(Color.Transparent)
-          .borderRadius(24)
+          .borderRadius(20)
           .onClick(() => {
             router.back()
           })
@@ -273,16 +299,16 @@ export struct LetterLessonPage {
           .hoverEffect(HoverEffect.Scale)
           .focusable(true)
 
-        Blank().width(20)
+        Blank().width(12)
 
         Scroll() {
           Row() {
             ForEach(this.viewModel.codes, (code: MorseCode, index: number) => {
               Text(code.character)
-                .fontSize(this.isWordLesson() ? 12 : 18)
+                .fontSize(this.isWordLesson() ? 11 : 16)
                 .fontWeight(FontWeight.Bold)
                 .fontColor(this.viewModel.getLetterStatusColor(index))
-                .margin({ right: 8 })
+                .margin({ right: 6 })
             })
           }
           .justifyContent(FlexAlign.Center)
@@ -291,22 +317,24 @@ export struct LetterLessonPage {
           .scrollable(ScrollDirection.Horizontal)
           .scrollBar(BarState.Off)
 
-        Blank().width(20)
+        Blank().width(12)
 
         Button() {
           Image($rawfile('ic_settings.svg'))
-            .width(22).height(22)
+            .width(20).height(20)
         }
-        .backgroundColor(Color.Transparent)
-          .borderRadius(24)
+        .width(40)
+          .height(40)
+          .backgroundColor(Color.Transparent)
+          .borderRadius(20)
           .onClick(() => {
             this.viewModel.showSettingsDialog = true
           })
           .hoverEffect(HoverEffect.Scale)
           .focusable(true)
       }
-      .height(56)
-        .padding({ left: 16, right: 16 })
+      .height(48)
+        .padding({ left: 12, right: 12 })
     }
     .width('100%')
       .backgroundColor(Color.Black)
@@ -315,25 +343,25 @@ export struct LetterLessonPage {
   @Builder
   private ProgressCircle() {
     Stack({ alignContent: Alignment.Center }) {
-      Circle({ width: 220, height: 220 })
+      Circle({ width: 160, height: 160 })
         .fill(Color.Transparent)
-        .strokeWidth(8)
+        .strokeWidth(6)
         .stroke('#333333')
 
-      Circle({ width: 220, height: 220 })
+      Circle({ width: 160, height: 160 })
         .fill(Color.Transparent)
-        .strokeWidth(8)
+        .strokeWidth(6)
         .stroke(this.viewModel.getProgressColor())
         .strokeDashArray([this.viewModel.getProgressVisualLength(), this.viewModel.getCircumference() - this.viewModel.getProgressVisualLength()])
         .strokeDashOffset(this.viewModel.getCircumference() / 4)
         .strokeLineCap(LineCapStyle.Round)
         .opacity(this.viewModel.progressVisual > 0 ? 1 : 0)
 
-      Circle({ width: 200, height: 200 })
+      Circle({ width: 148, height: 148 })
         .fill(this.viewModel.getProgressColor())
 
       Text(this.viewModel.codes[this.viewModel.currentIndex]?.character || '')
-        .fontSize(this.isWordLesson() ? 20 : 80)
+        .fontSize(this.isWordLesson() ? 18 : 60)
         .fontWeight(FontWeight.Bold)
         .fontColor('#1A1A1A')
         .textAlign(TextAlign.Center)
@@ -345,7 +373,6 @@ export struct LetterLessonPage {
   private MorseDisplay() {
     Column() {
       if (this.viewModel.shouldShowHint(this.viewModel.currentIndex)) {
-        // 用图形化方式显示摩尔斯码
         // 用图形化方式显示摩尔斯码
         Row() {
           ForEach((this.viewModel.codes[this.viewModel.currentIndex]?.morse || '').split(''), (char: string) => {
@@ -368,15 +395,14 @@ export struct LetterLessonPage {
         .justifyContent(FlexAlign.Center)
       } else {
         Image($rawfile('ic_eye.svg'))
-          .width(28)
-          .height(28)
+          .width(24)
+          .height(24)
           .fillColor(Color.White)
       }
     }
-    .height(80)
-      .width('95%')
-      .margin({ left: 24, right: 24 })
-      .padding({ left: 16, right: 16, top: 16, bottom: 16 })
+    .height(60)
+      .width('90%')
+      .padding({ left: 12, right: 12, top: 12, bottom: 12 })
       .backgroundColor('#1A1A1A')
       .borderRadius(this.pillRadius)
       .justifyContent(FlexAlign.Center)
@@ -393,7 +419,6 @@ export struct LetterLessonPage {
   private InputDisplay() {
     Column() {
       if (this.viewModel.userInput.trim().length > 0) {
-        // 用图形化方式显示用户输入
         // 用图形化方式显示用户输入
         Row() {
           ForEach(this.viewModel.userInput.split(''), (char: string) => {
@@ -422,7 +447,7 @@ export struct LetterLessonPage {
         .justifyContent(FlexAlign.Center)
       }
     }
-    .height(60)
+    .height(50)
       .width('100%')
       .justifyContent(FlexAlign.Center)
       .alignItems(HorizontalAlign.Center)
@@ -437,14 +462,14 @@ export struct LetterLessonPage {
 
         Button() {
           Text('·')
-            .fontSize(24)
+            .fontSize(22)
             .fontColor(Color.Black)
             .fontWeight(FontWeight.Bold)
         }
-        .height(120)
-          .width(120)
+        .height(100)
+          .width(100)
           .backgroundColor('#FFD700')
-          .borderRadius(60)
+          .borderRadius(50)
           .onTouch((event) => {
             if (event.type === TouchType.Down) {
               this.handleSingleButtonPress()
@@ -458,17 +483,17 @@ export struct LetterLessonPage {
         Blank().layoutWeight(1)
       }
       .width('100%')
-        .padding({ left: 20, right: 20, bottom: 60 })
+        .padding({ left: 16, right: 16, bottom: 20 })
     } else {
       // 双按钮模式
       Row() {
         if (this.isWordLesson()) {
           // 单词课程：三个按钮（点、空格、划）
           Button() {
-            Circle({ width: 20, height: 20 })
+            Circle({ width: 18, height: 18 })
               .fill('#FFD700')
           }
-          .height(80)
+          .height(70)
             .backgroundColor('#1A1A1A')
             .borderRadius(this.pillRadius)
             .border({ width: 1, color: '#333333' })
@@ -482,17 +507,17 @@ export struct LetterLessonPage {
             .focusable(true)
             .layoutWeight(1)
 
-          Blank().width(8)
+          Blank().width(6)
 
           // 短空格按钮
           Button() {
             Text('⎵')
-              .fontSize(16)
+              .fontSize(14)
               .fontColor('#FFD700')
               .fontWeight(FontWeight.Bold)
           }
-          .height(80)
-            .width(60)
+          .height(70)
+            .width(50)
             .backgroundColor('#1A1A1A')
             .borderRadius(12)
             .border({ width: 1, color: '#333333' })
@@ -505,13 +530,13 @@ export struct LetterLessonPage {
             .hoverEffect(HoverEffect.Scale)
             .focusable(true)
 
-          Blank().width(8)
+          Blank().width(6)
 
           Button() {
-            Rect({ width: 40, height: 12 })
+            Rect({ width: 36, height: 10 })
               .fill('#FFD700')
           }
-          .height(80)
+          .height(70)
             .backgroundColor('#1A1A1A')
             .borderRadius(this.pillRadius)
             .border({ width: 1, color: '#333333' })
@@ -527,10 +552,10 @@ export struct LetterLessonPage {
         } else {
           // 其他课程：两个按钮（点、划），平均分配宽度
           Button() {
-            Circle({ width: 20, height: 20 })
+            Circle({ width: 18, height: 18 })
               .fill('#FFD700')
           }
-          .height(80)
+          .height(70)
             .backgroundColor('#1A1A1A')
             .borderRadius(this.pillRadius)
             .border({ width: 1, color: '#333333' })
@@ -544,13 +569,13 @@ export struct LetterLessonPage {
             .focusable(true)
             .layoutWeight(1)
 
-          Blank().width(20)
+          Blank().width(12)
 
           Button() {
-            Rect({ width: 40, height: 12 })
+            Rect({ width: 36, height: 10 })
               .fill('#FFD700')
           }
-          .height(80)
+          .height(70)
             .backgroundColor('#1A1A1A')
             .borderRadius(this.pillRadius)
             .border({ width: 1, color: '#333333' })
@@ -565,7 +590,7 @@ export struct LetterLessonPage {
             .layoutWeight(1)
         }
       }
-      .padding({ left: 20, right: 20, bottom: 60 })
+      .padding({ left: 16, right: 16, bottom: 20 })
     }
   }
 
@@ -594,7 +619,7 @@ export struct LetterLessonPage {
 
         Blank().height(24)
 
-        Text($r('app.string.congratulations_completed'))
+        Text(this.viewModel.codes.map(code => code.character).join(' '))
           .fontSize(24)
           .fontWeight(FontWeight.Bold)
           .fontColor('#FFFFFF')
@@ -1019,13 +1044,13 @@ export struct LetterLessonPage {
 
         // 内容区域 - 响应式宽度，最大480vp
         Column() {
-          Blank().height(20)
+          Blank().height(8)
 
           Column() {
             this.ProgressCircle()
-            Blank().height(60)
+            Blank().height(24)
             this.MorseDisplay()
-            Blank().height(20)
+            Blank().height(12)
             this.InputDisplay()
           }
           .layoutWeight(1)
@@ -1035,7 +1060,7 @@ export struct LetterLessonPage {
         }
         .width('100%')
           .constraintSize({ maxWidth: 480 })
-          .padding({ left: 20, right: 20 })
+          .padding({ left: 12, right: 12 })
           .height('100%')
           .justifyContent(FlexAlign.Center)
           .alignItems(HorizontalAlign.Center)

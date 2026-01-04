@@ -5,6 +5,13 @@
     "pages/learn/LessonQuizPage",
     "pages/learn/KnowledgeLessonPage",
     "pages/practice/PracticePage",
-    "pages/codetable/ChineseTelegraphCodePage"
+    "pages/codetable/ChineseTelegraphCodePage",
+    "pages/watch/Index",
+    "pages/watch/KnowledgeLessonPage",
+    "pages/watch/LessonDetailPage",
+    "pages/watch/PracticeDetailPage",
+    "pages/watch/PracticeMistakesPage",
+    "pages/watch/AppRecommendationDetail",
+    "pages/watch/PrivacyPage"
   ]
 }

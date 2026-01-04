@@ -1,0 +1,17 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "摩斯电码通 Watch 版"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "摩斯电码通 Watch 版入口"
+    },
+    {
+      "name": "vibrate_permission_reason",
+      "value": "用于摩斯电码振动反馈"
+    }
+  ]
+}
+

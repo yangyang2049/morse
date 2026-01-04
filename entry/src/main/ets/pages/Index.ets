@@ -3,10 +3,12 @@ import { PracticeDifficultyPage } from './practice/PracticeDifficultyPage'
 import { TranslatePage } from './translate/TranslatePage'
 import { CodeTablePage } from './codetable/CodeTablePage'
 import { MePage } from './me/MePage'
+import { WatchIndexPage } from './WatchIndexPage'
 import { audioService } from '../services/AudioService'
 import { Context } from '@kit.AbilityKit'
 import deviceInfo from '@ohos.deviceInfo'
 import preferences from '@ohos.data.preferences'
+import { DeviceHelper } from '../utils/DeviceHelper'
 // Window system bar properties are managed globally in EntryAbility
 
 @Entry
@@ -14,6 +16,7 @@ import preferences from '@ohos.data.preferences'
   struct Index {
   @State currentIndex: number = 0
   @State isTablet: boolean = false
+  @State isWearable: boolean = false
 
   @StorageLink('currentLanguage') currentLanguage: string = ''
 
@@ -24,7 +27,7 @@ import preferences from '@ohos.data.preferences'
   private preferencesStore: preferences.Preferences | null = null
 
   async aboutToAppear() {
-    // 检查是否为平板设备
+    // 检查设备类型
     this.checkDeviceType()
 
     // 初始化偏好设置并加载上次的标签页
@@ -77,11 +80,12 @@ import preferences from '@ohos.data.preferences'
   // 检查设备类型
   private checkDeviceType() {
     try {
-      const deviceType = deviceInfo.deviceType
-      this.isTablet = deviceType === 'tablet'
-      console.log(`[INDEX] Device type: ${deviceType}, isTablet: ${this.isTablet}`)
+      this.isWearable = DeviceHelper.isWearable()
+      this.isTablet = DeviceHelper.isTablet()
+      console.log(`[INDEX] Device type: ${DeviceHelper.getDeviceType()}, isWearable: ${this.isWearable}, isTablet: ${this.isTablet}`)
     } catch (error) {
       console.error('[INDEX] Error getting device type:', error)
+      this.isWearable = false
       this.isTablet = false
     }
   }
@@ -128,64 +132,71 @@ import preferences from '@ohos.data.preferences'
   }
 
   build() {
-    Tabs({
-      barPosition: this.isTablet ? BarPosition.Start : BarPosition.End,
-      controller: new TabsController(),
-      index: this.currentIndex
-    }) {
-      TabContent() {
-        // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
-        if (this.pageRebuildKey >= 0) {
-          LearnPage()
+    // 根据设备类型显示不同的首页
+    if (this.isWearable) {
+      // 手表设备：显示 watch 版本的首页（使用 ArcSwiper）
+      WatchIndexPage()
+    } else {
+      // 手机/平板设备：显示原来的首页（使用 Tabs）
+      Tabs({
+        barPosition: this.isTablet ? BarPosition.Start : BarPosition.End,
+        controller: new TabsController(),
+        index: this.currentIndex
+      }) {
+        TabContent() {
+          // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
+          if (this.pageRebuildKey >= 0) {
+            LearnPage()
+          }
         }
-      }
-      .tabBar(this.TabBuilder(0, $rawfile('ic_learn.svg'), $rawfile('ic_learn_light.svg')))
+        .tabBar(this.TabBuilder(0, $rawfile('ic_learn.svg'), $rawfile('ic_learn_light.svg')))
 
-      TabContent() {
-        // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
-        if (this.pageRebuildKey >= 0) {
-          PracticeDifficultyPage()
+        TabContent() {
+          // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
+          if (this.pageRebuildKey >= 0) {
+            PracticeDifficultyPage()
+          }
         }
-      }
-      .tabBar(this.TabBuilder(1, $rawfile('ic_train.svg'), $rawfile('ic_train_light.svg')))
+        .tabBar(this.TabBuilder(1, $rawfile('ic_train.svg'), $rawfile('ic_train_light.svg')))
 
-      TabContent() {
-        // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
-        if (this.pageRebuildKey >= 0) {
-          TranslatePage()
+        TabContent() {
+          // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
+          if (this.pageRebuildKey >= 0) {
+            TranslatePage()
+          }
         }
-      }
-      .tabBar(this.TabBuilder(2, $rawfile('ic_translate.svg'), $rawfile('ic_translate_light.svg')))
+        .tabBar(this.TabBuilder(2, $rawfile('ic_translate.svg'), $rawfile('ic_translate_light.svg')))
 
-      TabContent() {
-        // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
-        if (this.pageRebuildKey >= 0) {
-          CodeTablePage()
+        TabContent() {
+          // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
+          if (this.pageRebuildKey >= 0) {
+            CodeTablePage()
+          }
         }
-      }
-      .tabBar(this.TabBuilder(3, $rawfile('ic_table.svg'), $rawfile('ic_table_light.svg')))
+        .tabBar(this.TabBuilder(3, $rawfile('ic_table.svg'), $rawfile('ic_table_light.svg')))
 
-      TabContent() {
-        // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
-        if (this.pageRebuildKey >= 0) {
-          MePage()
+        TabContent() {
+          // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
+          if (this.pageRebuildKey >= 0) {
+            MePage()
+          }
         }
+        .tabBar(this.TabBuilder(4, $rawfile('ic_me.svg'), $rawfile('ic_me_light.svg')))
       }
-      .tabBar(this.TabBuilder(4, $rawfile('ic_me.svg'), $rawfile('ic_me_light.svg')))
+      .vertical(this.isTablet)
+        .scrollable(false)
+        .barMode(BarMode.Fixed)
+        .barBackgroundColor(Color.Black)
+        .animationDuration(400)
+        .onChange((index: number) => {
+          this.currentIndex = index
+          // 保存当前标签页索引
+          this.saveCurrentTabIndex(index)
+        })
+        .width('100%')
+        .height('100%')
+        .backgroundColor(Color.Black)
+        .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
     }
-    .vertical(this.isTablet)
-      .scrollable(false)
-      .barMode(BarMode.Fixed)
-      .barBackgroundColor(Color.Black)
-      .animationDuration(400)
-      .onChange((index: number) => {
-        this.currentIndex = index
-        // 保存当前标签页索引
-        this.saveCurrentTabIndex(index)
-      })
-      .width('100%')
-      .height('100%')
-      .backgroundColor(Color.Black)
-      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }

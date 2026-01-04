@@ -370,6 +370,8 @@ import { resourceManager, i18n } from '@kit.LocalizationKit'
         console.error(`[KNOWLEDGE_LESSON] CompleteButton: User completed learning, marking lesson as completed`)
         // 立即标记课程完成
         await this.viewModel.markLessonCompletedImmediately()
+        // 刷新完成状态以更新进度显示
+        this.viewModel.refreshCompletionStatus()
         router.back()
       })
   }
@@ -394,7 +396,7 @@ import { resourceManager, i18n } from '@kit.LocalizationKit'
         // Complete button
         this.CompleteButton()
       }
-      .padding(16)
+      .padding({ top: 24, bottom: 24, left: 16, right: 16 })
         .alignItems(HorizontalAlign.Start)
     }
     .layoutWeight(1)

@@ -903,6 +903,218 @@
     {
       "name": "entering_review_mode",
       "value": "复习"
+    },
+    {
+      "name": "app_recommendation_zhaocha",
+      "value": "指尖找茬"
+    },
+    {
+      "name": "app_recommendation_zhaocha_name",
+      "value": "指尖找茬"
+    },
+    {
+      "name": "app_recommendation_zhaocha_desc",
+      "value": "考验眼力的找茬游戏"
+    },
+    {
+      "name": "app_recommendation_quannengjifenqi",
+      "value": "全能计分器"
+    },
+    {
+      "name": "app_recommendation_quannengjifenqi_name",
+      "value": "全能计分器"
+    },
+    {
+      "name": "app_recommendation_quannengjifenqi_desc",
+      "value": "腕上运动计分，就这么轻松"
+    },
+    {
+      "name": "search_zhaocha_in_appgallery",
+      "value": "在应用市场搜索\"指尖找茬\""
+    },
+    {
+      "name": "search_quannengjifenqi_in_appgallery",
+      "value": "在应用市场搜索\"全能计分器\""
+    },
+    {
+      "name": "qr_code_generating",
+      "value": "二维码生成中…"
+    },
+    {
+      "name": "qr_code_generation_failed",
+      "value": "二维码生成失败"
+    },
+    {
+      "name": "click_to_close",
+      "value": "轻触关闭"
+    },
+    {
+      "name": "watch_learn",
+      "value": "学习"
+    },
+    {
+      "name": "watch_basics",
+      "value": "基础"
+    },
+    {
+      "name": "watch_alphabet",
+      "value": "字母"
+    },
+    {
+      "name": "watch_numbers",
+      "value": "数字"
+    },
+    {
+      "name": "watch_practice",
+      "value": "练习"
+    },
+    {
+      "name": "watch_text_to_code",
+      "value": "字母 → 代码"
+    },
+    {
+      "name": "watch_code_to_text",
+      "value": "代码 → 字母"
+    },
+    {
+      "name": "watch_code_table",
+      "value": "码表"
+    },
+    {
+      "name": "watch_settings",
+      "value": "设置"
+    },
+    {
+      "name": "watch_vibration_feedback",
+      "value": "振动反馈"
+    },
+    {
+      "name": "watch_long_press_duration",
+      "value": "长按时间"
+    },
+    {
+      "name": "watch_phone_version_richer",
+      "value": "更多功能请在手机端体验"
+    },
+    {
+      "name": "watch_company_name",
+      "value": "重庆豆花科技有限公司"
+    },
+    {
+      "name": "watch_delete",
+      "value": "删除"
+    },
+    {
+      "name": "watch_clear",
+      "value": "清空"
+    },
+    {
+      "name": "watch_completed",
+      "value": "✓ 完成"
+    },
+    {
+      "name": "watch_next_group",
+      "value": "下一组"
+    },
+    {
+      "name": "watch_back",
+      "value": "返回"
+    },
+    {
+      "name": "watch_try_again",
+      "value": "X 再试一次"
+    },
+    {
+      "name": "watch_correct",
+      "value": "✓ 正确"
+    },
+    {
+      "name": "watch_wrong",
+      "value": "✗ 错误"
+    },
+    {
+      "name": "watch_correct_answer",
+      "value": "正确答案:"
+    },
+    {
+      "name": "watch_next_question",
+      "value": "下一题"
+    },
+    {
+      "name": "watch_complete_learning",
+      "value": "完成学习"
+    },
+    {
+      "name": "watch_already_completed",
+      "value": "已完成"
+    },
+    {
+      "name": "watch_morse_code_basics_title",
+      "value": "摩斯电码基础"
+    },
+    {
+      "name": "watch_select_morse_code_character",
+      "value": "选择摩斯码对应的字母或数字。"
+    },
+    {
+      "name": "watch_loading_failed",
+      "value": "加载失败"
+    },
+    {
+      "name": "watch_guide_title",
+      "value": "使用提示"
+    },
+    {
+      "name": "watch_guide_text_letter_lesson",
+      "value": "依照提示码学习，短按 ·，长按 -。"
+    },
+    {
+      "name": "watch_guide_text_practice_text_to_code",
+      "value": "依照提示码学习，短按 ·，长按 -。"
+    },
+    {
+      "name": "watch_guide_text_practice_code_to_text",
+      "value": "选择摩斯码对应的字母或数字。"
+    },
+    {
+      "name": "watch_guide_button_got_it",
+      "value": "知道了"
+    },
+    {
+      "name": "click_to_play_vibrate",
+      "value": "轻触播放（震动）"
+    },
+    {
+      "name": "watch_mistakes",
+      "value": "错题本"
+    },
+    {
+      "name": "watch_mistakes_empty",
+      "value": "练习或课程中的错题会自动记录在此，继续加油！"
+    },
+    {
+      "name": "watch_delete_mistake",
+      "value": "删除"
+    },
+    {
+      "name": "privacy_title",
+      "value": "隐私政策"
+    },
+    {
+      "name": "privacy_content",
+      "value": "欢迎使用摩斯电码通！我们非常重视您的隐私保护。本应用仅在本地运行，不会收集、上传或分享您的任何个人信息。您的学习进度和设置仅保存在您的设备上。"
+    },
+    {
+      "name": "agree",
+      "value": "同意"
+    },
+    {
+      "name": "exit_app",
+      "value": "取消"
+    },
+    {
+      "name": "scan_to_read",
+      "value": "扫码阅读完整政策"
     }
   ]
 }

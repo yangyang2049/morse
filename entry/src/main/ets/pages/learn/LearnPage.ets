@@ -3,6 +3,7 @@ import { LessonConfig } from '../../data/LessonConfig'
 import { LessonItem } from '../../types/Types'
 import { router } from '@kit.ArkUI'
 import { eventHub, Events } from '../../utils/EventHub'
+import { progressStore } from '../../store/ProgressStoreSingleton'
 
 @Component
 export struct LearnPage {
@@ -258,6 +259,16 @@ export struct LearnPage {
     return localizedStrings[langKey]?.[titleKey] || titleKey
   }
 
+  // 获取单元进度文本（格式：completed/total）
+  private getUnitProgress(unitKey: string): string {
+    const lessons = this.getLessonsForUnit(unitKey)
+    // 过滤掉占位课程
+    const realLessons = lessons.filter(l => !this.isPlaceholderLesson(this.getLessonTitle(l)))
+    const total = realLessons.length
+    const completed = realLessons.filter(l => l.completed).length
+    return `${completed}/${total}`
+  }
+
 
 
   @Builder
@@ -360,6 +371,13 @@ export struct LearnPage {
             .fontColor(Color.White)
             .layoutWeight(1)
             .textAlign(TextAlign.Center)
+
+          // 所有单元都显示进度
+          Text(this.getUnitProgress(unitKey))
+            .fontSize(16)
+            .fontColor('#FFFFFF')
+            .fontWeight(FontWeight.Medium)
+            .margin({ left: 8 })
         }
         .margin({ top: 24, bottom: 32 })
 

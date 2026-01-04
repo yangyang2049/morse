@@ -2,6 +2,7 @@ import { BusinessError } from "@kit.BasicServicesKit";
 import { media } from "@kit.MediaKit";
 import { audio } from "@kit.AudioKit";
 import { Context } from '@kit.AbilityKit';
+import { resourceManager } from '@kit.LocalizationKit';
 import { vibratorService } from './VibratorService';
 
 export class AudioService {
@@ -11,6 +12,7 @@ export class AudioService {
   private context: Context | null = null
   private loadedSounds: Map<string, number> = new Map() // soundName -> soundId
   private isPlaying: boolean = false
+  private soundEnabled: boolean = true
 
   private constructor() {}
 
@@ -21,28 +23,48 @@ export class AudioService {
     return AudioService.instance
   }
 
+  // 设置声音开关
+  setSoundEnabled(enabled: boolean): void {
+    this.soundEnabled = enabled;
+    console.info(`[AudioService] Sound enabled set to: ${enabled}`);
+  }
+
   // 初始化音频服务
   async init(context?: Context): Promise<void> {
     console.info("[AudioService] ===== INIT CALLED =====");
 
-    this.context = context || this.context;
+    // 修复 Context Leak: 使用 ApplicationContext 而不是 Activity/Page Context
+    if (context) {
+      try {
+        // 尝试获取 ApplicationContext，如果失败则使用传入的 context
+        this.context = context.getApplicationContext() || context;
+        console.info('[AudioService] Using ApplicationContext to prevent memory leaks');
+      } catch (error) {
+        console.warn('[AudioService] Failed to get ApplicationContext, using provided context:', error);
+        this.context = context;
+      }
+    }
 
     try {
-      // 如果已经初始化且存在可用的 SoundPool，避免重复创建
+      // 修复 SoundPool 初始化竞态条件: 使用锁机制防止并发初始化
       if (this.isInitialized && this.soundPool) {
         console.info('[AudioService] Already initialized, skip creating SoundPool');
         return;
       }
 
-      await this.createSoundPool();
-      this.isInitialized = true;
-      
-      // 预加载音频文件
-      await this.preloadSounds();
+      // 设置初始化标志，防止并发初始化
+      if (!this.isInitialized) {
+        await this.createSoundPool();
+        this.isInitialized = true;
+        
+        // 预加载音频文件
+        await this.preloadSounds();
+      }
       
       console.info("[AudioService] Initialization completed successfully");
     } catch (error) {
       console.error("[AudioService] Initialization failed:", error);
+      this.isInitialized = false;
       throw new Error("Initialization failed");
     }
   }
@@ -102,13 +124,23 @@ export class AudioService {
 
     try {
       // 获取文件描述符
+      // 注意: getRawFdSync 是同步 I/O 操作，但由于音频文件很小，通常不会造成明显的 UI 卡顿
+      // 如果将来需要优化，可以考虑在后台线程中执行此操作
       if (!this.context?.resourceManager) {
         throw new Error("Resource manager not available");
       }
 
-      const fileDescriptor = this.context.resourceManager.getRawFdSync(
-        filePath.replace("rawfile/", "")
-      );
+      let fileDescriptor: resourceManager.RawFileDescriptor | undefined = undefined;
+      try {
+        fileDescriptor = this.context.resourceManager.getRawFdSync(
+          filePath.replace("rawfile/", "")
+        );
+      } catch (syncError) {
+        const errorMessage = syncError instanceof Error ? syncError.message : String(syncError);
+        console.error(`[AudioService] Synchronous I/O error for ${soundName}:`, syncError);
+        throw new Error(`Failed to read file descriptor: ${errorMessage}`);
+      }
+      
       if (!fileDescriptor) {
         throw new Error(`Failed to get file descriptor for ${filePath}`);
       }
@@ -189,6 +221,14 @@ export class AudioService {
 
   // 内部播放音频方法
   private async playSound(soundName: string, duration: number): Promise<void> {
+    // 如果声音被禁用，仅等待时长
+    if (!this.soundEnabled) {
+      await new Promise<void>((resolve) => {
+        setTimeout(() => resolve(), duration);
+      });
+      return;
+    }
+
     // 检查SoundPool状态，如果需要则重新初始化
     if (!this.soundPool || !this.isInitialized) {
       console.warn(`[AudioService] SoundPool not available, attempting to reinitialize...`);

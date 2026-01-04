@@ -36,7 +36,26 @@ export class KnowledgeLessonViewModel {
     // 根据课程类型加载对应的数据
     this.loadLessonData()
 
+    // 检查课程完成状态
+    this.checkLessonCompleted()
+
     console.error(`[KnowledgeLessonViewModel] init completed: title=${this.title}`)
+  }
+
+  // 检查课程完成状态
+  private checkLessonCompleted(): void {
+    if (this.lessonCompletedKey) {
+      const lessonNumber = LessonConfig.getLessonNumber(this.lessonCompletedKey)
+      if (lessonNumber > 0) {
+        this.isLessonCompleted = progressStore.isLessonCompleted(lessonNumber)
+      }
+    }
+  }
+
+  // 获取进度显示文本（格式：1/1 或 0/1）
+  getProgressText(): string {
+    const completed = this.isLessonCompleted ? 1 : 0
+    return `${completed}/1`
   }
 
   // 加载课程数据
@@ -152,5 +171,10 @@ export class KnowledgeLessonViewModel {
     } else {
       console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Cannot complete - lessonCompletedKey=${this.lessonCompletedKey}, isLessonCompleted=${this.isLessonCompleted}, context=${!!this.context}`)
     }
+  }
+
+  // 刷新课程完成状态（用于在完成课程后更新显示）
+  refreshCompletionStatus(): void {
+    this.checkLessonCompleted()
   }
 }
