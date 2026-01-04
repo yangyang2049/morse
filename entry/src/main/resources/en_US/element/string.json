@@ -1081,6 +1081,10 @@
       "value": "Got it"
     },
     {
+      "name": "click_to_play_vibrate",
+      "value": "Tap to play (vibration)"
+    },
+    {
       "name": "watch_mistakes",
       "value": "Mistakes"
     },
