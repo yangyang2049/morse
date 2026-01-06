@@ -419,32 +419,39 @@ export struct LetterLessonPage {
   private InputDisplay() {
     Column() {
       if (this.viewModel.userInput.trim().length > 0) {
-        // 用图形化方式显示用户输入
-        Row() {
-          ForEach(this.viewModel.userInput.split(''), (char: string) => {
-            if (char === '.') {
-              Circle({ width: this.isWordLesson() ? 6.4 : 8, height: this.isWordLesson() ? 6.4 : 8 })
-                .fill(
-                  this.viewModel.showResult && this.viewModel.isCorrect ? Color.Green :
-                    this.viewModel.showResult && !this.viewModel.isCorrect ? Color.Red : '#FFD700'
-                )
-                .margin({ right: this.isWordLesson() ? 6.4 : 8 })
-            } else if (char === '-') {
-              Rect({ width: this.isWordLesson() ? 12.8 : 16, height: this.isWordLesson() ? 3.2 : 4 })
-                .fill(
-                  this.viewModel.showResult && this.viewModel.isCorrect ? Color.Green :
-                    this.viewModel.showResult && !this.viewModel.isCorrect ? Color.Red : '#FFD700'
-                )
-                .margin({ right: this.isWordLesson() ? 6.4 : 8 })
-            } else if (char === ' ') {
-              // 字母间空格
-              if (this.isWordLesson()) {
-                Blank().width(3.2).height(1)
+        // 用图形化方式显示用户输入，使用 Scroll 防止内容超出时换行
+        Scroll() {
+          Row() {
+            ForEach(this.viewModel.userInput.split(''), (char: string, index: number) => {
+              if (char === '.') {
+                Circle({ width: this.isWordLesson() ? 6.4 : 8, height: this.isWordLesson() ? 6.4 : 8 })
+                  .fill(
+                    this.viewModel.showResult && this.viewModel.isCorrect ? Color.Green :
+                      this.viewModel.showResult && !this.viewModel.isCorrect ? Color.Red : '#FFD700'
+                  )
+                  .margin({ right: this.isWordLesson() ? 6.4 : 8 })
+                  .id(`dot_${index}`)
+              } else if (char === '-') {
+                Rect({ width: this.isWordLesson() ? 12.8 : 16, height: this.isWordLesson() ? 3.2 : 4 })
+                  .fill(
+                    this.viewModel.showResult && this.viewModel.isCorrect ? Color.Green :
+                      this.viewModel.showResult && !this.viewModel.isCorrect ? Color.Red : '#FFD700'
+                  )
+                  .margin({ right: this.isWordLesson() ? 6.4 : 8 })
+                  .id(`dash_${index}`)
+              } else if (char === ' ') {
+                // 字母间空格
+                if (this.isWordLesson()) {
+                  Blank().width(3.2).height(1).id(`space_${index}`)
+                }
               }
-            }
-          })
+            }, (char: string, index: number) => `${char}_${index}`)
+          }
+          .justifyContent(FlexAlign.Center)
         }
-        .justifyContent(FlexAlign.Center)
+        .width('100%')
+        .scrollable(ScrollDirection.Horizontal)
+        .scrollBar(BarState.Off)
       }
     }
     .height(50)

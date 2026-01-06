@@ -477,6 +477,8 @@ struct PracticeMistakesPage {
                     .height(32)
                     .width('80%')
                     .textAlign(TextAlign.Center)
+                    .maxLines(1)
+                    .textOverflow({ overflow: TextOverflow.Ellipsis })
                     .padding(8)
                     .backgroundColor('rgba(255, 255, 255, 0.1)')
                     .borderRadius(8)
