@@ -25,7 +25,7 @@ const SUPPORTED_LANGUAGES: LanguageOption[] = [
 
 @Component
 export struct MePage {
-  @State appVersion: string = '1.3.1'
+  @State appVersion: string = '1.4.0'
   @StorageLink('currentLanguage') currentLanguage: string = this.getInitialLanguage()
   @State useSingleButton: boolean = false // 是否使用单按钮模式
   @State showButtonModeDialog: boolean = false // 是否显示按钮模式选择对话框
@@ -161,7 +161,7 @@ export struct MePage {
   }
 
   private loadAppInfo() {
-    this.appVersion = '1.3.1'
+    this.appVersion = '1.4.0'
   }
 
   // 初始化偏好设置存储
@@ -1371,36 +1371,11 @@ export struct MePage {
 
             // 底部版权信息 - 现在在滚动内容的底部
             Column() {
-              // QQ群信息 - 仅在中文环境下显示
-              if (this.currentLanguage.startsWith('zh')) {
-                Row() {
-                  Text('QQ群：825096333 ')
-                    .fontSize(12)
-                    .fontColor('#999999')
-
-                  Image($rawfile('ic_copy.svg'))
-                    .width(16)
-                    .height(16)
-                    .margin({ left: 4 })
-                }
-                .width('100%')
-                  .justifyContent(FlexAlign.Center)
-                  .alignItems(VerticalAlign.Center)
-                  .padding({ bottom: 20 })
-                  .onClick(async () => {
-                    try {
-                      const sysPB = pasteboard.getSystemPasteboard()
-                      const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, '825096333')
-                      await sysPB.setPasteData(pasteData)
-                      promptAction.showToast({
-                        message: $r('app.string.qq_group_number_copied'),
-                        duration: 2000
-                      })
-                    } catch (error) {
-                      console.error('[MePage] Failed to copy QQ group number:', error)
-                    }
-                  })
-              }
+              // 手表版已上线提示
+              Text($r('app.string.watch_version_available'))
+                .fontSize(14)
+                .fontColor('#AAAAAA')
+                .padding({ bottom: 16 })
 
               Text($r('app.string.copyright'))
                 .fontSize(12)
