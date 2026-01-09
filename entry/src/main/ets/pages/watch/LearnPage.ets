@@ -89,7 +89,7 @@ export struct LearnPage {
       Column() {
         // 基础课程
         Row() {
-          Image($rawfile('ic_learn.svg'))
+          Image($rawfile('ic_article.svg'))
             .width(24)
             .height(24)
             .fillColor('#FFD700')

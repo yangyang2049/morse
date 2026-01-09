@@ -5,6 +5,7 @@ import { BusinessError } from '@kit.BasicServicesKit'
 import preferences from '@ohos.data.preferences'
 import { Context } from '@kit.AbilityKit'
 import { audioService } from '../../services/AudioService'
+import { vibratorService } from '../../services/VibratorService'
 import { promptAction, ArcButton, ArcButtonOptions, ArcButtonPosition, ArcButtonStyleMode, ColorMetrics } from '@kit.ArkUI'
 import { LessonGroups } from '../../data/LessonGroups'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
@@ -24,6 +25,7 @@ struct LessonDetailPage {
   @State longPressThreshold: number = 300
   @State isCurrentCharCorrect: boolean = false
   @State showGuideDialog: boolean = false
+  @State vibrationEnabled: boolean = true
   
   private preferencesStore: preferences.Preferences | null = null
   private pressStartTime: number = 0
@@ -44,6 +46,7 @@ struct LessonDetailPage {
         const practiceStore = await preferences.getPreferences(context, 'practice_settings')
         await this.loadButtonModePreference(practiceStore)
         await this.loadLongPressThresholdPreference(practiceStore)
+        await this.loadVibrationPreference(practiceStore)
         await this.checkAndShowGuide()
       }
     } catch (error) {
@@ -138,6 +141,17 @@ struct LessonDetailPage {
       }
     } catch (error) {
       console.error('[LessonDetailPage] Failed to load long press threshold:', error)
+    }
+  }
+
+  // 加载震动偏好设置
+  private async loadVibrationPreference(store: preferences.Preferences | null): Promise<void> {
+    try {
+      if (store) {
+        this.vibrationEnabled = await store.get('vibration_enabled', true) as boolean
+      }
+    } catch (error) {
+      console.error('[LessonDetailPage] Failed to load vibration preference:', error)
     }
   }
 
@@ -276,14 +290,18 @@ struct LessonDetailPage {
   // 添加点
   private addDot(): void {
     this.lessonInput += '·'
-    vibrator.vibrate(100, () => {})
+    if (vibratorService.isVibrationEnabled()) {
+      vibrator.vibrate(100, () => {})
+    }
     this.startAutoCheck()
   }
 
   // 添加划
   private addDash(): void {
     this.lessonInput += '-'
-    vibrator.vibrate(300, () => {})
+    if (vibratorService.isVibrationEnabled()) {
+      vibrator.vibrate(300, () => {})
+    }
     this.startAutoCheck()
   }
 
@@ -549,19 +567,21 @@ struct LessonDetailPage {
                 .margin({ bottom: 12 })
             }
 
-            // 输入显示
-            Text(this.lessonInput || '')
-              .fontSize(20)
-              .fontColor('#FFFFFF')
-              .height(32)
-              .width('80%')
-              .textAlign(TextAlign.Center)
-              .maxLines(1)
-              .textOverflow({ overflow: TextOverflow.Ellipsis })
-              .padding(8)
-              .backgroundColor('rgba(255, 255, 255, 0.1)')
-              .borderRadius(8)
-              .margin({ bottom: 8 })
+            // 输入显示 - 使用 Scroll 支持横向滚动
+            Scroll() {
+              Text(this.lessonInput || '')
+                .fontSize(20)
+                .fontColor('#FFFFFF')
+                .textAlign(TextAlign.Center)
+            }
+            .width('80%')
+            .height(32)
+            .scrollable(ScrollDirection.Horizontal)
+            .scrollBar(BarState.Off)
+            .padding(8)
+            .backgroundColor('rgba(255, 255, 255, 0.1)')
+            .borderRadius(8)
+            .margin({ bottom: 8 })
 
             // 单键输入按钮 - 使用 ArcButton 自定义金色样式
             if (this.useSingleButton) {

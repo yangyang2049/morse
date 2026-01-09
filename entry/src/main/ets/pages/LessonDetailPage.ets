@@ -19,6 +19,7 @@ struct LessonDetailPage {
   @State useSingleButton: boolean = true
   @State longPressThreshold: number = 300
   @State isCurrentCharCorrect: boolean = false
+  @State vibrationEnabled: boolean = true
   
   private preferencesStore: preferences.Preferences | null = null
   private pressStartTime: number = 0
@@ -34,6 +35,7 @@ struct LessonDetailPage {
         const practiceStore = await preferences.getPreferences(context, 'practice_settings')
         await this.loadButtonModePreference(practiceStore)
         await this.loadLongPressThresholdPreference(practiceStore)
+        await this.loadVibrationPreference(practiceStore)
       }
     } catch (error) {
       console.error('[LessonDetailPage] Failed to initialize preferences:', error)
@@ -82,6 +84,17 @@ struct LessonDetailPage {
       }
     } catch (error) {
       console.error('[LessonDetailPage] Failed to load long press threshold:', error)
+    }
+  }
+
+  // 加载震动偏好设置
+  private async loadVibrationPreference(store: preferences.Preferences | null): Promise<void> {
+    try {
+      if (store) {
+        this.vibrationEnabled = await store.get('vibration_enabled', true) as boolean
+      }
+    } catch (error) {
+      console.error('[LessonDetailPage] Failed to load vibration preference:', error)
     }
   }
 
@@ -198,14 +211,18 @@ struct LessonDetailPage {
   // 添加点
   private addDot(): void {
     this.lessonInput += '·'
-    vibrator.vibrate(100, () => {})
+    if (this.vibrationEnabled) {
+      vibrator.vibrate(100, () => {})
+    }
     this.startAutoCheck()
   }
 
   // 添加划
   private addDash(): void {
     this.lessonInput += '-'
-    vibrator.vibrate(300, () => {})
+    if (this.vibrationEnabled) {
+      vibrator.vibrate(300, () => {})
+    }
     this.startAutoCheck()
   }
 

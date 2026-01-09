@@ -2,6 +2,7 @@ import { MorseCodeData, MorseCode } from '../../models/MorseCode'
 import vibrator from '@ohos.vibrator'
 import { BusinessError } from '@kit.BasicServicesKit'
 import { audioService } from '../../services/AudioService'
+import { vibratorService } from '../../services/VibratorService'
 import { Context } from '@kit.AbilityKit'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
 import preferences from '@ohos.data.preferences'
@@ -57,7 +58,7 @@ export struct CodeTablePage {
 
   // 通过振动播放摩斯码
   private playMorseVibration(morse: string): void {
-    if (!morse || !this.vibrationEnabled) return
+    if (!morse || !vibratorService.isVibrationEnabled()) return
 
     this.clearVibrationTimers()
 
@@ -66,7 +67,7 @@ export struct CodeTablePage {
       const char = morse[i]
       if (char === '·' || char === '.') {
         const timerId = setTimeout(() => {
-          if (this.vibrationEnabled) {
+          if (vibratorService.isVibrationEnabled()) {
             vibrator.vibrate(100, (error: BusinessError) => {
               if (error) {
                 console.error(`[CodeTablePage] Failed to vibrate: ${error.message}`)
@@ -78,7 +79,7 @@ export struct CodeTablePage {
         delay += 200
       } else if (char === '-') {
         const timerId = setTimeout(() => {
-          if (this.vibrationEnabled) {
+          if (vibratorService.isVibrationEnabled()) {
             vibrator.vibrate(300, (error: BusinessError) => {
               if (error) {
                 console.error(`[CodeTablePage] Failed to vibrate: ${error.message}`)

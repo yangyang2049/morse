@@ -25,6 +25,7 @@ struct PracticeDetailPage {
   @State isCorrectFeedback: boolean = false
   @State showHint: boolean = false
   @State isContentVisible: boolean = true
+  @State vibrationEnabled: boolean = true
   
   private pressStartTime: number = 0
   private longPressTimer: number | null = null
@@ -41,6 +42,7 @@ struct PracticeDetailPage {
         this.preferencesStore = await preferences.getPreferences(context, 'practice_settings')
         await this.loadButtonModePreference()
         await this.loadLongPressThresholdPreference()
+        await this.loadVibrationPreference()
       }
     } catch (error) {
       console.error('[PracticeDetailPage] Failed to initialize preferences:', error)
@@ -123,6 +125,17 @@ struct PracticeDetailPage {
     }
   }
 
+  // 加载震动偏好设置
+  private async loadVibrationPreference(): Promise<void> {
+    try {
+      if (this.preferencesStore) {
+        this.vibrationEnabled = await this.preferencesStore.get('vibration_enabled', true) as boolean
+      }
+    } catch (error) {
+      console.error('[PracticeDetailPage] Failed to load vibration preference:', error)
+    }
+  }
+
   // 下一题
   private nextQuestion(): void {
     this.isCorrectFeedback = false
@@ -187,9 +200,13 @@ struct PracticeDetailPage {
     if (isCorrect) {
       this.isCorrectFeedback = true
       // 正确：成功振动
-      vibrator.vibrate(50, () => {})
-      setTimeout(() => {
+      if (this.vibrationEnabled) {
         vibrator.vibrate(50, () => {})
+      }
+      setTimeout(() => {
+        if (this.vibrationEnabled) {
+          vibrator.vibrate(50, () => {})
+        }
       }, 100)
       // 延迟后切换到下一题
       setTimeout(() => {
@@ -197,7 +214,9 @@ struct PracticeDetailPage {
       }, 300)
     } else {
       // 错误：错误振动
-      vibrator.vibrate(250, () => {})
+      if (this.vibrationEnabled) {
+        vibrator.vibrate(250, () => {})
+      }
       // 延迟后切换到下一题
       setTimeout(() => {
         this.nextQuestion()
@@ -224,9 +243,13 @@ struct PracticeDetailPage {
         }
         this.isCorrectFeedback = true
         // 成功振动
-        vibrator.vibrate(50, () => {})
-        setTimeout(() => {
+        if (this.vibrationEnabled) {
           vibrator.vibrate(50, () => {})
+        }
+        setTimeout(() => {
+          if (this.vibrationEnabled) {
+            vibrator.vibrate(50, () => {})
+          }
         }, 100)
         // 延迟后切换到下一题
         setTimeout(() => {
@@ -239,7 +262,9 @@ struct PracticeDetailPage {
           this.autoCheckTimer = null
         }
         // 错误振动
-        vibrator.vibrate(250, () => {})
+        if (this.vibrationEnabled) {
+          vibrator.vibrate(250, () => {})
+        }
         try {
           promptAction.showToast({
             message: 'X 再试一次',
@@ -288,7 +313,9 @@ struct PracticeDetailPage {
   private addDot(): void {
     if (this.mode === 'text_to_code' && !this.showAnswer) {
       this.practiceAnswer += '·'
-      vibrator.vibrate(100, () => {})
+      if (this.vibrationEnabled) {
+        vibrator.vibrate(100, () => {})
+      }
       this.startAutoCheck()
     }
   }
@@ -297,7 +324,9 @@ struct PracticeDetailPage {
   private addDash(): void {
     if (this.mode === 'text_to_code' && !this.showAnswer) {
       this.practiceAnswer += '-'
-      vibrator.vibrate(300, () => {})
+      if (this.vibrationEnabled) {
+        vibrator.vibrate(300, () => {})
+      }
       this.startAutoCheck()
     }
   }

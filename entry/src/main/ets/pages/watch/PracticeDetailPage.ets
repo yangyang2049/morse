@@ -1,6 +1,7 @@
 import router from '@ohos.router'
 import { MorseCodeData, MorseCode } from '../../models/MorseCode'
 import { audioService } from '../../services/AudioService'
+import { vibratorService } from '../../services/VibratorService'
 import vibrator from '@ohos.vibrator'
 import { BusinessError } from '@kit.BasicServicesKit'
 import preferences from '@ohos.data.preferences'
@@ -28,6 +29,7 @@ struct PracticeDetailPage {
   @State showHint: boolean = false
   @State isContentVisible: boolean = true
   @State showGuideDialog: boolean = false
+  @State vibrationEnabled: boolean = true
   
   private pressStartTime: number = 0
   private longPressTimer: number | null = null
@@ -49,6 +51,7 @@ struct PracticeDetailPage {
         this.preferencesStore = await preferences.getPreferences(context, 'practice_settings')
         await this.loadButtonModePreference()
         await this.loadLongPressThresholdPreference()
+        await this.loadVibrationPreference()
       }
     } catch (error) {
       console.error('[PracticeDetailPage] Failed to initialize preferences:', error)
@@ -142,6 +145,17 @@ struct PracticeDetailPage {
       }
     } catch (error) {
       console.error('[PracticeDetailPage] Failed to load long press threshold:', error)
+    }
+  }
+
+  // 加载震动偏好设置
+  private async loadVibrationPreference(): Promise<void> {
+    try {
+      if (this.preferencesStore) {
+        this.vibrationEnabled = await this.preferencesStore.get('vibration_enabled', true) as boolean
+      }
+    } catch (error) {
+      console.error('[PracticeDetailPage] Failed to load vibration preference:', error)
     }
   }
 
@@ -340,12 +354,16 @@ struct PracticeDetailPage {
       this.isCorrectFeedback = true
       // 正确：成功振动
       const t1 = setTimeout(() => {
-        vibrator.vibrate(50, () => {})
+        if (vibratorService.isVibrationEnabled()) {
+          vibrator.vibrate(50, () => {})
+        }
       }, 0)
       this.selectCharTimers.push(t1)
 
       const t2 = setTimeout(() => {
-        vibrator.vibrate(50, () => {})
+        if (vibratorService.isVibrationEnabled()) {
+          vibrator.vibrate(50, () => {})
+        }
       }, 100)
       this.selectCharTimers.push(t2)
 
@@ -357,7 +375,9 @@ struct PracticeDetailPage {
     } else {
       FavoritesStore.getInstance().addToMistakes(this.practiceChar)
       // 错误：错误振动
-      vibrator.vibrate(250, () => {})
+      if (vibratorService.isVibrationEnabled()) {
+        vibrator.vibrate(250, () => {})
+      }
       // 延迟后切换到下一题
       const t4 = setTimeout(() => {
         this.nextQuestion()
@@ -391,12 +411,16 @@ struct PracticeDetailPage {
         this.isCorrectFeedback = true
         // 成功振动
         const t1 = setTimeout(() => {
+          if (vibratorService.isVibrationEnabled()) {
           vibrator.vibrate(50, () => {})
+        }
         }, 0)
         this.checkAnswerTimers.push(t1)
 
         const t2 = setTimeout(() => {
+          if (vibratorService.isVibrationEnabled()) {
           vibrator.vibrate(50, () => {})
+        }
         }, 100)
         this.checkAnswerTimers.push(t2)
 
@@ -413,7 +437,9 @@ struct PracticeDetailPage {
           this.autoCheckTimer = null
         }
         // 错误振动
-        vibrator.vibrate(250, () => {})
+        if (vibratorService.isVibrationEnabled()) {
+          vibrator.vibrate(250, () => {})
+        }
         try {
           promptAction.showToast({
             message: LocalizationHelper.getString('watch_try_again'),
@@ -463,7 +489,9 @@ struct PracticeDetailPage {
   private addDot(): void {
     if (this.mode === 'text_to_code' && !this.showAnswer) {
       this.practiceAnswer += '·'
-      vibrator.vibrate(100, () => {})
+      if (vibratorService.isVibrationEnabled()) {
+        vibrator.vibrate(100, () => {})
+      }
       this.startAutoCheck()
     }
   }
@@ -472,7 +500,9 @@ struct PracticeDetailPage {
   private addDash(): void {
     if (this.mode === 'text_to_code' && !this.showAnswer) {
       this.practiceAnswer += '-'
-      vibrator.vibrate(300, () => {})
+      if (vibratorService.isVibrationEnabled()) {
+        vibrator.vibrate(300, () => {})
+      }
       this.startAutoCheck()
     }
   }
@@ -557,19 +587,21 @@ struct PracticeDetailPage {
                   .fontWeight(FontWeight.Bold)
                   .margin({ top: 8, bottom: 8 })
 
-                // 输入显示
-                Text(this.practiceAnswer)
-                  .fontSize(20)
-                  .fontColor(this.isCorrectFeedback ? '#4CAF50' : '#FFFFFF')
-                  .height(32)
-                  .width('80%')
-                  .textAlign(TextAlign.Center)
-                  .maxLines(1)
-                  .textOverflow({ overflow: TextOverflow.Ellipsis })
-                  .padding(8)
-                  .backgroundColor('rgba(255, 255, 255, 0.1)')
-                  .borderRadius(8)
-                  .margin({ bottom: 8 })
+                // 输入显示 - 使用 Scroll 支持横向滚动
+                Scroll() {
+                  Text(this.practiceAnswer)
+                    .fontSize(20)
+                    .fontColor(this.isCorrectFeedback ? '#4CAF50' : '#FFFFFF')
+                    .textAlign(TextAlign.Center)
+                }
+                .width('80%')
+                .height(32)
+                .scrollable(ScrollDirection.Horizontal)
+                .scrollBar(BarState.Off)
+                .padding(8)
+                .backgroundColor('rgba(255, 255, 255, 0.1)')
+                .borderRadius(8)
+                .margin({ bottom: 8 })
 
                 // 提示按钮
                 if (this.showHint) {

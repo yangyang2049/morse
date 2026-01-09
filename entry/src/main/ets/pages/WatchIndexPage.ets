@@ -3,6 +3,7 @@ import { ArcSwiper, ArcSwiperController, ArcSwiperAttribute } from '@kit.ArkUI'
 import vibrator from '@ohos.vibrator'
 import { BusinessError } from '@kit.BasicServicesKit'
 import { audioService } from '../services/AudioService'
+import { vibratorService } from '../services/VibratorService'
 import { Context } from '@kit.AbilityKit'
 import router from '@ohos.router'
 import preferences from '@ohos.data.preferences'
@@ -287,6 +288,7 @@ export struct WatchIndexPage {
               .selectedColor('#FFD700')
               .onChange((isOn: boolean) => {
                 this.vibrationEnabled = isOn
+                vibratorService.setEnabled(isOn)
               })
           }
           .width('100%')
@@ -354,7 +356,7 @@ export struct WatchIndexPage {
 
   // 通过振动播放摩斯码
   private playMorseVibration(morse: string): void {
-    if (!morse || !this.vibrationEnabled) return
+    if (!morse || !vibratorService.isVibrationEnabled()) return
 
     // 清理之前的振动定时器，防止定时器泄漏
     this.clearVibrationTimers()
@@ -364,7 +366,7 @@ export struct WatchIndexPage {
       const char = morse[i]
       if (char === '·' || char === '.') {
         const timerId = setTimeout(() => {
-          if (this.vibrationEnabled) {
+          if (vibratorService.isVibrationEnabled()) {
             vibrator.vibrate(100, (error: BusinessError) => {
               if (error) {
                 console.error(`[WatchIndexPage] Failed to vibrate: ${error.message}`)
@@ -376,7 +378,7 @@ export struct WatchIndexPage {
         delay += 200
       } else if (char === '-') {
         const timerId = setTimeout(() => {
-          if (this.vibrationEnabled) {
+          if (vibratorService.isVibrationEnabled()) {
             vibrator.vibrate(300, (error: BusinessError) => {
               if (error) {
                 console.error(`[WatchIndexPage] Failed to vibrate: ${error.message}`)
@@ -447,7 +449,10 @@ export struct WatchIndexPage {
     try {
       if (this.practiceSettingsStore) {
         this.longPressThreshold = await this.practiceSettingsStore.get('long_press_threshold', 300) as number
-        console.log(`[WatchIndexPage] Loaded settings: longPressThreshold=${this.longPressThreshold}`)
+        this.vibrationEnabled = await this.practiceSettingsStore.get('vibration_enabled', true) as boolean
+        // 同步震动服务状态
+        vibratorService.setEnabled(this.vibrationEnabled)
+        console.log(`[WatchIndexPage] Loaded settings: longPressThreshold=${this.longPressThreshold}, vibrationEnabled=${this.vibrationEnabled}`)
       }
     } catch (error) {
       console.error('[WatchIndexPage] Failed to load settings:', error)

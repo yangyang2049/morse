@@ -3,6 +3,7 @@ import preferences from '@ohos.data.preferences'
 import { Context } from '@kit.AbilityKit'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
 import { audioService } from '../../services/AudioService'
+import { vibratorService } from '../../services/VibratorService'
 
 @Component
 export struct SettingsPage {
@@ -39,6 +40,8 @@ export struct SettingsPage {
         
         // 更新音频服务状态
         audioService.setSoundEnabled(this.soundEnabled)
+        // 更新震动服务状态
+        vibratorService.setEnabled(this.vibrationEnabled)
       }
     } catch (error) {
       console.error('[SettingsPage] Failed to load settings:', error)
@@ -63,6 +66,8 @@ export struct SettingsPage {
       if (this.practiceSettingsStore) {
         await this.practiceSettingsStore.put('vibration_enabled', enabled)
         await this.practiceSettingsStore.flush()
+        // 立即更新震动服务状态
+        vibratorService.setEnabled(enabled)
       }
     } catch (error) {
       console.error('[SettingsPage] Failed to save vibration enabled:', error)
