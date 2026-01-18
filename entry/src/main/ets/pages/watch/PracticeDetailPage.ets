@@ -233,7 +233,7 @@ struct PracticeDetailPage {
   @Builder
   private GuideDialog() {
     Column() {
-      Text(LocalizationHelper.getString('watch_guide_title'))
+      Text('提示')
         .fontSize(18)
         .fontWeight(FontWeight.Bold)
         .fontColor('#FFFFFF')

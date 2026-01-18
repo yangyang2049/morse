@@ -74,8 +74,8 @@ struct PrivacyPage {
 
             if (this.qrCode) {
               Image(this.qrCode)
-                .width(150)
-                .height(150)
+                .width(120)
+                .height(120)
                 .backgroundColor(Color.White)
                 .borderRadius(12)
                 .padding(12)
@@ -90,8 +90,8 @@ struct PrivacyPage {
                   .fontColor('#666666')
                   .margin({ top: 8 })
               }
-              .width(150)
-              .height(150)
+              .width(120)
+              .height(120)
               .backgroundColor('#FFFFFF')
               .borderRadius(12)
               .justifyContent(FlexAlign.Center)
@@ -130,6 +130,7 @@ struct PrivacyPage {
       }
       .layoutWeight(1)
       .width('100%')
+      .scrollBar(BarState.Off)
       .focusable(true)
       .defaultFocus(true)
     }

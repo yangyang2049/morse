@@ -486,6 +486,22 @@ struct PracticeMistakesPage {
         .alignItems(HorizontalAlign.Center)
       } else {
         Stack({ alignContent: Alignment.TopEnd }) {
+          // Back button
+          Button() {
+            Image($rawfile('ic_back.svg'))
+              .width(16)
+              .height(16)
+              .fillColor(Color.White)
+          }
+          .width(36)
+          .height(36)
+          .backgroundColor('rgba(255, 255, 255, 0.1)')
+          .borderRadius(18)
+          .margin({ top: 8, right: 8 })
+          .onClick(() => {
+            router.back()
+          })
+
           // Main content
           Column() {
             if (!this.showAnswer && this.mistakeCode) {
