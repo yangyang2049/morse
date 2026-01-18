@@ -18,16 +18,21 @@ export class LessonGroups {
     ]
   }
 
-  // 数字分组：每3个数字一组
+  // 数字分组：按指定分组
   static getNumberGroups(): string[][] {
     return [
       ['0', '1', '2'],
       ['3', '4', '5'],
-      ['6', '7', '8'],
-      ['9']
+      ['6', '7', '8', '9']
+    ]
+  }
+
+  // 标点分组：分成3组学习
+  static getPunctuationGroups(): string[][] {
+    return [
+      ['.', ',', '?', '!'],
+      [':', ';', '-', '/'],
+      ['(', ')']
     ]
   }
 }
-
-
-

@@ -539,7 +539,6 @@ struct PracticeDetailPage {
                           (this.selectedChar && char === this.practiceChar ? '#00FF00' : 'rgba(255, 255, 255, 0.1)'))
                     )
                     .borderRadius(8)
-                    .border({ width: 1, color: '#333333' })
                     .onClick(() => {
                       if (!this.selectedChar) {
                         this.selectChar(char)
@@ -550,11 +549,11 @@ struct PracticeDetailPage {
               }
               .columnsTemplate('1fr 1fr 1fr')
               .rowsTemplate('1fr 1fr')
-              .columnsGap(4)
-              .rowsGap(4)
-              .width('80%')
-              .layoutWeight(1)
-              .margin({ top: 8, bottom: 20 })
+              .columnsGap(12)
+              .rowsGap(12)
+              .width('100%')
+              .height(280)
+              .margin({ bottom: 20 })
               .opacity(this.showCandidateGrid ? 1 : 0)
             }
         } else {
@@ -592,4 +591,3 @@ struct PracticeDetailPage {
     .backgroundColor('#000000')
   }
 }
-

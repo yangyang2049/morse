@@ -228,7 +228,6 @@ import { resourceManager, i18n } from '@kit.LocalizationKit'
       .height(480)
       .padding(16)
       .backgroundColor('#1A1A1A')
-      .border({ width: 1, color: '#333333' })
       .borderRadius(12)
       .margin({ right: 16 })
   }
@@ -309,7 +308,6 @@ import { resourceManager, i18n } from '@kit.LocalizationKit'
       .height(480)
       .padding(16)
       .backgroundColor('#FFF8DC')
-      .border({ width: 1, color: '#FF8C00' })
       .borderRadius(12)
   }
 
@@ -326,7 +324,6 @@ import { resourceManager, i18n } from '@kit.LocalizationKit'
     .width('100%')
       .padding(20)
       .backgroundColor('#2A2A2A')
-      .border({ width: 1, color: '#333333' })
       .borderRadius(12)
   }
 
@@ -346,7 +343,6 @@ import { resourceManager, i18n } from '@kit.LocalizationKit'
           .width('100%')
             .padding(20)
             .backgroundColor('#2A2A2A')
-            .border({ width: 1, color: '#333333' })
             .borderRadius(12)
             .margin({ top: index > 0 ? 20 : 0 })
         })
@@ -396,7 +392,7 @@ import { resourceManager, i18n } from '@kit.LocalizationKit'
         // Complete button
         this.CompleteButton()
       }
-      .padding({ top: 24, bottom: 24, left: 16, right: 16 })
+      .padding({ top: 24, bottom: 48, left: 16, right: 16 })
         .alignItems(HorizontalAlign.Start)
     }
     .layoutWeight(1)
@@ -423,7 +419,7 @@ import { resourceManager, i18n } from '@kit.LocalizationKit'
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring)
       .layoutWeight(1)
-      .padding({ left: 16, right: 16, top: 16, bottom: 24 })
+      .padding({ left: 16, right: 16, top: 16, bottom: 48 })
   }
 
   build() {

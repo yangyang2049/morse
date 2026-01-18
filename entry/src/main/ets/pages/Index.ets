@@ -120,10 +120,17 @@ import { DeviceHelper } from '../utils/DeviceHelper'
   }
 
 
-  @Builder TabBuilder(targetIndex: number, selectedImg: Resource, normalImg: Resource) {
+  @Builder TabBuilder(targetIndex: number, selectedImg: Resource, normalImg: Resource, titleKey: string) {
     Column() {
       Image(this.currentIndex === targetIndex ? selectedImg : normalImg)
-        .size({ width: 28, height: 28 })
+        .size({ width: 24, height: 24 })
+
+      Text($r(titleKey))
+        .fontSize(10)
+        .fontColor('#FFD700')
+        .fontWeight(FontWeight.Medium)
+        .textAlign(TextAlign.Center)
+        .margin({ top: 2 })
     }
     .width('100%')
       .height(56)
@@ -149,7 +156,7 @@ import { DeviceHelper } from '../utils/DeviceHelper'
             LearnPage()
           }
         }
-        .tabBar(this.TabBuilder(0, $rawfile('ic_learn.svg'), $rawfile('ic_learn_light.svg')))
+        .tabBar(this.TabBuilder(0, $rawfile('ic_learn.svg'), $rawfile('ic_learn_light.svg'), 'learn'))
 
         TabContent() {
           // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
@@ -157,7 +164,7 @@ import { DeviceHelper } from '../utils/DeviceHelper'
             PracticeDifficultyPage()
           }
         }
-        .tabBar(this.TabBuilder(1, $rawfile('ic_train.svg'), $rawfile('ic_train_light.svg')))
+        .tabBar(this.TabBuilder(1, $rawfile('ic_train.svg'), $rawfile('ic_train_light.svg'), 'practice'))
 
         TabContent() {
           // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
@@ -165,7 +172,7 @@ import { DeviceHelper } from '../utils/DeviceHelper'
             TranslatePage()
           }
         }
-        .tabBar(this.TabBuilder(2, $rawfile('ic_translate.svg'), $rawfile('ic_translate_light.svg')))
+        .tabBar(this.TabBuilder(2, $rawfile('ic_translate.svg'), $rawfile('ic_translate_light.svg'), 'translate'))
 
         TabContent() {
           // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
@@ -173,7 +180,7 @@ import { DeviceHelper } from '../utils/DeviceHelper'
             CodeTablePage()
           }
         }
-        .tabBar(this.TabBuilder(3, $rawfile('ic_table.svg'), $rawfile('ic_table_light.svg')))
+        .tabBar(this.TabBuilder(3, $rawfile('ic_table.svg'), $rawfile('ic_table_light.svg'), 'code_table'))
 
         TabContent() {
           // 使用pageRebuildKey强制重建页面，确保语言切换时页面完全刷新
@@ -181,7 +188,7 @@ import { DeviceHelper } from '../utils/DeviceHelper'
             MePage()
           }
         }
-        .tabBar(this.TabBuilder(4, $rawfile('ic_me.svg'), $rawfile('ic_me_light.svg')))
+        .tabBar(this.TabBuilder(4, $rawfile('ic_me.svg'), $rawfile('ic_me_light.svg'), 'me'))
       }
       .vertical(this.isTablet)
         .scrollable(false)

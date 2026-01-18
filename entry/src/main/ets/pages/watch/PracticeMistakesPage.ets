@@ -646,7 +646,6 @@ struct PracticeMistakesPage {
                               (this.selectedChar && char === this.mistakeCode?.character ? '#4CAF50' : 'rgba(255, 255, 255, 0.1)'))
                         )
                         .borderRadius(8)
-                        .border({ width: 1, color: '#333333' })
                         .onClick(() => {
                           if (!this.selectedChar) {
                             this.selectChar(char)

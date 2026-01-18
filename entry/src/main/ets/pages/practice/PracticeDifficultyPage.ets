@@ -171,7 +171,6 @@ export struct PracticeDifficultyPage {
     .width('100%')
       .backgroundColor('#1A1A1A')
       .borderRadius(14)
-      .border({ width: 1, color: '#333333' })
       .onClick(() => {
         this.openPractice(item.key)
       })
@@ -203,7 +202,6 @@ export struct PracticeDifficultyPage {
     .width('100%')
       .backgroundColor('#1A1A1A')
       .borderRadius(14)
-      .border({ width: 1, color: '#333333' })
       .onClick(onClick)
   }
 
@@ -231,7 +229,6 @@ export struct PracticeDifficultyPage {
     .width('100%')
       .backgroundColor('#1A1A1A')
       .borderRadius(14)
-      .border({ width: 1, color: '#333333' })
       .onClick(onClick)
   }
 

@@ -362,23 +362,27 @@ export struct TranslatePage {
       // 文本 → 电码
       Button($r('app.string.text_to_morse'))
         .onClick(() => { this.isTextToMorse = true })
-        .backgroundColor(this.isTextToMorse ? '#FFD700' : '#1A1A1A')
-        .fontColor(this.isTextToMorse ? '#000000' : '#B0B0B0')
+        .backgroundColor(this.isTextToMorse ? '#FFD700' : 'rgba(255, 255, 255, 0.08)')
+        .fontColor(this.isTextToMorse ? '#000000' : '#FFD700')
+        .fontSize(14)
+        .fontWeight(this.isTextToMorse ? FontWeight.Bold : FontWeight.Medium)
         .borderRadius(16)
-        .padding({ left: 14, right: 14 })
+        .padding({ left: 12, right: 12, top: 6, bottom: 6 })
         .margin({ right: 8 })
-        .border({ width: 1, color: '#333333' })
+        .border({ width: 0 })
         .hoverEffect(HoverEffect.Scale)
         .focusable(true)
 
       // 电码 → 文本
       Button($r('app.string.morse_to_text'))
         .onClick(() => { this.isTextToMorse = false })
-        .backgroundColor(!this.isTextToMorse ? '#FFD700' : '#1A1A1A')
-        .fontColor(!this.isTextToMorse ? '#000000' : '#B0B0B0')
+        .backgroundColor(!this.isTextToMorse ? '#FFD700' : 'rgba(255, 255, 255, 0.08)')
+        .fontColor(!this.isTextToMorse ? '#000000' : '#FFD700')
+        .fontSize(14)
+        .fontWeight(!this.isTextToMorse ? FontWeight.Bold : FontWeight.Medium)
         .borderRadius(16)
-        .padding({ left: 14, right: 14 })
-        .border({ width: 1, color: '#333333' })
+        .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+        .border({ width: 0 })
         .hoverEffect(HoverEffect.Scale)
         .focusable(true)
     }
@@ -447,7 +451,6 @@ export struct TranslatePage {
       .backgroundColor('#1A1A1A')
       .borderRadius(12)
       .margin({ left: 12, right: 12 })
-      .border({ width: 1, color: '#333333' })
   }
 
   @Builder
@@ -543,7 +546,6 @@ export struct TranslatePage {
       .backgroundColor('#1A1A1A')
       .borderRadius(12)
       .margin({ left: 12, right: 12, bottom: 12 })
-      .border({ width: 1, color: '#333333' })
   }
 
   @Builder
@@ -560,8 +562,7 @@ export struct TranslatePage {
         }
         .height(40)
           .backgroundColor('#1A1A1A')
-          .borderRadius(0)
-          .border({ width: 1, color: '#333333' })
+          .borderRadius(8)
           .onClick(() => this.addSlash())
           .hoverEffect(HoverEffect.Scale)
           .focusable(true)
@@ -578,8 +579,7 @@ export struct TranslatePage {
         }
         .height(40)
           .backgroundColor('#1A1A1A')
-          .borderRadius(0)
-          .border({ width: 1, color: '#333333' })
+          .borderRadius(8)
           .onClick(() => this.addSpace())
           .hoverEffect(HoverEffect.Scale)
           .focusable(true)
@@ -596,8 +596,7 @@ export struct TranslatePage {
         }
         .height(40)
           .backgroundColor('#1A1A1A')
-          .borderRadius(0)
-          .border({ width: 1, color: '#333333' })
+          .borderRadius(8)
           .onClick(() => this.deleteLast())
           .hoverEffect(HoverEffect.Scale)
           .focusable(true)
@@ -616,7 +615,6 @@ export struct TranslatePage {
         .height(80)
           .backgroundColor('#1A1A1A')
           .borderRadius(this.pillRadius)
-          .border({ width: 1, color: '#333333' })
           .onClick(async () => {
             this.addDot()
             // 播放点音
@@ -641,7 +639,6 @@ export struct TranslatePage {
         .height(80)
           .backgroundColor('#1A1A1A')
           .borderRadius(this.pillRadius)
-          .border({ width: 1, color: '#333333' })
           .onClick(async () => {
             this.addDash()
             // 播放划音

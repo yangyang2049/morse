@@ -41,6 +41,7 @@ export struct PracticePage {
         .padding({ left: 12, right: 12, top: 8, bottom: 8 })
         .backgroundColor('rgba(255, 255, 255, 0.1)')
         .borderRadius(8)
+        .clickEffect({ level: ClickEffectLevel.LIGHT })
         .onClick(() => {
           router.pushUrl({
             url: 'pages/watch/PracticeDetailPage',
@@ -63,6 +64,7 @@ export struct PracticePage {
         .padding({ left: 12, right: 12, top: 8, bottom: 8 })
         .backgroundColor('rgba(255, 255, 255, 0.1)')
         .borderRadius(8)
+        .clickEffect({ level: ClickEffectLevel.LIGHT })
         .onClick(() => {
           router.pushUrl({
             url: 'pages/watch/PracticeDetailPage',
@@ -85,6 +87,7 @@ export struct PracticePage {
         .padding({ left: 12, right: 12, top: 8, bottom: 8 })
         .backgroundColor('rgba(255, 255, 255, 0.1)')
         .borderRadius(8)
+        .clickEffect({ level: ClickEffectLevel.LIGHT })
         .onClick(() => {
           router.pushUrl({
             url: 'pages/watch/PracticeMistakesPage'
@@ -102,6 +105,3 @@ export struct PracticePage {
     .backgroundColor('#000000')
   }
 }
-
-
-

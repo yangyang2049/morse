@@ -490,7 +490,7 @@ export struct LetterLessonPage {
         Blank().layoutWeight(1)
       }
       .width('100%')
-        .padding({ left: 16, right: 16, bottom: 20 })
+        .padding({ left: 16, right: 16, bottom: 48 })
     } else {
       // 双按钮模式
       Row() {
@@ -597,7 +597,7 @@ export struct LetterLessonPage {
             .layoutWeight(1)
         }
       }
-      .padding({ left: 16, right: 16, bottom: 20 })
+      .padding({ left: 16, right: 16, bottom: 48 })
     }
   }
 

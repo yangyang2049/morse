@@ -148,6 +148,7 @@ struct KnowledgeLessonPage {
     .width('100%')
     .height('100%')
     .backgroundColor('#000000')
+    .scrollBar(BarState.Off)
     .focusable(true)
     .defaultFocus(true)
   }
@@ -222,4 +223,3 @@ struct KnowledgeLessonPage {
     }
   }
 }
-

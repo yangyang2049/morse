@@ -241,7 +241,7 @@ struct PracticeDetailPage {
         .width('100%')
         .margin({ bottom: 16 })
 
-      Text(LocalizationHelper.getString('watch_guide_text_practice_text_to_code'))
+      Text('点击输入电码，不确定时点击眼睛图标查看')
         .fontSize(14)
         .fontColor('#CCCCCC')
         .textAlign(TextAlign.Center)
@@ -578,16 +578,18 @@ struct PracticeDetailPage {
     Stack() {
       Column() {
         if (!this.showAnswer) {
-            Column() {
-              if (this.mode === 'text_to_code') {
-                // 文本转代码模式
+          Column() {
+            if (this.mode === 'text_to_code') {
+              // --- Text to Code Mode UI ---
+              Column() {
+                // Character display
                 Text(this.practiceChar)
                   .fontSize(48)
                   .fontColor(this.isCorrectFeedback ? '#4CAF50' : '#FFD700')
                   .fontWeight(FontWeight.Bold)
                   .margin({ top: 8, bottom: 8 })
 
-                // 输入显示 - 使用 Scroll 支持横向滚动
+                // Input display - 使用 Scroll 支持横向滚动
                 Scroll() {
                   Text(this.practiceAnswer)
                     .fontSize(20)
@@ -603,7 +605,7 @@ struct PracticeDetailPage {
                 .borderRadius(8)
                 .margin({ bottom: 8 })
 
-                // 提示按钮
+                // Hint button
                 if (this.showHint) {
                   Text(this.getCorrectMorse())
                     .fontSize(20)
@@ -613,10 +615,9 @@ struct PracticeDetailPage {
                     .margin({ bottom: 8 })
                 } else {
                   Button() {
-                    Image($r('app.media.ic_eye'))
-                      .width(16)
-                      .height(16)
-                      .fillColor('#FFFFFF')
+                    SymbolGlyph($r('sys.symbol.eye'))
+                      .fontSize(20)
+                      .fontColor(['#FFFFFF'])
                   }
                   .width(32)
                   .height(32)
@@ -627,9 +628,68 @@ struct PracticeDetailPage {
                   .margin({ bottom: 8 })
                 }
               }
+              .width('100%')
+              .layoutWeight(1)
+              .justifyContent(FlexAlign.Center)
+              .opacity(this.isContentVisible ? 1 : 0)
 
-              if (this.mode === 'code_to_text') {
-                // 代码转文本模式：显示摩斯码（金色，无背景）
+              // Input Buttons
+              if (this.useSingleButton) {
+                ArcButton({
+                  options: new ArcButtonOptions({
+                    label: '·',
+                    position: ArcButtonPosition.BOTTOM_EDGE,
+                    styleMode: ArcButtonStyleMode.CUSTOM,
+                    backgroundColor: ColorMetrics.resourceColor('#FFD700'),
+                    fontColor: ColorMetrics.resourceColor('#000000')
+                  })
+                })
+                .onClick(() => {
+                  this.handleSingleButtonRelease()
+                })
+                .onTouch((event: TouchEvent) => {
+                  if (event.type === TouchType.Down) {
+                    this.handleSingleButtonPress()
+                  } else if (event.type === TouchType.Up) {
+                    this.handleSingleButtonRelease()
+                  }
+                })
+              } else {
+                Row() {
+                  Button('·')
+                    .width(60)
+                    .height(60)
+                    .backgroundColor('#FFD700')
+                    .fontColor(Color.Black)
+                    .fontSize(24)
+                    .fontWeight(FontWeight.Bold)
+                    .borderRadius(30)
+                    .onClick(() => {
+                      this.addDot()
+                      audioService.playDit()
+                    })
+
+                  Button('-')
+                    .width(60)
+                    .height(60)
+                    .backgroundColor('#FFD700')
+                    .fontColor(Color.Black)
+                    .fontSize(24)
+                    .fontWeight(FontWeight.Bold)
+                    .borderRadius(30)
+                    .onClick(() => {
+                      this.addDash()
+                      audioService.playDah()
+                    })
+                }
+                .width('80%')
+                .justifyContent(FlexAlign.SpaceEvenly)
+                .margin({ top: 8, bottom: 8 })
+              }
+            } else {
+              // --- Code to Text Mode UI ---
+              Column() {
+                // Morse display
                 Text(this.showMorseCode ? this.getCorrectMorse() : '')
                   .fontSize(24)
                   .fontWeight(FontWeight.Bold)
@@ -637,107 +697,54 @@ struct PracticeDetailPage {
                   .textAlign(TextAlign.Center)
                   .margin({ top: 12, bottom: 12 })
                   .opacity(this.showMorseCode ? 1 : 0)
-              }
-            }
-            .width('100%')
-            .layoutWeight(1)
-            .justifyContent(FlexAlign.Center)
-            .opacity(this.isContentVisible ? 1 : 0)
 
-            // 单键输入按钮（仅字母转代码模式）- 使用 ArcButton
-            if (this.useSingleButton && this.mode === 'text_to_code') {
-              ArcButton({
-                options: new ArcButtonOptions({
-                  label: '·',
-                  position: ArcButtonPosition.BOTTOM_EDGE,
-                  styleMode: ArcButtonStyleMode.CUSTOM,
-                  backgroundColor: ColorMetrics.resourceColor('#FFD700'),
-                  fontColor: ColorMetrics.resourceColor('#000000')
-                })
-              })
-              .onClick(() => {
-                this.handleSingleButtonRelease()
-              })
-              .onTouch((event: TouchEvent) => {
-                if (event.type === TouchType.Down) {
-                  this.handleSingleButtonPress()
-                } else if (event.type === TouchType.Up) {
-                  this.handleSingleButtonRelease()
-                }
-              })
-            } else if (this.mode === 'text_to_code') {
-              // 双键模式（仅字母转代码模式）
-              Row() {
-                Button('·')
-                  .width(60)
-                  .height(60)
-                  .backgroundColor('#FFD700')
-                  .fontColor(Color.Black)
-                  .fontSize(24)
-                  .fontWeight(FontWeight.Bold)
-                  .borderRadius(30)
-                  .onClick(() => {
-                    this.addDot()
-                    audioService.playDit()
-                  })
-
-                Button('-')
-                  .width(60)
-                  .height(60)
-                  .backgroundColor('#FFD700')
-                  .fontColor(Color.Black)
-                  .fontSize(24)
-                  .fontWeight(FontWeight.Bold)
-                  .borderRadius(30)
-                  .onClick(() => {
-                    this.addDash()
-                    audioService.playDah()
-                  })
-              }
-              .width('80%')
-              .justifyContent(FlexAlign.SpaceEvenly)
-              .margin({ top: 8, bottom: 8 })
-            }
-
-            // 代码转字母模式的字符选择（6个选项：3列2行）
-            if (this.mode === 'code_to_text') {
-              Grid() {
-                ForEach(this.candidateChars, (char: string) => {
-                  GridItem() {
-                    Column() {
-                      Text(char)
-                        .fontSize(20)
-                        .fontWeight(FontWeight.Bold)
-                        .fontColor('#FFFFFF')
-                        .textAlign(TextAlign.Center)
-                    }
-                    .width('100%')
-                    .height('100%')
-                    .justifyContent(FlexAlign.Center)
-                    .backgroundColor(
-                      this.selectedChar === char && char === this.practiceChar ? '#4CAF50' :
-                        (this.selectedChar === char ? '#F44336' :
-                          (this.selectedChar && char === this.practiceChar ? '#4CAF50' : 'rgba(255, 255, 255, 0.1)'))
-                    )
-                    .borderRadius(8)
-                    .border({ width: 1, color: '#333333' })
-                    .onClick(() => {
-                      if (!this.selectedChar) {
-                        this.selectChar(char)
+                // Candidate Grid
+                Grid() {
+                  ForEach(this.candidateChars, (char: string) => {
+                    GridItem() {
+                      Column() {
+                        Text(char)
+                          .fontSize(20)
+                          .fontWeight(FontWeight.Bold)
+                          .fontColor('#FFFFFF')
+                          .textAlign(TextAlign.Center)
                       }
-                    })
-                  }
-                })
+                      .width('100%')
+                      .height('100%')
+                      .justifyContent(FlexAlign.Center)
+                      .backgroundColor(
+                        this.selectedChar === char && char === this.practiceChar ? '#4CAF50' :
+                          (this.selectedChar === char ? '#F44336' :
+                            (this.selectedChar && char === this.practiceChar ? '#4CAF50' : 'rgba(255, 255, 255, 0.1)'))
+                      )
+                      .borderRadius(8)
+                      .onClick(() => {
+                        if (!this.selectedChar) {
+                          this.selectChar(char)
+                        }
+                      })
+                    }
+                  })
+                }
+                .columnsTemplate('1fr 1fr 1fr')
+                .rowsTemplate('1fr 1fr')
+                .columnsGap(4)
+                .rowsGap(4)
+                .width('80%')
+                .layoutWeight(1)
+                .margin({ top: 8, bottom: 20 })
+                .opacity(this.showCandidateGrid ? 1 : 0)
               }
-              .columnsTemplate('1fr 1fr 1fr')
-              .rowsTemplate('1fr 1fr')
-              .columnsGap(4)
-              .rowsGap(4)
-              .width('80%')
+              .width('100%')
               .layoutWeight(1)
-              .margin({ top: 8, bottom: 20 })
-              .opacity(this.showCandidateGrid ? 1 : 0)
+              .justifyContent(FlexAlign.Center)
+              .opacity(this.isContentVisible ? 1 : 0)
             }
+          }
+          .width('100%')
+          .height('100%')
+          .alignItems(HorizontalAlign.Center)
+          .padding({ top: 20, bottom: 0, left: 12, right: 12 })
         } else {
           // 答案显示
           Text(this.isAnswerCorrect() ? LocalizationHelper.getString('watch_correct') : LocalizationHelper.getString('watch_wrong'))
@@ -769,7 +776,6 @@ struct PracticeDetailPage {
       .width('100%')
       .height('100%')
       .alignItems(HorizontalAlign.Center)
-      .padding({ top: 8, bottom: 0, left: 12, right: 12 })
       .backgroundColor('#000000')
 
       // 引导对话框（仅 text to code 模式）
@@ -793,4 +799,3 @@ struct PracticeDetailPage {
     .height('100%')
   }
 }
-

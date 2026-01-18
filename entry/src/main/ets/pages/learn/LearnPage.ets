@@ -368,7 +368,7 @@ export struct LearnPage {
           Text(this.getLocalizedTitle(titleKey))
             .fontSize(28)
             .fontWeight(FontWeight.Bold)
-            .fontColor(Color.White)
+            .fontColor('#FFD700')
             .layoutWeight(1)
             .textAlign(TextAlign.Center)
 
@@ -400,7 +400,7 @@ export struct LearnPage {
         }
         .layoutWeight(1)
           .scrollBar(BarState.Off)  // 移除滚动条
-          .edgeEffect(EdgeEffect.None)  // 移除弹性效果
+          .edgeEffect(EdgeEffect.Spring)  // 添加弹性效果
           .opacity(1.0)
           .enabled(true)  // 所有单元都启用滚动
       }
@@ -409,7 +409,6 @@ export struct LearnPage {
       .width('100%')
       .height('100%')
       .backgroundColor('#1A1A1A')
-      .border({ width: 1, color: '#333333' })
       .borderRadius(12)
   }
 
@@ -453,10 +452,10 @@ export struct LearnPage {
           }
         }
         .scrollable(ScrollDirection.Horizontal)
-          .edgeEffect(EdgeEffect.None)
+          .edgeEffect(EdgeEffect.Spring)
           .scrollBar(BarState.Off)
           .layoutWeight(1)
-          .padding({ left: 16, right: 16, top: 16, bottom: 24 })
+          .padding({ left: 16, right: 16, top: 16, bottom: 48 })
       } else {
         // Loading state - Pure black screen
         Column() {

@@ -1080,7 +1080,6 @@ export struct MePage {
         .padding({ left: 16, right: 16, top: 12, bottom: 12 })
         .backgroundColor('#111111')
         .borderRadius(12)
-        .border({ width: 1, color: '#222222' })
         .margin({ bottom: 8 })
         .onClick(() => {
           this.openIScoreApp()
@@ -1118,7 +1117,6 @@ export struct MePage {
         .padding({ left: 16, right: 16, top: 12, bottom: 12 })
         .backgroundColor('#111111')
         .borderRadius(12)
-        .border({ width: 1, color: '#222222' })
         .margin({ bottom: 8 })
         .onClick(() => {
           this.openPeriodicTableApp()
@@ -1156,7 +1154,6 @@ export struct MePage {
         .padding({ left: 16, right: 16, top: 12, bottom: 12 })
         .backgroundColor('#111111')
         .borderRadius(12)
-        .border({ width: 1, color: '#222222' })
         .margin({ bottom: 8 })
         .onClick(() => {
           this.openFlagApp()
@@ -1194,7 +1191,6 @@ export struct MePage {
         .padding({ left: 16, right: 16, top: 12, bottom: 12 })
         .backgroundColor('#111111')
         .borderRadius(12)
-        .border({ width: 1, color: '#222222' })
         .margin({ bottom: 8 })
         .onClick(() => {
           this.openDevAssistantApp()
@@ -1232,7 +1228,6 @@ export struct MePage {
         .padding({ left: 16, right: 16, top: 12, bottom: 12 })
         .backgroundColor('#111111')
         .borderRadius(12)
-        .border({ width: 1, color: '#222222' })
         .margin({ bottom: 8 })
         .onClick(() => {
           this.openCaikuaiApp()
@@ -1270,7 +1265,6 @@ export struct MePage {
         .padding({ left: 16, right: 16, top: 12, bottom: 12 })
         .backgroundColor('#111111')
         .borderRadius(12)
-        .border({ width: 1, color: '#222222' })
         .margin({ bottom: 8 })
         .onClick(() => {
           this.openRustApp()

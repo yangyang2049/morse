@@ -191,6 +191,7 @@ export struct CodeTablePage {
       .width('80%')
       .layoutWeight(1)
       .cachedCount(10)
+      .scrollBar(BarState.Off)
       .focusable(true)
       .defaultFocus(true)
     }
@@ -201,4 +202,3 @@ export struct CodeTablePage {
     .backgroundColor('#000000')
   }
 }
-

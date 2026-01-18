@@ -698,6 +698,7 @@ export struct PracticePage {
           .fontColor(this.category === 'letters' ? '#FFD700' : '#999999')
           .fontWeight(this.category === 'letters' ? FontWeight.Bold : FontWeight.Normal)
           .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+          .clickEffect({ level: ClickEffectLevel.LIGHT })
           .onClick(() => this.switchCategory('letters'))
 
         Text('|')
@@ -710,6 +711,7 @@ export struct PracticePage {
           .fontColor(this.category === 'numbers' ? '#FFD700' : '#999999')
           .fontWeight(this.category === 'numbers' ? FontWeight.Bold : FontWeight.Normal)
           .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+          .clickEffect({ level: ClickEffectLevel.LIGHT })
           .onClick(() => this.switchCategory('numbers'))
 
         Text('|')
@@ -722,6 +724,7 @@ export struct PracticePage {
           .fontColor(this.category === 'punctuation' ? '#FFD700' : '#999999')
           .fontWeight(this.category === 'punctuation' ? FontWeight.Bold : FontWeight.Normal)
           .padding({ left: 8, right: 8, top: 4, bottom: 4 })
+          .clickEffect({ level: ClickEffectLevel.LIGHT })
           .onClick(() => this.switchCategory('punctuation'))
       }
       .layoutWeight(1)
@@ -935,7 +938,6 @@ export struct PracticePage {
         .height(80)
           .backgroundColor('#1A1A1A')
           .borderRadius(this.pillRadius)
-          .border({ width: 1, color: '#333333' })
           .onClick(async () => {
             this.vm.addDot() // addDot 内部已包含振动反馈
             if (this.soundEnabled) {
@@ -953,7 +955,6 @@ export struct PracticePage {
         .height(80)
           .backgroundColor('#1A1A1A')
           .borderRadius(this.pillRadius)
-          .border({ width: 1, color: '#333333' })
           .onClick(async () => {
             this.vm.addDash()
             if (this.soundEnabled) {
@@ -1039,21 +1040,21 @@ export struct PracticePage {
                   )
                   .textAlign(TextAlign.Center)
               }
-            .width('100%')
-                .height('100%')
-                .justifyContent(FlexAlign.Center)
-                .backgroundColor(
-                  this.selectedChar === char && char === this.vm.getCurrentCharacter() ? Color.Green :
-                    (this.selectedChar === char ? Color.Red :
-                      (this.selectedChar && char === this.vm.getCurrentCharacter() ? Color.Green : '#1A1A1A'))
-                )
-                .borderRadius(12)
-                .border({ width: 1, color: '#333333' })
-                .onClick(() => {
-                  if (!this.selectedChar) {
-                    this.selectChar(char)
-                  }
-                })
+              .width('100%')
+              .height('100%')
+              .justifyContent(FlexAlign.Center)
+              .backgroundColor(
+                this.selectedChar === char && char === this.vm.getCurrentCharacter() ? Color.Green :
+                  (this.selectedChar === char ? Color.Red :
+                    (this.selectedChar && char === this.vm.getCurrentCharacter() ? Color.Green : '#1A1A1A'))
+              )
+              .borderRadius(12)
+              .clickEffect({ level: ClickEffectLevel.LIGHT })
+              .onClick(() => {
+                if (!this.selectedChar) {
+                  this.selectChar(char)
+                }
+              })
             }
           })
         }
@@ -1162,7 +1163,7 @@ export struct PracticePage {
                       (this.selectedChar && char === this.vm.getCurrentCharacter() ? Color.Green : '#1A1A1A'))
                 )
                 .borderRadius(12)
-                .border({ width: 1, color: '#333333' })
+                .clickEffect({ level: ClickEffectLevel.LIGHT })
                 .onClick(() => {
                   if (!this.selectedChar) {
                     this.selectChar(char)
@@ -1232,11 +1233,6 @@ export struct PracticePage {
         .backgroundColor('#111111')
         .borderRadius(8)
         .margin({ bottom: 8 })
-        .border({
-          width: !this.selectedButtonMode ? 1 : 0.5,
-          color: !this.selectedButtonMode ? '#FFD700' : '#222222',
-          radius: 8
-        })
         .onClick(() => {
           this.selectedButtonMode = false
         })
@@ -1268,11 +1264,6 @@ export struct PracticePage {
         .padding(16)
         .backgroundColor('#111111')
         .borderRadius(8)
-        .border({
-          width: this.selectedButtonMode ? 1 : 0.5,
-          color: this.selectedButtonMode ? '#FFD700' : '#222222',
-          radius: 8
-        })
         .onClick(() => {
           this.selectedButtonMode = true
         })

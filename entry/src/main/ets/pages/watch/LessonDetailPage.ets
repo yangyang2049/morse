@@ -16,7 +16,7 @@ import { LessonConfig } from '../../data/LessonConfig'
 @Entry
 @Component
 struct LessonDetailPage {
-  @State lessonType: 'alphabet' | 'numbers' = 'alphabet'
+  @State lessonType: 'alphabet' | 'numbers' | 'punctuation' = 'alphabet'
   @State currentLessonGroup: string[] = []
   @State currentLessonIndex: number = 0
   @State lessonCharIndex: number = 0
@@ -55,11 +55,11 @@ struct LessonDetailPage {
 
     const params = router.getParams() as Record<string, Object>
     if (params) {
-      const lessonType = (params['lessonType'] as 'alphabet' | 'numbers') || 'alphabet'
+      const lessonType = (params['lessonType'] as 'alphabet' | 'numbers' | 'punctuation') || 'alphabet'
       const lessonIndex = (params['lessonIndex'] as number) || 0
 
       // 验证 lessonType
-      if (lessonType !== 'alphabet' && lessonType !== 'numbers') {
+      if (lessonType !== 'alphabet' && lessonType !== 'numbers' && lessonType !== 'punctuation') {
         console.error('[LessonDetailPage] Invalid lessonType:', lessonType)
         router.back()
         return
@@ -68,7 +68,9 @@ struct LessonDetailPage {
       // 验证 lessonIndex
       const groups = lessonType === 'alphabet'
         ? LessonGroups.getAlphabetGroups()
-        : LessonGroups.getNumberGroups()
+        : lessonType === 'numbers'
+        ? LessonGroups.getNumberGroups()
+        : LessonGroups.getPunctuationGroups()
       
       if (lessonIndex < 0 || lessonIndex >= groups.length) {
         console.error('[LessonDetailPage] Invalid lessonIndex:', lessonIndex, 'max:', groups.length - 1)
@@ -159,7 +161,9 @@ struct LessonDetailPage {
   private startLesson(groupIndex: number): void {
     const groups = this.lessonType === 'alphabet'
       ? LessonGroups.getAlphabetGroups()
-      : LessonGroups.getNumberGroups()
+      : this.lessonType === 'numbers'
+      ? LessonGroups.getNumberGroups()
+      : LessonGroups.getPunctuationGroups()
 
     if (groupIndex < groups.length) {
       this.currentLessonGroup = groups[groupIndex]
@@ -414,7 +418,8 @@ struct LessonDetailPage {
       if (this.pendingSave && this.preferencesStore) {
         try {
           const nextIndex = this.currentLessonIndex + 1
-          const key = this.lessonType === 'alphabet' ? 'alphabet_progress' : 'numbers_progress'
+          const key = this.lessonType === 'alphabet' ? 'alphabet_progress' :
+            this.lessonType === 'numbers' ? 'numbers_progress' : 'punctuation_progress'
           await this.preferencesStore.put(key, nextIndex)
           await this.preferencesStore.flush()
           this.pendingSave = false
@@ -446,7 +451,9 @@ struct LessonDetailPage {
   private async nextLessonGroup(): Promise<void> {
     const groups = this.lessonType === 'alphabet'
       ? LessonGroups.getAlphabetGroups()
-      : LessonGroups.getNumberGroups()
+      : this.lessonType === 'numbers'
+      ? LessonGroups.getNumberGroups()
+      : LessonGroups.getPunctuationGroups()
 
     if (this.currentLessonIndex < groups.length - 1) {
       // 保存当前进度
@@ -542,7 +549,10 @@ struct LessonDetailPage {
                   Text(char)
                     .fontSize(14)
                     .fontWeight(FontWeight.Bold)
-                    .fontColor(index === this.lessonCharIndex ? '#FFD700' : '#FFFFFF')
+                    .fontColor(
+                      index < this.lessonCharIndex ? '#4CAF50' :  // Completed characters in green
+                      index === this.lessonCharIndex ? '#FFD700' : '#FFFFFF'  // Current in gold, future in white
+                    )
                     .margin({ right: 8 })
                 })
               }
@@ -763,4 +773,3 @@ struct LessonDetailPage {
     .height('100%')
   }
 }
-
