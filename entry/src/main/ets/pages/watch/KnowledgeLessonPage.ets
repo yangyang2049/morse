@@ -12,6 +12,7 @@ struct KnowledgeLessonPage {
   @State title: ResourceStr = ''
   @State isCompleted: boolean = false
   @State isCompleting: boolean = false
+  @State hasShownCompleted: boolean = false
   
   private preferencesStore: preferences.Preferences | null = null
   private completeTimers: number[] = []
@@ -56,6 +57,8 @@ struct KnowledgeLessonPage {
     try {
       if (this.preferencesStore) {
         this.isCompleted = await this.preferencesStore.get('basic_lesson_completed', false) as boolean
+        this.hasShownCompleted = await this.preferencesStore.get('basic_lesson_completed_shown', false) as boolean
+        console.log('[KnowledgeLessonPage] Loaded status - isCompleted:', this.isCompleted, 'hasShownCompleted:', this.hasShownCompleted)
       }
     } catch (error) {
       console.error('[KnowledgeLessonPage] Failed to load completion status:', error)
@@ -65,6 +68,26 @@ struct KnowledgeLessonPage {
   // 获取进度文本
   private getProgressText(): string {
     return this.isCompleted ? '1/1' : '0/1'
+  }
+
+  // 获取按钮文本 - 始终显示返回
+  private getButtonText(): ResourceStr {
+    return LocalizationHelper.getString('watch_back')
+  }
+
+  // 获取按钮颜色 - 始终为绿色
+  private getButtonColor(): ResourceColor {
+    return '#4CAF50' // 绿色
+  }
+
+  // 获取按钮文字颜色 - 白色
+  private getButtonTextColor(): ResourceColor {
+    return '#FFFFFF' // 白色文字
+  }
+
+  // 获取按钮是否可用 - 始终可用
+  private isButtonEnabled(): boolean {
+    return true
   }
 
   // 章节内容 Builder
@@ -123,21 +146,23 @@ struct KnowledgeLessonPage {
 
         Blank().height(16)
 
-        // 完成按钮
-        Button(this.isCompleting ? LocalizationHelper.getString('watch_already_completed') : (this.isCompleted ? LocalizationHelper.getString('watch_already_completed') : LocalizationHelper.getString('watch_complete_learning')))
+        // 完成/返回按钮
+        Button(this.getButtonText())
           .width('80%')
           .height(44)
-          .backgroundColor(this.isCompleting || this.isCompleted ? '#4CAF50' : '#FFD700')
-          .fontColor('#000000')
+          .backgroundColor(this.getButtonColor())
+          .fontColor(this.getButtonTextColor())
           .fontWeight(FontWeight.Bold)
           .margin({ top: 24, bottom: 32 })
-          .enabled(!this.isCompleting && !this.isCompleted)
+          .enabled(this.isButtonEnabled())
           .focusable(true)
           .onClick(() => {
-            console.log('[KnowledgeLessonPage] Complete button onClick triggered')
-            if (!this.isCompleting && !this.isCompleted) {
-              console.log('[KnowledgeLessonPage] Calling handleComplete')
+            // 如果未完成，先完成课程再退出
+            if (!this.isCompleted && !this.isCompleting) {
               this.handleComplete()
+            } else {
+              // 已完成或正在完成中，直接退出
+              router.back()
             }
           })
       }
@@ -192,6 +217,31 @@ struct KnowledgeLessonPage {
     }
   }
 
+  // 标记已显示过并退出
+  private async markAsShownAndExit(): Promise<void> {
+    console.log('[KnowledgeLessonPage] markAsShownAndExit called')
+    try {
+      if (this.preferencesStore) {
+        await this.preferencesStore.put('basic_lesson_completed_shown', true)
+        await this.preferencesStore.flush()
+        this.hasShownCompleted = true
+        console.log('[KnowledgeLessonPage] Marked as shown and saved, will exit in 300ms')
+        // 延迟退出，给用户看到状态变化
+        const timerId = setTimeout(() => {
+          router.back()
+        }, 300)
+        this.completeTimers.push(timerId)
+      } else {
+        console.error('[KnowledgeLessonPage] preferencesStore is null, exiting directly')
+        // 如果没有 preferencesStore，直接退出
+        router.back()
+      }
+    } catch (error) {
+      console.error('[KnowledgeLessonPage] Failed to mark as shown:', error)
+      router.back()
+    }
+  }
+
   // 标记课程完成
   private async markLessonCompleted(): Promise<void> {
     console.log('[KnowledgeLessonPage] markLessonCompleted called, preferencesStore:', !!this.preferencesStore)
@@ -199,8 +249,11 @@ struct KnowledgeLessonPage {
       if (this.preferencesStore) {
         // 保存基础课程完成状态到 lesson_progress 存储
         await this.preferencesStore.put('basic_lesson_completed', true)
+        // 标记已经显示过完成状态（首次完成时）
+        await this.preferencesStore.put('basic_lesson_completed_shown', true)
         await this.preferencesStore.flush()
         this.isCompleted = true
+        this.hasShownCompleted = true
         console.log('[KnowledgeLessonPage] Lesson marked as completed and saved')
         
         // 同时保存到 ProgressStoreSingleton（课程编号为1）

@@ -13,6 +13,9 @@ struct PrivacyPage {
   @State qrCode: image.PixelMap | null = null
   @State qrCodeGenerating: boolean = false
   private privacyLink = 'https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1776276266387804160'
+  private touchStartX: number = 0
+  private touchStartY: number = 0
+  private isSwipeRight: boolean = false
 
   aboutToAppear(): void {
     void this.generateQRCode()
@@ -53,6 +56,37 @@ struct PrivacyPage {
     this.context.terminateSelf()
   }
 
+  private handleTouch(event: TouchEvent): void {
+    if (event.type === TouchType.Down) {
+      this.touchStartX = event.touches[0].x
+      this.touchStartY = event.touches[0].y
+      this.isSwipeRight = false
+    } else if (event.type === TouchType.Move) {
+      if (this.touchStartX > 0) {
+        const deltaX = event.touches[0].x - this.touchStartX
+        const deltaY = Math.abs(event.touches[0].y - this.touchStartY)
+        // 检测右滑手势：水平移动距离大于垂直移动距离的2倍，且从左侧边缘开始
+        if (this.touchStartX < 80 && deltaX > 20 && deltaX > deltaY * 1.5) {
+          this.isSwipeRight = true
+        } else if (deltaY > deltaX) {
+          // 如果垂直移动更多，取消右滑检测
+          this.isSwipeRight = false
+        }
+      }
+    } else if (event.type === TouchType.Up) {
+      if (this.isSwipeRight && this.touchStartX > 0) {
+        const deltaX = event.touches[0].x - this.touchStartX
+        // 如果右滑距离超过50像素，触发退出
+        if (deltaX > 50) {
+          this.exitApp()
+        }
+      }
+      this.touchStartX = 0
+      this.touchStartY = 0
+      this.isSwipeRight = false
+    }
+  }
+
   build() {
     Column() {
       Scroll() {
@@ -61,7 +95,7 @@ struct PrivacyPage {
             .fontSize(16)
             .fontWeight(FontWeight.Bold)
             .fontColor('#FFFFFF')
-            .margin({ top: 20, bottom: 10 })
+            .margin({ top: 8, bottom: 6 })
             .textAlign(TextAlign.Center)
             .width('100%')
 
@@ -70,7 +104,7 @@ struct PrivacyPage {
             Text(LocalizationHelper.getString('scan_to_read'))
               .fontSize(14)
               .fontColor('#FFFFFF')
-              .margin({ bottom: 10 })
+              .margin({ bottom: 6 })
 
             if (this.qrCode) {
               Image(this.qrCode)
@@ -100,15 +134,15 @@ struct PrivacyPage {
           }
           .width('100%')
           .alignItems(HorizontalAlign.Center)
-          .margin({ bottom: 20 })
+          .margin({ bottom: 12 })
 
           Column() {
             Button(LocalizationHelper.getString('agree'))
-              .width('80%')
+              .width(140)
               .height(40)
               .backgroundColor('#FFD700')
               .fontColor('#000000')
-              .margin({ bottom: 12 })
+              .margin({ bottom: 8 })
               .onClick(() => {
                 this.agreePrivacy()
               })
@@ -123,10 +157,10 @@ struct PrivacyPage {
           }
           .width('100%')
           .alignItems(HorizontalAlign.Center)
-          .padding({ bottom: 20 })
+          .padding({ bottom: 12 })
         }
         .width('100%')
-        .padding(16)
+        .padding({ top: 8, left: 16, right: 16, bottom: 16 })
       }
       .layoutWeight(1)
       .width('100%')
@@ -137,5 +171,8 @@ struct PrivacyPage {
     .width('100%')
     .height('100%')
     .backgroundColor('#000000')
+    .onTouch((event: TouchEvent) => {
+      this.handleTouch(event)
+    })
   }
 }
