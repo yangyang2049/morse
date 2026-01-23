@@ -371,13 +371,6 @@ export struct LearnPage {
             .fontColor('#FFD700')
             .layoutWeight(1)
             .textAlign(TextAlign.Center)
-
-          // 所有单元都显示进度
-          Text(this.getUnitProgress(unitKey))
-            .fontSize(16)
-            .fontColor('#FFFFFF')
-            .fontWeight(FontWeight.Medium)
-            .margin({ left: 8 })
         }
         .margin({ top: 24, bottom: 32 })
 

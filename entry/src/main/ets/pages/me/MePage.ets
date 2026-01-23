@@ -7,6 +7,8 @@ import preferences from '@ohos.data.preferences'
 import { systemShare } from '@kit.ShareKit'
 import { uniformTypeDescriptor } from '@kit.ArkData'
 import { vibratorService } from '../../services/VibratorService'
+import { MorseCodeData } from '../../models/MorseCode'
+import { PinyinService } from '../../services/PinyinService'
 // 手电筒功能已移至翻译页面
 // import { flashlightService } from '../../services/FlashlightService'
 
@@ -30,6 +32,7 @@ export struct MePage {
   @State useSingleButton: boolean = false // 是否使用单按钮模式
   @State showButtonModeDialog: boolean = false // 是否显示按钮模式选择对话框
   @State vibrationEnabled: boolean = true // 振动反馈开关
+  @State isMorseCodeExpanded: boolean = false // 摩斯码是否展开
   // 手电筒相关状态已移除（功能已移至翻译页面）
   // @State isFlashlightOn: boolean = false
   // @State flashlightInitialized: boolean = false
@@ -43,6 +46,9 @@ export struct MePage {
     // 初始化资源管理器
     try {
       this.resourceMgr = getContext(this).resourceManager
+      const context = getContext(this) as common.UIAbilityContext
+      // 加载拼音服务
+      await PinyinService.load(context)
     } catch (error) {
       console.error('[MePage] Failed to get resource manager:', error)
     }
@@ -1040,6 +1046,101 @@ export struct MePage {
   @Builder SOSTestItem() { ... }
   */
 
+  // 获取拼音摩斯码
+  private getPinyinMorseCode(): string {
+    // 写死的摩斯码
+    return '-·-- ··/··· ···· ·- -· --·/-·-- ·· -· --·/-·-- --- -· --·/-·-· ·- -·/-·-- ··-/···· --- -· --·/-- · -· --·/-·- ·- ··/··-· ·-/--·· ···· ·/·--- ··/·-·· ··/·--- ··/···· ··- ·-/-· ··/-·· ·/-··- ·· ·-/--·· ·- ··/- ··/-·-- ·- -·/·--- ·· ·- -· --·/--·· ···· ··-/·-·· ··/·-- ---/-- · -·/·--- ·· ·/··· ··- ---/--· ··- ·- -·/··-· ·- -· --·/·--- ··/·-·· ··/·--- ·· -·'
+  }
+
+  // 复制摩斯码到剪贴板
+  private async copyMorseCode(content: string): Promise<void> {
+    try {
+      const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, content)
+      const systemPasteboard = pasteboard.getSystemPasteboard()
+      await systemPasteboard.setData(pasteData)
+      
+      const uiContext = this.getUIContext()
+      if (uiContext) {
+        const promptActionInstance = uiContext.getPromptAction()
+        const message = this.currentLanguage.startsWith('zh') ? '已复制到剪贴板' : 'Copied to clipboard'
+        promptActionInstance.showToast({
+          message: message,
+          duration: 2000
+        })
+      }
+    } catch (error) {
+      console.error('[MePage] Failed to copy morse code:', error)
+    }
+  }
+
+  @Builder
+  MorseCodeFootnote() {
+    // 只在中文语言时显示
+    if (this.currentLanguage.startsWith('zh')) {
+      Column() {
+        if (this.isMorseCodeExpanded) {
+          Text(this.getPinyinMorseCode())
+            .fontSize(11)
+            .fontColor('#666666')
+            .fontFamily('monospace')
+            .lineHeight(16)
+            .width('100%')
+            .padding({ top: 16, bottom: 8, left: 16, right: 16 })
+        } else {
+          Text(this.getPinyinMorseCode())
+            .fontSize(11)
+            .fontColor('#666666')
+            .fontFamily('monospace')
+            .maxLines(3)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .lineHeight(16)
+            .width('100%')
+            .padding({ top: 16, bottom: 8, left: 16, right: 16 })
+        }
+
+        // 展开/收起按钮和复制按钮
+        Row() {
+          Row() {
+            Text(this.isMorseCodeExpanded ? '收起' : '展开')
+              .fontSize(12)
+              .fontColor('#999999')
+            
+            Image($rawfile('ic_arrow_right.svg'))
+              .width(12)
+              .height(12)
+              .fillColor('#999999')
+              .rotate({ angle: this.isMorseCodeExpanded ? 90 : 0 })
+          }
+          .onClick(() => {
+            this.isMorseCodeExpanded = !this.isMorseCodeExpanded
+          })
+          
+          Blank()
+          
+          if (this.isMorseCodeExpanded) {
+            Button() {
+              Image($rawfile('ic_copy.svg'))
+                .width(14)
+                .height(14)
+            }
+            .type(ButtonType.Normal)
+            .backgroundColor(Color.Transparent)
+            .width(32)
+            .height(32)
+            .onClick(() => {
+              this.copyMorseCode(this.getPinyinMorseCode())
+            })
+          }
+        }
+        .width('100%')
+          .padding({ left: 16, right: 16, bottom: 8 })
+          .justifyContent(FlexAlign.SpaceBetween)
+      }
+      .width('100%')
+        .alignItems(HorizontalAlign.Start)
+    }
+  }
+
   @Builder OtherAppsSection() {
     // 其他应用部分
     Column() {
@@ -1050,118 +1151,7 @@ export struct MePage {
         .margin({ top: 30, bottom: 12, left: 16 })
         .alignSelf(ItemAlign.Start)
 
-      // 全能计分器应用卡片
-      Row() {
-        Image($rawfile('appicon_jifen.png'))
-          .width(48)
-          .height(48)
-          .borderRadius(8)
-          .margin({ right: 16 })
-
-        Column() {
-          Text(this.currentLanguage.startsWith('zh') ? '全能计分器' : 'iScore')
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#FFFFFF')
-            .textAlign(TextAlign.Start)
-            .width('100%')
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-        }
-        .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
-
-        Image($rawfile('ic_arrow_right.svg'))
-          .width(16)
-          .height(16)
-          .fillColor('#666666')
-      }
-      .width('100%')
-        .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-        .backgroundColor('#111111')
-        .borderRadius(12)
-        .margin({ bottom: 8 })
-        .onClick(() => {
-          this.openIScoreApp()
-        })
-        .hoverEffect(HoverEffect.Scale)
-        .focusable(true)
-
-      // 元素周期表应用卡片
-      Row() {
-        Image($r('app.media.appicon_yuansu'))
-          .width(48)
-          .height(48)
-          .borderRadius(8)
-          .margin({ right: 16 })
-
-        Column() {
-          Text($r('app.string.periodic_table_app'))
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#FFFFFF')
-            .textAlign(TextAlign.Start)
-            .width('100%')
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-        }
-        .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
-
-        Image($rawfile('ic_arrow_right.svg'))
-          .width(16)
-          .height(16)
-          .fillColor('#666666')
-      }
-      .width('100%')
-        .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-        .backgroundColor('#111111')
-        .borderRadius(12)
-        .margin({ bottom: 8 })
-        .onClick(() => {
-          this.openPeriodicTableApp()
-        })
-        .hoverEffect(HoverEffect.Scale)
-        .focusable(true)
-
-      // 国旗小百科应用卡片
-      Row() {
-        Image($rawfile('appicon_flag.png'))
-          .width(48)
-          .height(48)
-          .borderRadius(8)
-          .margin({ right: 16 })
-
-        Column() {
-          Text(this.currentLanguage.startsWith('zh') ? '国旗小百科' : 'Flag Wiki')
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#FFFFFF')
-            .textAlign(TextAlign.Start)
-            .width('100%')
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-        }
-        .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
-
-        Image($rawfile('ic_arrow_right.svg'))
-          .width(16)
-          .height(16)
-          .fillColor('#666666')
-      }
-      .width('100%')
-        .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-        .backgroundColor('#111111')
-        .borderRadius(12)
-        .margin({ bottom: 8 })
-        .onClick(() => {
-          this.openFlagApp()
-        })
-        .hoverEffect(HoverEffect.Scale)
-        .focusable(true)
-
-      // 开发助手应用卡片
+      // 独立开发助手应用卡片
       Row() {
         Image($rawfile('appicon_devassistant.png'))
           .width(48)
@@ -1235,42 +1225,8 @@ export struct MePage {
         .hoverEffect(HoverEffect.Scale)
         .focusable(true)
 
-      // Rust从入门到放弃应用卡片
-      Row() {
-        Image($rawfile('appicon_rust.png'))
-          .width(48)
-          .height(48)
-          .borderRadius(8)
-          .margin({ right: 16 })
-
-        Column() {
-          Text(this.currentLanguage.startsWith('zh') ? 'Rust 从入门到放弃' : 'Rust Master')
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#FFFFFF')
-            .textAlign(TextAlign.Start)
-            .width('100%')
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-        }
-        .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
-
-        Image($rawfile('ic_arrow_right.svg'))
-          .width(16)
-          .height(16)
-          .fillColor('#666666')
-      }
-      .width('100%')
-        .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-        .backgroundColor('#111111')
-        .borderRadius(12)
-        .margin({ bottom: 8 })
-        .onClick(() => {
-          this.openRustApp()
-        })
-        .hoverEffect(HoverEffect.Scale)
-        .focusable(true)
+      // 脚注 - 拼音摩斯码
+      this.MorseCodeFootnote()
     }
     .width('100%')
       .alignItems(HorizontalAlign.Start)

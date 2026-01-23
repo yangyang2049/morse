@@ -30,7 +30,8 @@ struct Index {
         const deltaX = event.touches[0].x - this.touchStartX
         const deltaY = Math.abs(event.touches[0].y - this.touchStartY)
         // 检测右滑手势：水平移动距离大于垂直移动距离的1.5倍，且从左侧边缘开始
-        if (this.touchStartX < 80 && deltaX > 20 && deltaX > deltaY * 1.5) {
+        // 只检测从最左侧边缘（前30像素）开始的右滑，避免与 ArcSwiper 冲突
+        if (this.touchStartX < 30 && deltaX > 20 && deltaX > deltaY * 1.5) {
           this.isSwipeRight = true
         } else if (deltaY > deltaX) {
           // 如果垂直移动更多，取消右滑检测
