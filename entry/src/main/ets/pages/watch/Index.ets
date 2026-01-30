@@ -1,55 +1,36 @@
-import { ArcSwiper, ArcSwiperAttribute, ArcSwiperController, ArcDotIndicator } from '@kit.ArkUI'
+import { ArcSwiper, ArcSwiperController, ArcDotIndicator } from '@kit.ArkUI'
 import { LearnPage } from './LearnPage'
 import { PracticePage } from './PracticePage'
 import { CodeTablePage } from './CodeTablePage'
 import { SettingsPage } from './SettingsPage'
-import common from '@ohos.app.ability.common'
 
 @Entry
 @Component
 struct Index {
   @State currentTab: number = 0 // 0: 学习, 1: 练习, 2: 码表, 3: 设置
-  
+
   private arcSwiperController: ArcSwiperController = new ArcSwiperController()
-  private context = getContext(this) as common.UIAbilityContext
-  private touchStartX: number = 0
-  private touchStartY: number = 0
-  private isSwipeRight: boolean = false
 
-  exitApp() {
-    this.context.terminateSelf()
-  }
-
-  private handleTouch(event: TouchEvent): void {
-    if (event.type === TouchType.Down) {
-      this.touchStartX = event.touches[0].x
-      this.touchStartY = event.touches[0].y
-      this.isSwipeRight = false
-    } else if (event.type === TouchType.Move) {
-      if (this.touchStartX > 0) {
-        const deltaX = event.touches[0].x - this.touchStartX
-        const deltaY = Math.abs(event.touches[0].y - this.touchStartY)
-        // 检测右滑手势：水平移动距离大于垂直移动距离的1.5倍，且从左侧边缘开始
-        // 只检测从最左侧边缘（前30像素）开始的右滑，避免与 ArcSwiper 冲突
-        if (this.touchStartX < 30 && deltaX > 20 && deltaX > deltaY * 1.5) {
-          this.isSwipeRight = true
-        } else if (deltaY > deltaX) {
-          // 如果垂直移动更多，取消右滑检测
-          this.isSwipeRight = false
-        }
-      }
-    } else if (event.type === TouchType.Up) {
-      if (this.isSwipeRight && this.touchStartX > 0) {
-        const deltaX = event.touches[0].x - this.touchStartX
-        // 如果右滑距离超过50像素，触发退出
-        if (deltaX > 50) {
-          this.exitApp()
-        }
-      }
-      this.touchStartX = 0
-      this.touchStartY = 0
-      this.isSwipeRight = false
+  /**
+   * 是否应允许退出：仅在首页（学习 tab）且右滑时返回 true，
+   * 供 onGestureRecognizerJudgeBegin 返回 REJECT 让系统处理退出手势（参考 zhaocha 项目）。
+   */
+  private shouldAllowExit(event: BaseGestureEvent, current: GestureRecognizer): boolean {
+    if (!current || !current.isBuiltIn()) {
+      return false
     }
+    if (current.getType() !== GestureControl.GestureType.PAN_GESTURE) {
+      return false
+    }
+    const target = current.getEventTargetInfo()
+    if (!(target instanceof ScrollableTargetInfo)) {
+      return false
+    }
+    const swiperTarget = target as ScrollableTargetInfo
+    const isAtBeginning = swiperTarget.isBegin() || this.currentTab === 0
+    const panEvent = event as PanGestureEvent
+    const isSwipingRight = panEvent?.offsetX > 0
+    return isAtBeginning && isSwipingRight
   }
 
   build() {
@@ -74,11 +55,15 @@ struct Index {
     .onChange((index: number) => {
       this.currentTab = index
     })
+    .onGestureRecognizerJudgeBegin((event: BaseGestureEvent, current: GestureRecognizer,
+      _others: Array<GestureRecognizer>): GestureJudgeResult => {
+      if (this.shouldAllowExit(event, current)) {
+        return GestureJudgeResult.REJECT
+      }
+      return GestureJudgeResult.CONTINUE
+    })
     .width('100%')
     .height('100%')
     .backgroundColor('#000000')
-    .onTouch((event: TouchEvent) => {
-      this.handleTouch(event)
-    })
   }
 }

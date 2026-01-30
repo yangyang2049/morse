@@ -27,7 +27,7 @@ const SUPPORTED_LANGUAGES: LanguageOption[] = [
 
 @Component
 export struct MePage {
-  @State appVersion: string = '1.4.0'
+  @State appVersion: string = '2.0.0'
   @StorageLink('currentLanguage') currentLanguage: string = this.getInitialLanguage()
   @State useSingleButton: boolean = false // 是否使用单按钮模式
   @State showButtonModeDialog: boolean = false // 是否显示按钮模式选择对话框
@@ -167,7 +167,7 @@ export struct MePage {
   }
 
   private loadAppInfo() {
-    this.appVersion = '1.4.0'
+    this.appVersion = '2.0.0'
   }
 
   // 初始化偏好设置存储
@@ -1221,6 +1221,43 @@ export struct MePage {
         .margin({ bottom: 8 })
         .onClick(() => {
           this.openCaikuaiApp()
+        })
+        .hoverEffect(HoverEffect.Scale)
+        .focusable(true)
+
+      // 码上学（Rust Master）应用卡片，图标与名称来自 rustmaster 项目
+      Row() {
+        Image($rawfile('appicon_rustmaster.png'))
+          .width(48)
+          .height(48)
+          .borderRadius(8)
+          .margin({ right: 16 })
+
+        Column() {
+          Text(this.currentLanguage.startsWith('zh') ? '码上学' : 'Rust Master')
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#FFFFFF')
+            .textAlign(TextAlign.Start)
+            .width('100%')
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+        }
+        .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
+
+        Image($rawfile('ic_arrow_right.svg'))
+          .width(16)
+          .height(16)
+          .fillColor('#666666')
+      }
+      .width('100%')
+        .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+        .backgroundColor('#111111')
+        .borderRadius(12)
+        .margin({ bottom: 8 })
+        .onClick(() => {
+          this.openRustApp()
         })
         .hoverEffect(HoverEffect.Scale)
         .focusable(true)
