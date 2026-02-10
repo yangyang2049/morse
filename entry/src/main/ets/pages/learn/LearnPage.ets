@@ -7,6 +7,7 @@ import { progressStore } from '../../store/ProgressStoreSingleton'
 import { common, Want } from '@kit.AbilityKit'
 import { FunctionComponent } from '@kit.AgentFrameworkKit'
 import { BusinessError } from '@kit.BasicServicesKit'
+import { DeviceHelper } from '../../utils/DeviceHelper'
 
 // 小艺智能体：摩斯电码冷知识（HMAF 文档 https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/hmaf-function）
 const AGENT_MORSE_FUN_FACTS_ID = 'agentbe59df1493d7411e91a8a30bb4dc8c22'
@@ -24,6 +25,7 @@ export struct LearnPage {
   private lessonCompletedCallback: ((data?: Object) => void) | null = null
   @State private agentEntryTitle: string = ''
   @State private agentEntryQueryText: string = ''
+  @State private isAgentSupported: boolean = true // 仅手机/平板展示智能体入口
 
   onLanguageChange(): void {
     // 调用ViewModel刷新课程数据
@@ -32,6 +34,7 @@ export struct LearnPage {
 
 
   async aboutToAppear(): Promise<void> {
+    this.isAgentSupported = DeviceHelper.isPhone() || DeviceHelper.isTablet()
     const uiContext = this.getUIContext()
     const hostContext = uiContext.getHostContext()
     if (hostContext) {
@@ -492,18 +495,20 @@ export struct LearnPage {
           .layoutWeight(1)
           .padding({ left: 16, right: 16, top: 16, bottom: 16 })
 
-        // 底部：小艺智能体「摩斯电码冷知识」（HMAF Function 组件，见 hmaf-function 文档）
-        FunctionComponent({
-          agentId: AGENT_MORSE_FUN_FACTS_ID,
-          onError: (err: BusinessError) => {
-            this.onAgentError(err)
-          },
-          options: {
-            title: this.agentEntryTitle,
-            queryText: this.agentEntryQueryText
-          }
-        })
-        .padding({ bottom: 24 })
+        // 底部：小艺智能体「摩斯电码冷知识」（仅手机/平板展示，HMAF Function 组件）
+        if (this.isAgentSupported) {
+          FunctionComponent({
+            agentId: AGENT_MORSE_FUN_FACTS_ID,
+            onError: (err: BusinessError) => {
+              this.onAgentError(err)
+            },
+            options: {
+              title: this.agentEntryTitle,
+              queryText: this.agentEntryQueryText
+            }
+          })
+          .padding({ bottom: 24 })
+        }
       } else {
         // Loading state - Pure black screen
         Column() {

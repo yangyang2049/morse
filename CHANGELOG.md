@@ -11,6 +11,7 @@
 - **我页合并输入模式与按键设置为「按键设置」**：移除单独的「输入模式」入口；「按键设置」对话框内先选单键/双键（默认双键），选单键时再显示长按阈值滑块（100–600ms），确认时一并保存至 practice_settings。
 - **练习页移除设置按钮，按键设置移至我页**：练习页（PracticePage）单键模式下的设置按钮已移除；长按时间等并入「我」页「按键设置」。
 - **主应用点/划输入按钮统一为黄底黑字**：翻译页、课程页（LetterLessonPage）、练习页（PracticePage）中单键与双键的点/划按钮（不含斜杠、空格、删除）改为背景 #FFD700、图标/文字 #000000；LessonDetailPage、PracticeDetailPage 原已是黄底黑字未改。
+- **智能体入口仅手机/平板展示**：学习 tab 底部「摩斯电码冷知识」小艺智能体入口仅在手机、平板上显示，手表等设备不展示（通过 DeviceHelper 判断）。
 - **首页智能体按 HMAF 文档调起**：学习 tab 底部「摩斯电码冷知识」改为使用 [HMAF Function 组件](https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/hmaf-function)（`@kit.AgentFrameworkKit` 的 `FunctionComponent`）调起小艺智能体，传入 `agentId`、本地化 `title` 与 `queryText`；`onError` 时回退为通过浏览器打开智能体页并带本地化 prompt。依赖 HarmonyOS 6 SDK 中的 AgentFrameworkKit。
 - **首页底部小艺智能体入口**：学习 tab 底部增加「摩斯电码冷知识」入口，文案与指令已本地化（base / en_US / zh_HK）。
 - **翻译页单/双按钮文案间距**：增大「单按钮/双按钮」切换文案与上方点划按钮的间距（margin top 4→20）。
