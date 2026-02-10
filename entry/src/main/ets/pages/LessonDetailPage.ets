@@ -6,7 +6,6 @@ import preferences from '@ohos.data.preferences'
 import { Context } from '@kit.AbilityKit'
 import { audioService } from '../services/AudioService'
 import { promptAction, ArcButton, ArcButtonOptions, ArcButtonPosition, ArcButtonStyleMode, ColorMetrics } from '@kit.ArkUI'
-import { LessonGroups } from '../data/LessonGroups'
 
 @Entry
 @Component
@@ -19,7 +18,6 @@ struct LessonDetailPage {
   @State useSingleButton: boolean = true
   @State longPressThreshold: number = 300
   @State isCurrentCharCorrect: boolean = false
-  @State vibrationEnabled: boolean = true
   
   private preferencesStore: preferences.Preferences | null = null
   private pressStartTime: number = 0
@@ -35,7 +33,6 @@ struct LessonDetailPage {
         const practiceStore = await preferences.getPreferences(context, 'practice_settings')
         await this.loadButtonModePreference(practiceStore)
         await this.loadLongPressThresholdPreference(practiceStore)
-        await this.loadVibrationPreference(practiceStore)
       }
     } catch (error) {
       console.error('[LessonDetailPage] Failed to initialize preferences:', error)
@@ -84,17 +81,6 @@ struct LessonDetailPage {
       }
     } catch (error) {
       console.error('[LessonDetailPage] Failed to load long press threshold:', error)
-    }
-  }
-
-  // 加载震动偏好设置
-  private async loadVibrationPreference(store: preferences.Preferences | null): Promise<void> {
-    try {
-      if (store) {
-        this.vibrationEnabled = await store.get('vibration_enabled', true) as boolean
-      }
-    } catch (error) {
-      console.error('[LessonDetailPage] Failed to load vibration preference:', error)
     }
   }
 
@@ -211,18 +197,14 @@ struct LessonDetailPage {
   // 添加点
   private addDot(): void {
     this.lessonInput += '·'
-    if (this.vibrationEnabled) {
-      vibrator.vibrate(100, () => {})
-    }
+    vibrator.vibrate(100, () => {})
     this.startAutoCheck()
   }
 
   // 添加划
   private addDash(): void {
     this.lessonInput += '-'
-    if (this.vibrationEnabled) {
-      vibrator.vibrate(300, () => {})
-    }
+    vibrator.vibrate(300, () => {})
     this.startAutoCheck()
   }
 
@@ -561,4 +543,30 @@ struct LessonDetailPage {
   }
 }
 
+// 课程分组数据
+class LessonGroups {
+  // 字母分组：每3个字母一组
+  static getAlphabetGroups(): string[][] {
+    return [
+      ['A', 'B', 'C'],
+      ['D', 'E', 'F'],
+      ['G', 'H', 'I'],
+      ['J', 'K', 'L'],
+      ['M', 'N', 'O'],
+      ['P', 'Q', 'R'],
+      ['S', 'T', 'U'],
+      ['V', 'W', 'X'],
+      ['Y', 'Z']
+    ]
+  }
+
+  // 数字分组：前两组各3个，第三组4个
+  static getNumberGroups(): string[][] {
+    return [
+      ['0', '1', '2'],
+      ['3', '4', '5'],
+      ['6', '7', '8', '9']
+    ]
+  }
+}
 

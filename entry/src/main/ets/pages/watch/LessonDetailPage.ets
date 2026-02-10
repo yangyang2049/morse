@@ -1,7 +1,6 @@
 import router from '@ohos.router'
 import { MorseCodeData, MorseCode } from '../../models/MorseCode'
 import vibrator from '@ohos.vibrator'
-import { BusinessError } from '@kit.BasicServicesKit'
 import preferences from '@ohos.data.preferences'
 import { Context } from '@kit.AbilityKit'
 import { audioService } from '../../services/AudioService'

@@ -6,7 +6,7 @@ import vibrator from '@ohos.vibrator'
 import { BusinessError } from '@kit.BasicServicesKit'
 import preferences from '@ohos.data.preferences'
 import { Context } from '@kit.AbilityKit'
-import { promptAction, ArcButton, ArcButtonOptions, ArcButtonPosition, ArcButtonStyleMode, ColorMetrics } from '@kit.ArkUI'
+import { promptAction } from '@kit.ArkUI'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
 import { FavoritesStore } from '../../store/FavoritesStore'
 
@@ -635,25 +635,29 @@ struct PracticeDetailPage {
 
               // Input Buttons
               if (this.useSingleButton) {
-                ArcButton({
-                  options: new ArcButtonOptions({
-                    label: '·',
-                    position: ArcButtonPosition.BOTTOM_EDGE,
-                    styleMode: ArcButtonStyleMode.CUSTOM,
-                    backgroundColor: ColorMetrics.resourceColor('#FFD700'),
-                    fontColor: ColorMetrics.resourceColor('#000000')
-                  })
-                })
-                .onClick(() => {
-                  this.handleSingleButtonRelease()
-                })
-                .onTouch((event: TouchEvent) => {
-                  if (event.type === TouchType.Down) {
-                    this.handleSingleButtonPress()
-                  } else if (event.type === TouchType.Up) {
-                    this.handleSingleButtonRelease()
-                  }
-                })
+                Row() {
+                  Button('·')
+                    .width(60)
+                    .height(60)
+                    .backgroundColor('#FFD700')
+                    .fontColor(Color.Black)
+                    .fontSize(24)
+                    .fontWeight(FontWeight.Bold)
+                    .borderRadius(30)
+                    .onClick(() => {
+                      this.handleSingleButtonRelease()
+                    })
+                    .onTouch((event: TouchEvent) => {
+                      if (event.type === TouchType.Down) {
+                        this.handleSingleButtonPress()
+                      } else if (event.type === TouchType.Up) {
+                        this.handleSingleButtonRelease()
+                      }
+                    })
+                }
+                .width('80%')
+                .justifyContent(FlexAlign.Center)
+                .margin({ top: 8, bottom: 8 })
               } else {
                 Row() {
                   Button('·')

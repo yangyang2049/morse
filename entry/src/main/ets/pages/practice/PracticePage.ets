@@ -5,7 +5,6 @@ import { FavoritesStore } from '../../store/FavoritesStore'
 import { PracticeViewModel } from '../../viewmodel/PracticeViewModel'
 import { PracticeProgressStore } from '../../store/PracticeProgressStore'
 import preferences from '@ohos.data.preferences'
-import { vibratorService } from '../../services/VibratorService'
 
 // 练习模式类型
 type PracticeMode = 'text_to_code' | 'code_to_text' | 'sound_to_text'
@@ -29,10 +28,6 @@ export struct PracticePage {
   @State useSingleButton: boolean = false
   @State showButtonModeDialog: boolean = false
   @State selectedButtonMode: boolean = false
-  @State showSettingsDialog: boolean = false
-  @State sliderValue: number = 300
-  @State settingsDialogScale: number = 0.8
-  @State settingsDialogOpacity: number = 0
 
   // 代码转文本和声音转文本模式的候选字符
   @State candidateChars: string[] = []
@@ -69,14 +64,10 @@ export struct PracticePage {
       const context = getContext(this)
       await this.practiceProgressStore.init(context)
 
-      // 初始化收藏和错题store
-      await this.favoritesStore.init(context)
-
       // 初始化偏好设置
       await this.initPreferences()
       await this.loadButtonModePreference()
       await this.loadLongPressThresholdPreference()
-      await this.loadVibrationPreference()
 
       this.vm.setAutoCheckDelay(this.useSingleButton ? 1500 : 600)
 
@@ -125,7 +116,6 @@ export struct PracticePage {
     this.vm.destroy()
     if (this.animationTimer) {
       clearInterval(this.animationTimer)
-      this.animationTimer = null
     }
     if (this.progressTimer) {
       clearInterval(this.progressTimer)
@@ -135,18 +125,29 @@ export struct PracticePage {
       clearInterval(this.playProgressTimer)
       this.playProgressTimer = null
     }
-    // 清理长按定时器
-    if (this.longPressTimer) {
-      clearTimeout(this.longPressTimer)
-      this.longPressTimer = null
+  }
+
+  onPageShow(): void {
+    if (this.preferencesStore) {
+      this.reloadButtonModeFromStore()
     }
+  }
+
+  private async reloadButtonModeFromStore(): Promise<void> {
+    await this.loadButtonModePreference()
+    await this.loadLongPressThresholdPreference()
+    this.vm.setAutoCheckDelay(this.useSingleButton ? 1500 : 600)
+    if (this.animationTimer) {
+      clearInterval(this.animationTimer)
+    }
+    this.startAnimationCheck()
   }
 
   // 初始化偏好设置
   private async initPreferences(): Promise<void> {
     try {
       const context = getContext(this)
-      this.preferencesStore = await preferences.getPreferences(context, 'practice_preferences')
+      this.preferencesStore = await preferences.getPreferences(context, 'practice_settings')
     } catch (error) {
       console.error('[PracticePage] Failed to initialize preferences:', error)
     }
@@ -197,38 +198,6 @@ export struct PracticePage {
       }
     } catch (error) {
       console.error('[PracticePage] Failed to load long press threshold:', error)
-    }
-  }
-
-  // 保存长按时间偏好
-  private async saveLongPressThresholdPreference(threshold: number): Promise<void> {
-    try {
-      if (this.preferencesStore) {
-        await this.preferencesStore.put('long_press_threshold', threshold)
-        await this.preferencesStore.flush()
-        this.longPressThreshold = threshold
-      }
-    } catch (error) {
-      console.error('[PracticePage] Failed to save long press threshold:', error)
-    }
-  }
-
-  // 加载振动偏好设置
-  private async loadVibrationPreference(): Promise<void> {
-    try {
-      if (this.preferencesStore) {
-        const vibrationEnabled = await this.preferencesStore.get('vibration_enabled', true) as boolean
-        vibratorService.setEnabled(vibrationEnabled)
-        console.log(`[PracticePage] ===== Loaded vibration preference: ${vibrationEnabled} =====`)
-        console.log(`[PracticePage] ===== Vibrator service enabled: ${vibratorService.isVibrationEnabled()} =====`)
-      } else {
-        console.warn('[PracticePage] Preferences store not initialized, using default vibration: true')
-        vibratorService.setEnabled(true)
-      }
-    } catch (error) {
-      console.error('[PracticePage] Failed to load vibration preference:', error)
-      // 如果加载失败，确保振动默认开启
-      vibratorService.setEnabled(true)
     }
   }
 
@@ -370,13 +339,9 @@ export struct PracticePage {
     for (let i = 0; i < codes.length; i++) {
       const code = codes[i]
       if (code === '.') {
-        // 声音播放时同步振动：点短振
-        void vibratorService.vibrateDit()
         await audioService.playDit()
         await this.delay(100)
       } else if (code === '-') {
-        // 声音播放时同步振动：划长振
-        void vibratorService.vibrateDah()
         await audioService.playDah()
         await this.delay(100)
       } else {
@@ -411,21 +376,12 @@ export struct PracticePage {
     this.selectedChar = char
     const isCorrect = char === this.vm.getCurrentCharacter()
 
-    // 振动反馈
-    if (isCorrect) {
-      void vibratorService.vibrateSuccess()
-    } else {
-      void vibratorService.vibrateError()
-    }
-
     // 记录到练习进度
     if (isCorrect) {
       this.practiceProgressStore.recordCorrect(this.vm.getCurrentCharacter())
     } else {
       this.practiceProgressStore.recordIncorrect(this.vm.getCurrentCharacter())
-      void this.favoritesStore.addToMistakes(this.vm.getCurrentCharacter()).catch((error: Error) => {
-        console.error('[PracticePage] Failed to add to mistakes:', error)
-      })
+      this.favoritesStore.addToMistakes(this.vm.getCurrentCharacter())
     }
 
     // 如果答错，显示提示但不自动进入下一题
@@ -698,7 +654,6 @@ export struct PracticePage {
           .fontColor(this.category === 'letters' ? '#FFD700' : '#999999')
           .fontWeight(this.category === 'letters' ? FontWeight.Bold : FontWeight.Normal)
           .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-          .clickEffect({ level: ClickEffectLevel.LIGHT })
           .onClick(() => this.switchCategory('letters'))
 
         Text('|')
@@ -711,7 +666,6 @@ export struct PracticePage {
           .fontColor(this.category === 'numbers' ? '#FFD700' : '#999999')
           .fontWeight(this.category === 'numbers' ? FontWeight.Bold : FontWeight.Normal)
           .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-          .clickEffect({ level: ClickEffectLevel.LIGHT })
           .onClick(() => this.switchCategory('numbers'))
 
         Text('|')
@@ -724,7 +678,6 @@ export struct PracticePage {
           .fontColor(this.category === 'punctuation' ? '#FFD700' : '#999999')
           .fontWeight(this.category === 'punctuation' ? FontWeight.Bold : FontWeight.Normal)
           .padding({ left: 8, right: 8, top: 4, bottom: 4 })
-          .clickEffect({ level: ClickEffectLevel.LIGHT })
           .onClick(() => this.switchCategory('punctuation'))
       }
       .layoutWeight(1)
@@ -839,11 +792,8 @@ export struct PracticePage {
       }
       .onClick(() => {
         const currentChar = this.vm.getCurrentCharacter()
-        void this.favoritesStore.toggleFavorite(currentChar).then(() => {
-          this.vm.toggleFavorite()
-        }).catch((error: Error) => {
-          console.error('[PracticePage] Failed to toggle favorite:', error)
-        })
+        this.favoritesStore.toggleFavorite(currentChar)
+        this.vm.toggleFavorite()
       })
         .width(48).height(48)
         .backgroundColor(Color.Transparent)
@@ -881,65 +831,43 @@ export struct PracticePage {
   private BottomKeys() {
     if (this.useSingleButton) {
       Row() {
-        Column().width(48).height(48)
-
-        Button() {
+        Column() {
           Text('·')
-            .fontSize(24)
-            .fontColor(Color.Black)
+            .fontSize(28)
+            .fontColor('#000000')
             .fontWeight(FontWeight.Bold)
         }
-        .height(120)
-          .width(120)
+        .height(80)
+          .layoutWeight(1)
+          .justifyContent(FlexAlign.Center)
+          .alignItems(HorizontalAlign.Center)
           .backgroundColor('#FFD700')
-          .borderRadius(60)
+          .borderRadius(this.pillRadius)
+          .border({ width: 1, color: '#333333' })
           .onTouch((event) => {
-            if (event.type === TouchType.Down) {
+            if (event.type === 0) {
               this.handleSingleButtonPress()
-            } else if (event.type === TouchType.Up) {
+            } else if (event.type === 1) {
               this.handleSingleButtonRelease()
             }
           })
-
-        Button() {
-          Image($rawfile('ic_settings.svg'))
-            .width(24)
-            .height(24)
-        }
-        .width(48)
-          .height(48)
-          .backgroundColor(Color.Transparent)
-          .onClick(() => {
-            this.sliderValue = this.longPressThreshold
-            this.settingsDialogScale = 0.8
-            this.settingsDialogOpacity = 0
-            this.showSettingsDialog = true
-            setTimeout(() => {
-              animateTo({
-                duration: 200,
-                curve: Curve.EaseOut
-              }, () => {
-                this.settingsDialogScale = 1.0
-                this.settingsDialogOpacity = 1.0
-              })
-            }, 10)
-          })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
       }
       .width('100%')
-        .justifyContent(FlexAlign.SpaceBetween)
-        .alignItems(VerticalAlign.Center)
         .padding({ left: 20, right: 20, bottom: 12 })
     } else {
       Row() {
         Button() {
           Circle({ width: 20, height: 20 })
-            .fill('#FFD700')
+            .fill('#000000')
         }
         .height(80)
-          .backgroundColor('#1A1A1A')
+          .backgroundColor('#FFD700')
           .borderRadius(this.pillRadius)
+          .border({ width: 1, color: '#333333' })
           .onClick(async () => {
-            this.vm.addDot() // addDot 内部已包含振动反馈
+            this.vm.addDot()
             if (this.soundEnabled) {
               await audioService.playDit()
             }
@@ -950,11 +878,12 @@ export struct PracticePage {
 
         Button() {
           Rect({ width: 40, height: 12 })
-            .fill('#FFD700')
+            .fill('#000000')
         }
         .height(80)
-          .backgroundColor('#1A1A1A')
+          .backgroundColor('#FFD700')
           .borderRadius(this.pillRadius)
+          .border({ width: 1, color: '#333333' })
           .onClick(async () => {
             this.vm.addDash()
             if (this.soundEnabled) {
@@ -1040,21 +969,21 @@ export struct PracticePage {
                   )
                   .textAlign(TextAlign.Center)
               }
-              .width('100%')
-              .height('100%')
-              .justifyContent(FlexAlign.Center)
-              .backgroundColor(
-                this.selectedChar === char && char === this.vm.getCurrentCharacter() ? Color.Green :
-                  (this.selectedChar === char ? Color.Red :
-                    (this.selectedChar && char === this.vm.getCurrentCharacter() ? Color.Green : '#1A1A1A'))
-              )
-              .borderRadius(12)
-              .clickEffect({ level: ClickEffectLevel.LIGHT })
-              .onClick(() => {
-                if (!this.selectedChar) {
-                  this.selectChar(char)
-                }
-              })
+            .width('100%')
+                .height('100%')
+                .justifyContent(FlexAlign.Center)
+                .backgroundColor(
+                  this.selectedChar === char && char === this.vm.getCurrentCharacter() ? Color.Green :
+                    (this.selectedChar === char ? Color.Red :
+                      (this.selectedChar && char === this.vm.getCurrentCharacter() ? Color.Green : '#1A1A1A'))
+                )
+                .borderRadius(12)
+                .border({ width: 1, color: '#333333' })
+                .onClick(() => {
+                  if (!this.selectedChar) {
+                    this.selectChar(char)
+                  }
+                })
             }
           })
         }
@@ -1163,7 +1092,7 @@ export struct PracticePage {
                       (this.selectedChar && char === this.vm.getCurrentCharacter() ? Color.Green : '#1A1A1A'))
                 )
                 .borderRadius(12)
-                .clickEffect({ level: ClickEffectLevel.LIGHT })
+                .border({ width: 1, color: '#333333' })
                 .onClick(() => {
                   if (!this.selectedChar) {
                     this.selectChar(char)
@@ -1233,6 +1162,11 @@ export struct PracticePage {
         .backgroundColor('#111111')
         .borderRadius(8)
         .margin({ bottom: 8 })
+        .border({
+          width: !this.selectedButtonMode ? 1 : 0.5,
+          color: !this.selectedButtonMode ? '#FFD700' : '#222222',
+          radius: 8
+        })
         .onClick(() => {
           this.selectedButtonMode = false
         })
@@ -1264,6 +1198,11 @@ export struct PracticePage {
         .padding(16)
         .backgroundColor('#111111')
         .borderRadius(8)
+        .border({
+          width: this.selectedButtonMode ? 1 : 0.5,
+          color: this.selectedButtonMode ? '#FFD700' : '#222222',
+          radius: 8
+        })
         .onClick(() => {
           this.selectedButtonMode = true
         })
@@ -1279,107 +1218,6 @@ export struct PracticePage {
         .onClick(() => {
           this.saveButtonModePreference(this.selectedButtonMode)
           this.showButtonModeDialog = false
-        })
-    }
-    .padding(20)
-      .backgroundColor('#2A2A2A')
-      .borderRadius(12)
-      .width('90%')
-      .constraintSize({ maxWidth: 400 })
-  }
-
-  @Builder
-  private SettingsDialog() {
-    Column() {
-      Row() {
-        Text($r('app.string.settings'))
-          .fontSize(18)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#FFFFFF')
-        Blank()
-        Button() {
-          Image($rawfile('ic_close.svg'))
-            .width(20)
-            .height(20)
-            .fillColor(Color.White)
-        }
-        .width(32)
-          .height(32)
-          .backgroundColor('rgba(128, 128, 128, 0.2)')
-          .borderRadius(16)
-          .onClick(() => {
-            animateTo({
-              duration: 150,
-              curve: Curve.EaseIn
-            }, () => {
-              this.settingsDialogScale = 0.8
-              this.settingsDialogOpacity = 0
-            })
-            setTimeout(() => {
-              this.showSettingsDialog = false
-            }, 150)
-          })
-      }
-      .width('100%')
-        .margin({ bottom: 20 })
-
-      Row() {
-        Column() {
-          Text('长按时间')
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#FFFFFF')
-            .margin({ bottom: 8 })
-          Text(`${this.sliderValue}ms`)
-            .fontSize(14)
-            .fontColor('#FFD700')
-        }
-        .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
-      }
-      .width('100%')
-        .padding(16)
-        .backgroundColor('#111111')
-        .borderRadius(8)
-        .margin({ bottom: 8 })
-
-      Slider({
-        value: this.sliderValue,
-        min: 100,
-        max: 600,
-        step: 25,
-        style: SliderStyle.OutSet
-      })
-        .blockColor('#FFD700')
-        .trackColor('#333333')
-        .selectedColor('#FFD700')
-        .trackThickness(6)
-        .blockSize({ width: 20, height: 20 })
-        .onChange((value: number) => {
-          this.sliderValue = value
-          this.longPressThreshold = value
-        })
-        .margin({ bottom: 20 })
-
-      Button($r('app.string.confirm'))
-        .width('100%')
-        .height(48)
-        .backgroundColor('#FFD700')
-        .borderRadius(8)
-        .fontColor(Color.Black)
-        .fontWeight(FontWeight.Bold)
-        .onClick(async () => {
-          await this.saveLongPressThresholdPreference(this.sliderValue)
-          animateTo({
-            duration: 150,
-            curve: Curve.EaseIn
-          }, () => {
-            this.settingsDialogScale = 0.8
-            this.settingsDialogOpacity = 0
-          })
-          setTimeout(() => {
-            this.showSettingsDialog = false
-          }, 150)
         })
     }
     .padding(20)
@@ -1426,26 +1264,6 @@ export struct PracticePage {
           .height('100%')
       }
 
-      if (this.showSettingsDialog) {
-        Stack() {
-          Column()
-            .width('100%')
-            .height('100%')
-            .backgroundColor('rgba(0, 0, 0, 0.5)')
-
-          Column() {
-            this.SettingsDialog()
-          }
-          .width('100%')
-            .height('100%')
-            .justifyContent(FlexAlign.Center)
-            .alignItems(HorizontalAlign.Center)
-            .scale({ x: this.settingsDialogScale, y: this.settingsDialogScale })
-            .opacity(this.settingsDialogOpacity)
-        }
-        .width('100%')
-          .height('100%')
-      }
     }
   }
 }

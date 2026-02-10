@@ -148,6 +148,9 @@ git clone https://gitee.com/shishizii/morse-code-hos.git
 
 ## 📝 版本历史
 
+### v2.1.0 (2026-01-30)
+- ✅ 练习页、翻译页与「我」页双键设置一致（统一使用 practice_settings，onPageShow 重载）
+
 ### v2.0.0 (2026-01-30)
 - ✅ 适配鸿蒙 OS 5.0 NEXT
 - ✅ 增加「其他应用」推荐

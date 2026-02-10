@@ -4,6 +4,15 @@ import { LessonItem } from '../../types/Types'
 import { router } from '@kit.ArkUI'
 import { eventHub, Events } from '../../utils/EventHub'
 import { progressStore } from '../../store/ProgressStoreSingleton'
+import { common, Want } from '@kit.AbilityKit'
+import { FunctionComponent } from '@kit.AgentFrameworkKit'
+import { BusinessError } from '@kit.BasicServicesKit'
+
+// 小艺智能体：摩斯电码冷知识（HMAF 文档 https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/hmaf-function）
+const AGENT_MORSE_FUN_FACTS_ID = 'agentbe59df1493d7411e91a8a30bb4dc8c22'
+// 浏览器回退 URL（当 HMAF 调起失败时使用）
+const AGENT_MORSE_FUN_FACTS_FALLBACK_URL =
+  'https://developer.huawei.com/consumer/cn/hag/abilityportal/#/agent/detail?agentId=agentbe59df1493d7411e91a8a30bb4dc8c22&agentUuid=25ace2bca2ad4274a6332f3193f5d5b4'
 
 @Component
 export struct LearnPage {
@@ -13,6 +22,8 @@ export struct LearnPage {
   @State private isLanguageReady: boolean = false
   @StorageLink('currentLanguage') @Watch('onLanguageChange') currentLanguage: string = ''
   private lessonCompletedCallback: ((data?: Object) => void) | null = null
+  @State private agentEntryTitle: string = ''
+  @State private agentEntryQueryText: string = ''
 
   onLanguageChange(): void {
     // 调用ViewModel刷新课程数据
@@ -35,6 +46,15 @@ export struct LearnPage {
       await this.waitForLanguageReady()
 
       await this.vm.init(hostContext)
+
+      // 加载智能体入口文案与指令（供 HMAF Function 组件使用）
+      try {
+        const ctx = hostContext as common.UIAbilityContext
+        this.agentEntryTitle = await ctx.resourceManager.getStringByName('agent_morse_fun_facts')
+        this.agentEntryQueryText = await ctx.resourceManager.getStringByName('agent_morse_fun_facts_prompt')
+      } catch (e) {
+        console.error('[LearnPage] Failed to load agent strings:', e)
+      }
 
       // Add 200ms delay for smooth rendering
       setTimeout(() => {
@@ -208,6 +228,28 @@ export struct LearnPage {
   // 检查是否为占位课程（支持简体和繁体）
   private isPlaceholderLesson(title: string): boolean {
     return title === '占位' || title === '佔位'
+  }
+
+  // HMAF 调起失败时通过浏览器打开智能体页（带本地化 prompt）
+  private async openMorseFunFactsAgentFallback(): Promise<void> {
+    try {
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
+      const prompt = await context.resourceManager.getStringByName('agent_morse_fun_facts_prompt')
+      const uri = `${AGENT_MORSE_FUN_FACTS_FALLBACK_URL}&prompt=${encodeURIComponent(prompt)}`
+      const want: Want = {
+        action: 'ohos.want.action.viewData',
+        entities: ['entity.system.browsable'],
+        uri: uri
+      }
+      await context.startAbility(want)
+    } catch (error) {
+      console.error('[LearnPage] Failed to open Morse fun facts agent fallback:', error)
+    }
+  }
+
+  private onAgentError(err: BusinessError): void {
+    console.error('[LearnPage] HMAF agent error:', err?.code, err?.message)
+    this.openMorseFunFactsAgentFallback()
   }
 
   // 获取本地化标题
@@ -448,7 +490,20 @@ export struct LearnPage {
           .edgeEffect(EdgeEffect.Spring)
           .scrollBar(BarState.Off)
           .layoutWeight(1)
-          .padding({ left: 16, right: 16, top: 16, bottom: 48 })
+          .padding({ left: 16, right: 16, top: 16, bottom: 16 })
+
+        // 底部：小艺智能体「摩斯电码冷知识」（HMAF Function 组件，见 hmaf-function 文档）
+        FunctionComponent({
+          agentId: AGENT_MORSE_FUN_FACTS_ID,
+          onError: (err: BusinessError) => {
+            this.onAgentError(err)
+          },
+          options: {
+            title: this.agentEntryTitle,
+            queryText: this.agentEntryQueryText
+          }
+        })
+        .padding({ bottom: 24 })
       } else {
         // Loading state - Pure black screen
         Column() {

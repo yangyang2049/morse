@@ -45,10 +45,6 @@ export struct PracticeDifficultyPage {
       console.error('[PracticeDifficultyPage] Failed to get resource manager:', error)
     }
 
-    // 初始化收藏和错题store
-    const context = getContext(this)
-    await this.favoritesStore.init(context)
-
     // 获取当前系统语言
     this.currentLanguage = this.getCurrentLanguage()
   }

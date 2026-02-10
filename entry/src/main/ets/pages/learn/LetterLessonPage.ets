@@ -1,22 +1,19 @@
 import { MorseCode, MorseCodeData } from '../../models/MorseCode'
-import { router, promptAction } from '@kit.ArkUI'
+import { router } from '@kit.ArkUI'
 import { LetterLessonViewModel } from '../../viewmodel/LetterLessonViewModel'
 import { LessonData } from '../../data/LessonData'
 import { audioService } from '../../services/AudioService'
-import { vibratorService } from '../../services/VibratorService'
 import preferences from '@ohos.data.preferences'
+import { Context } from '@kit.AbilityKit'
 
 @Entry
 @Component
 export struct LetterLessonPage {
   @State viewModel: LetterLessonViewModel = new LetterLessonViewModel()
+  @State useSingleButton: boolean = true
+  @State longPressThreshold: number = 300
   private readonly pillRadius: number = 20
-  @State useSingleButton: boolean = false
-  @State showButtonModeDialog: boolean = false
-  @State vibrationEnabled: boolean = true
-  private preferencesStore: preferences.Preferences | null = null
   private pressStartTime: number = 0
-  private longPressThreshold: number = 300
   private longPressTimer: number | null = null
 
   async aboutToAppear() {
@@ -38,127 +35,52 @@ export struct LetterLessonPage {
       this.viewModel.init(hostContext, lessonId, title, codes)
     }
 
-    // 初始化偏好设置存储并加载输入模式
-    await this.initPreferences()
-    await this.loadButtonModePreference()
-    await this.loadLongPressThresholdPreference()
-    await this.loadVibrationPreference()
-
-    // 延迟显示课程编号 toast，确保页面已加载
-    setTimeout(() => {
-      this.showLessonNumberToast(lessonId)
-    }, 300)
+    // 加载输入模式（单/双按钮）与长按阈值
+    try {
+      const context = hostContext as Context
+      if (context) {
+        const practiceStore = await preferences.getPreferences(context, 'practice_settings')
+        await this.loadButtonModePreference(practiceStore)
+        await this.loadLongPressThresholdPreference(practiceStore)
+      }
+    } catch (error) {
+      console.error('[LetterLessonPage] Failed to load practice_settings:', error)
+    }
   }
 
   aboutToDisappear() {
-    this.viewModel.destroy()
-    // 清理长按定时器
     if (this.longPressTimer) {
       clearTimeout(this.longPressTimer)
       this.longPressTimer = null
     }
+    this.viewModel.destroy()
   }
 
-  // 显示课程编号 toast
-  private showLessonNumberToast(lessonId: string): void {
+  private async loadButtonModePreference(store: preferences.Preferences | null): Promise<void> {
     try {
-      console.log(`[LetterLessonPage] showLessonNumberToast: lessonId=${lessonId}`)
-      const lessonNumber = parseInt(lessonId) || 0
-      console.log(`[LetterLessonPage] showLessonNumberToast: lessonNumber=${lessonNumber}`)
-      if (lessonNumber > 0) {
-        promptAction.showToast({
-          message: `第 ${lessonNumber} 课`,
-          duration: 2000,
-          bottom: '45%'
-        })
-        console.log(`[LetterLessonPage] Toast shown: 第 ${lessonNumber} 课`)
-      } else {
-        console.warn(`[LetterLessonPage] Invalid lessonId: ${lessonId}`)
-      }
-    } catch (error) {
-      console.error('[LetterLessonPage] Failed to show lesson number toast:', error)
-    }
-  }
-
-  // 初始化偏好设置存储
-  private async initPreferences(): Promise<void> {
-    try {
-      const context = getContext(this)
-      this.preferencesStore = await preferences.getPreferences(context, 'practice_preferences')
-      console.log('[LetterLessonPage] Preferences store initialized')
-    } catch (error) {
-      console.error('[LetterLessonPage] Failed to initialize preferences:', error)
-    }
-  }
-
-  // 加载按钮模式偏好设置
-  private async loadButtonModePreference(): Promise<void> {
-    try {
-      if (this.preferencesStore) {
-        this.useSingleButton = await this.preferencesStore.get('use_single_button', false) as boolean
-        console.log(`[LetterLessonPage] Loaded button mode preference: ${this.useSingleButton}`)
+      if (store) {
+        const hasSetPreference = await store.get('has_set_button_mode', false) as boolean
+        if (hasSetPreference) {
+          this.useSingleButton = await store.get('use_single_button', true) as boolean
+        } else {
+          this.useSingleButton = true
+        }
       }
     } catch (error) {
       console.error('[LetterLessonPage] Failed to load button mode preference:', error)
     }
   }
 
-  // 保存按钮模式偏好设置
-  private async saveButtonModePreference(useSingle: boolean): Promise<void> {
+  private async loadLongPressThresholdPreference(store: preferences.Preferences | null): Promise<void> {
     try {
-      if (this.preferencesStore) {
-        await this.preferencesStore.put('use_single_button', useSingle)
-        await this.preferencesStore.put('has_set_button_mode', true)
-        await this.preferencesStore.flush()
-        this.useSingleButton = useSingle
-        console.log(`[LetterLessonPage] Saved button mode preference: ${useSingle}`)
-      }
-    } catch (error) {
-      console.error('[LetterLessonPage] Failed to save button mode preference:', error)
-    }
-  }
-
-  // 加载长按时间偏好设置
-  private async loadLongPressThresholdPreference(): Promise<void> {
-    try {
-      if (this.preferencesStore) {
-        this.longPressThreshold = await this.preferencesStore.get('long_press_threshold', 300) as number
-        console.log(`[LetterLessonPage] Loaded long press threshold: ${this.longPressThreshold}`)
+      if (store) {
+        this.longPressThreshold = await store.get('long_press_threshold', 300) as number
       }
     } catch (error) {
       console.error('[LetterLessonPage] Failed to load long press threshold:', error)
     }
   }
 
-  // 加载振动偏好设置
-  private async loadVibrationPreference(): Promise<void> {
-    try {
-      if (this.preferencesStore) {
-        this.vibrationEnabled = await this.preferencesStore.get('vibration_enabled', true) as boolean
-        vibratorService.setEnabled(this.vibrationEnabled)
-        console.log(`[LetterLessonPage] Loaded vibration preference: ${this.vibrationEnabled}`)
-      }
-    } catch (error) {
-      console.error('[LetterLessonPage] Failed to load vibration preference:', error)
-    }
-  }
-
-  // 保存振动偏好设置
-  private async saveVibrationPreference(enabled: boolean): Promise<void> {
-    try {
-      if (this.preferencesStore) {
-        await this.preferencesStore.put('vibration_enabled', enabled)
-        await this.preferencesStore.flush()
-        this.vibrationEnabled = enabled
-        vibratorService.setEnabled(enabled)
-        console.log(`[LetterLessonPage] Saved vibration preference: ${enabled}`)
-      }
-    } catch (error) {
-      console.error('[LetterLessonPage] Failed to save vibration preference:', error)
-    }
-  }
-
-  // 单按钮模式处理
   private handleSingleButtonPress(): void {
     this.pressStartTime = Date.now()
     this.longPressTimer = setTimeout(() => {
@@ -276,14 +198,14 @@ export struct LetterLessonPage {
       Row() {
         Button() {
           Image($rawfile('ic_back.svg'))
-            .width(18)
-            .height(18)
+            .width(20)
+            .height(20)
             .fillColor(Color.White)
         }
-        .width(40)
-          .height(40)
+        .width(48)
+          .height(48)
           .backgroundColor(Color.Transparent)
-          .borderRadius(20)
+          .borderRadius(24)
           .onClick(() => {
             router.back()
           })
@@ -299,16 +221,16 @@ export struct LetterLessonPage {
           .hoverEffect(HoverEffect.Scale)
           .focusable(true)
 
-        Blank().width(12)
+        Blank().width(20)
 
         Scroll() {
           Row() {
             ForEach(this.viewModel.codes, (code: MorseCode, index: number) => {
               Text(code.character)
-                .fontSize(this.isWordLesson() ? 11 : 16)
+                .fontSize(this.isWordLesson() ? 12 : 18)
                 .fontWeight(FontWeight.Bold)
                 .fontColor(this.viewModel.getLetterStatusColor(index))
-                .margin({ right: 6 })
+                .margin({ right: 8 })
             })
           }
           .justifyContent(FlexAlign.Center)
@@ -317,24 +239,22 @@ export struct LetterLessonPage {
           .scrollable(ScrollDirection.Horizontal)
           .scrollBar(BarState.Off)
 
-        Blank().width(12)
+        Blank().width(20)
 
         Button() {
           Image($rawfile('ic_settings.svg'))
-            .width(20).height(20)
+            .width(22).height(22)
         }
-        .width(40)
-          .height(40)
-          .backgroundColor(Color.Transparent)
-          .borderRadius(20)
+        .backgroundColor(Color.Transparent)
+          .borderRadius(24)
           .onClick(() => {
             this.viewModel.showSettingsDialog = true
           })
           .hoverEffect(HoverEffect.Scale)
           .focusable(true)
       }
-      .height(48)
-        .padding({ left: 12, right: 12 })
+      .height(56)
+        .padding({ left: 16, right: 16 })
     }
     .width('100%')
       .backgroundColor(Color.Black)
@@ -343,25 +263,25 @@ export struct LetterLessonPage {
   @Builder
   private ProgressCircle() {
     Stack({ alignContent: Alignment.Center }) {
-      Circle({ width: 160, height: 160 })
+      Circle({ width: 220, height: 220 })
         .fill(Color.Transparent)
-        .strokeWidth(6)
+        .strokeWidth(8)
         .stroke('#333333')
 
-      Circle({ width: 160, height: 160 })
+      Circle({ width: 220, height: 220 })
         .fill(Color.Transparent)
-        .strokeWidth(6)
+        .strokeWidth(8)
         .stroke(this.viewModel.getProgressColor())
         .strokeDashArray([this.viewModel.getProgressVisualLength(), this.viewModel.getCircumference() - this.viewModel.getProgressVisualLength()])
         .strokeDashOffset(this.viewModel.getCircumference() / 4)
         .strokeLineCap(LineCapStyle.Round)
         .opacity(this.viewModel.progressVisual > 0 ? 1 : 0)
 
-      Circle({ width: 148, height: 148 })
+      Circle({ width: 200, height: 200 })
         .fill(this.viewModel.getProgressColor())
 
       Text(this.viewModel.codes[this.viewModel.currentIndex]?.character || '')
-        .fontSize(this.isWordLesson() ? 18 : 60)
+        .fontSize(this.isWordLesson() ? 20 : 80)
         .fontWeight(FontWeight.Bold)
         .fontColor('#1A1A1A')
         .textAlign(TextAlign.Center)
@@ -373,6 +293,7 @@ export struct LetterLessonPage {
   private MorseDisplay() {
     Column() {
       if (this.viewModel.shouldShowHint(this.viewModel.currentIndex)) {
+        // 用图形化方式显示摩尔斯码
         // 用图形化方式显示摩尔斯码
         Row() {
           ForEach((this.viewModel.codes[this.viewModel.currentIndex]?.morse || '').split(''), (char: string) => {
@@ -395,14 +316,15 @@ export struct LetterLessonPage {
         .justifyContent(FlexAlign.Center)
       } else {
         Image($rawfile('ic_eye.svg'))
-          .width(24)
-          .height(24)
+          .width(28)
+          .height(28)
           .fillColor(Color.White)
       }
     }
-    .height(60)
-      .width('90%')
-      .padding({ left: 12, right: 12, top: 12, bottom: 12 })
+    .height(80)
+      .width('95%')
+      .margin({ left: 24, right: 24 })
+      .padding({ left: 16, right: 16, top: 16, bottom: 16 })
       .backgroundColor('#1A1A1A')
       .borderRadius(this.pillRadius)
       .justifyContent(FlexAlign.Center)
@@ -419,42 +341,36 @@ export struct LetterLessonPage {
   private InputDisplay() {
     Column() {
       if (this.viewModel.userInput.trim().length > 0) {
-        // 用图形化方式显示用户输入，使用 Scroll 防止内容超出时换行
-        Scroll() {
-          Row() {
-            ForEach(this.viewModel.userInput.split(''), (char: string, index: number) => {
-              if (char === '.') {
-                Circle({ width: this.isWordLesson() ? 6.4 : 8, height: this.isWordLesson() ? 6.4 : 8 })
-                  .fill(
-                    this.viewModel.showResult && this.viewModel.isCorrect ? Color.Green :
-                      this.viewModel.showResult && !this.viewModel.isCorrect ? Color.Red : '#FFD700'
-                  )
-                  .margin({ right: this.isWordLesson() ? 6.4 : 8 })
-                  .id(`dot_${index}`)
-              } else if (char === '-') {
-                Rect({ width: this.isWordLesson() ? 12.8 : 16, height: this.isWordLesson() ? 3.2 : 4 })
-                  .fill(
-                    this.viewModel.showResult && this.viewModel.isCorrect ? Color.Green :
-                      this.viewModel.showResult && !this.viewModel.isCorrect ? Color.Red : '#FFD700'
-                  )
-                  .margin({ right: this.isWordLesson() ? 6.4 : 8 })
-                  .id(`dash_${index}`)
-              } else if (char === ' ') {
-                // 字母间空格
-                if (this.isWordLesson()) {
-                  Blank().width(3.2).height(1).id(`space_${index}`)
-                }
+        // 用图形化方式显示用户输入
+        // 用图形化方式显示用户输入
+        Row() {
+          ForEach(this.viewModel.userInput.split(''), (char: string) => {
+            if (char === '.') {
+              Circle({ width: this.isWordLesson() ? 6.4 : 8, height: this.isWordLesson() ? 6.4 : 8 })
+                .fill(
+                  this.viewModel.showResult && this.viewModel.isCorrect ? Color.Green :
+                    this.viewModel.showResult && !this.viewModel.isCorrect ? Color.Red : '#FFD700'
+                )
+                .margin({ right: this.isWordLesson() ? 6.4 : 8 })
+            } else if (char === '-') {
+              Rect({ width: this.isWordLesson() ? 12.8 : 16, height: this.isWordLesson() ? 3.2 : 4 })
+                .fill(
+                  this.viewModel.showResult && this.viewModel.isCorrect ? Color.Green :
+                    this.viewModel.showResult && !this.viewModel.isCorrect ? Color.Red : '#FFD700'
+                )
+                .margin({ right: this.isWordLesson() ? 6.4 : 8 })
+            } else if (char === ' ') {
+              // 字母间空格
+              if (this.isWordLesson()) {
+                Blank().width(3.2).height(1)
               }
-            }, (char: string, index: number) => `${char}_${index}`)
-          }
-          .justifyContent(FlexAlign.Center)
+            }
+          })
         }
-        .width('100%')
-        .scrollable(ScrollDirection.Horizontal)
-        .scrollBar(BarState.Off)
+        .justifyContent(FlexAlign.Center)
       }
     }
-    .height(50)
+    .height(60)
       .width('100%')
       .justifyContent(FlexAlign.Center)
       .alignItems(HorizontalAlign.Center)
@@ -462,143 +378,135 @@ export struct LetterLessonPage {
 
   @Builder
   private BottomKeys() {
-    if (this.useSingleButton) {
-      // 单按钮模式：一个按钮，短按输入点，长按输入划
-      Row() {
-        Blank().layoutWeight(1)
-
+    Row() {
+      if (this.isWordLesson()) {
+        // 单词课程：三个按钮（点、空格、划），不区分单/双键；点/划黄底黑字
         Button() {
-          Text('·')
-            .fontSize(22)
-            .fontColor(Color.Black)
+          Circle({ width: 20, height: 20 })
+            .fill('#000000')
+        }
+        .height(80)
+          .backgroundColor('#FFD700')
+          .borderRadius(this.pillRadius)
+          .border({ width: 1, color: '#333333' })
+          .onClick(async () => {
+            this.viewModel.addDot()
+            if (this.viewModel.soundEnabled) {
+              await audioService.playDit()
+            }
+          })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
+          .layoutWeight(1)
+
+        Blank().width(8)
+
+        // 短空格按钮
+        Button() {
+          Text('⎵')
+            .fontSize(16)
+            .fontColor('#FFD700')
             .fontWeight(FontWeight.Bold)
         }
-        .height(100)
-          .width(100)
-          .backgroundColor('#FFD700')
-          .borderRadius(50)
-          .onTouch((event) => {
-            if (event.type === TouchType.Down) {
-              this.handleSingleButtonPress()
-            } else if (event.type === TouchType.Up) {
-              this.handleSingleButtonRelease()
+        .height(80)
+          .width(60)
+          .backgroundColor('#1A1A1A')
+          .borderRadius(12)
+          .border({ width: 1, color: '#333333' })
+          .onClick(async () => {
+            this.viewModel.addSpace()
+            if (this.viewModel.soundEnabled) {
+              await audioService.playSpace()
             }
           })
           .hoverEffect(HoverEffect.Scale)
           .focusable(true)
 
-        Blank().layoutWeight(1)
-      }
-      .width('100%')
-        .padding({ left: 16, right: 16, bottom: 48 })
-    } else {
-      // 双按钮模式
-      Row() {
-        if (this.isWordLesson()) {
-          // 单词课程：三个按钮（点、空格、划）
-          Button() {
-            Circle({ width: 18, height: 18 })
-              .fill('#FFD700')
-          }
-          .height(70)
-            .backgroundColor('#1A1A1A')
-            .borderRadius(this.pillRadius)
-            .border({ width: 1, color: '#333333' })
-            .onClick(async () => {
-              this.viewModel.addDot()
-              if (this.viewModel.soundEnabled) {
-                await audioService.playDit()
-              }
-            })
-            .hoverEffect(HoverEffect.Scale)
-            .focusable(true)
-            .layoutWeight(1)
+        Blank().width(8)
 
-          Blank().width(6)
-
-          // 短空格按钮
-          Button() {
-            Text('⎵')
-              .fontSize(14)
-              .fontColor('#FFD700')
-              .fontWeight(FontWeight.Bold)
-          }
-          .height(70)
-            .width(50)
-            .backgroundColor('#1A1A1A')
-            .borderRadius(12)
-            .border({ width: 1, color: '#333333' })
-            .onClick(async () => {
-              this.viewModel.addSpace()
-              if (this.viewModel.soundEnabled) {
-                await audioService.playSpace()
-              }
-            })
-            .hoverEffect(HoverEffect.Scale)
-            .focusable(true)
-
-          Blank().width(6)
-
-          Button() {
-            Rect({ width: 36, height: 10 })
-              .fill('#FFD700')
-          }
-          .height(70)
-            .backgroundColor('#1A1A1A')
-            .borderRadius(this.pillRadius)
-            .border({ width: 1, color: '#333333' })
-            .onClick(async () => {
-              this.viewModel.addDash()
-              if (this.viewModel.soundEnabled) {
-                await audioService.playDah()
-              }
-            })
-            .hoverEffect(HoverEffect.Scale)
-            .focusable(true)
-            .layoutWeight(1)
-        } else {
-          // 其他课程：两个按钮（点、划），平均分配宽度
-          Button() {
-            Circle({ width: 18, height: 18 })
-              .fill('#FFD700')
-          }
-          .height(70)
-            .backgroundColor('#1A1A1A')
-            .borderRadius(this.pillRadius)
-            .border({ width: 1, color: '#333333' })
-            .onClick(async () => {
-              this.viewModel.addDot()
-              if (this.viewModel.soundEnabled) {
-                await audioService.playDit()
-              }
-            })
-            .hoverEffect(HoverEffect.Scale)
-            .focusable(true)
-            .layoutWeight(1)
-
-          Blank().width(12)
-
-          Button() {
-            Rect({ width: 36, height: 10 })
-              .fill('#FFD700')
-          }
-          .height(70)
-            .backgroundColor('#1A1A1A')
-            .borderRadius(this.pillRadius)
-            .border({ width: 1, color: '#333333' })
-            .onClick(async () => {
-              this.viewModel.addDash()
-              if (this.viewModel.soundEnabled) {
-                await audioService.playDah()
-              }
-            })
-            .hoverEffect(HoverEffect.Scale)
-            .focusable(true)
-            .layoutWeight(1)
+        Button() {
+          Rect({ width: 40, height: 12 })
+            .fill('#000000')
         }
+        .height(80)
+          .backgroundColor('#FFD700')
+          .borderRadius(this.pillRadius)
+          .border({ width: 1, color: '#333333' })
+          .onClick(async () => {
+            this.viewModel.addDash()
+            if (this.viewModel.soundEnabled) {
+              await audioService.playDah()
+            }
+          })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
+          .layoutWeight(1)
+      } else if (this.useSingleButton) {
+        // 非单词课程 + 单键模式：一个按钮，短按点、长按划；黄底黑字
+        Column() {
+          Text('·')
+            .fontSize(28)
+            .fontColor('#000000')
+            .fontWeight(FontWeight.Bold)
+        }
+        .height(80)
+          .layoutWeight(1)
+          .justifyContent(FlexAlign.Center)
+          .alignItems(HorizontalAlign.Center)
+          .backgroundColor('#FFD700')
+          .borderRadius(this.pillRadius)
+          .border({ width: 1, color: '#333333' })
+          .onTouch((event: TouchEvent) => {
+            if (event.type === 0) {
+              this.handleSingleButtonPress()
+            } else if (event.type === 1) {
+              this.handleSingleButtonRelease()
+            }
+          })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
+      } else {
+        // 非单词课程 + 双键模式：两个按钮（点、划）；黄底黑字
+        Button() {
+          Circle({ width: 20, height: 20 })
+            .fill('#000000')
+        }
+        .height(80)
+          .backgroundColor('#FFD700')
+          .borderRadius(this.pillRadius)
+          .border({ width: 1, color: '#333333' })
+          .onClick(async () => {
+            this.viewModel.addDot()
+            if (this.viewModel.soundEnabled) {
+              await audioService.playDit()
+            }
+          })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
+          .layoutWeight(1)
+
+        Blank().width(20)
+
+        Button() {
+          Rect({ width: 40, height: 12 })
+            .fill('#000000')
+        }
+        .height(80)
+          .backgroundColor('#FFD700')
+          .borderRadius(this.pillRadius)
+          .border({ width: 1, color: '#333333' })
+          .onClick(async () => {
+            this.viewModel.addDash()
+            if (this.viewModel.soundEnabled) {
+              await audioService.playDah()
+            }
+          })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
+          .layoutWeight(1)
       }
-      .padding({ left: 16, right: 16, bottom: 48 })
     }
+    .padding({ left: 20, right: 20, bottom: 60 })
   }
 
   @Builder
@@ -626,7 +534,7 @@ export struct LetterLessonPage {
 
         Blank().height(24)
 
-        Text(this.viewModel.codes.map(code => code.character).join(' '))
+        Text($r('app.string.congratulations_completed'))
           .fontSize(24)
           .fontWeight(FontWeight.Bold)
           .fontColor('#FFFFFF')
@@ -715,7 +623,7 @@ export struct LetterLessonPage {
       }
       .width(360)
         .padding(20)
-        .backgroundColor('#2A2A2A')
+        .backgroundColor('#000000')
         .border({ width: 2, color: Color.Green })
         .borderRadius(16)
         .shadow({ radius: 24, color: 'rgba(0,0,0,0.4)', offsetX: 0, offsetY: 12 })
@@ -758,48 +666,6 @@ export struct LetterLessonPage {
         }
         .height(44)
           .padding({ left: 4, right: 4 })
-
-        Blank().height(12)
-
-        // 振动反馈
-        Row() {
-          Text($r('app.string.vibration'))
-            .fontSize(16)
-            .fontColor('#FFFFFF')
-          Blank().layoutWeight(1)
-          Toggle({ type: ToggleType.Switch, isOn: this.vibrationEnabled })
-            .selectedColor('#FFD700')
-            .onChange(async (isOn: boolean) => {
-              await this.saveVibrationPreference(isOn)
-            })
-        }
-        .height(44)
-          .padding({ left: 4, right: 4 })
-
-        Blank().height(12)
-
-        // 输入模式设置
-        Row() {
-          Text($r('app.string.practice_input_mode'))
-            .fontSize(16)
-            .fontColor('#FFFFFF')
-          Blank().layoutWeight(1)
-          Text(this.useSingleButton ? $r('app.string.single_button_mode') : $r('app.string.dual_button_mode'))
-            .fontSize(14)
-            .fontColor('#B0B0B0')
-            .margin({ right: 8 })
-          Image($rawfile('ic_arrow_right.svg'))
-            .width(16)
-            .height(16)
-            .fillColor('#666666')
-        }
-        .height(44)
-          .padding({ left: 4, right: 4 })
-          .onClick(() => {
-            this.showButtonModeDialog = true
-          })
-          .hoverEffect(HoverEffect.Scale)
-          .focusable(true)
 
         Blank().height(12)
 
@@ -873,7 +739,7 @@ export struct LetterLessonPage {
       }
       .width(320)
         .padding(20)
-        .backgroundColor('#2A2A2A')
+        .backgroundColor('#000000')
         .border({ width: 1, color: '#333333' })
         .borderRadius(12)
         .shadow({ radius: 24, color: 'rgba(0,0,0,0.4)', offsetX: 0, offsetY: 12 })
@@ -887,122 +753,6 @@ export struct LetterLessonPage {
   }
 
   @Builder
-  private ButtonModeSelectorDialog() {
-    Column() {
-      Row() {
-        Text($r('app.string.select_practice_input_mode'))
-          .fontSize(18)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#FFFFFF')
-        Blank()
-        Button() {
-          Image($rawfile('ic_close.svg'))
-            .width(20)
-            .height(20)
-            .fillColor('#FFFFFF')
-        }
-        .width(32)
-          .height(32)
-          .backgroundColor('rgba(128, 128, 128, 0.2)')
-          .borderRadius(16)
-          .onClick(() => {
-            this.showButtonModeDialog = false
-          })
-          .hoverEffect(HoverEffect.Scale)
-          .focusable(true)
-      }
-      .width('100%')
-        .margin({ bottom: 20 })
-
-      // 双按钮模式选项
-      Row() {
-        Column() {
-          Text($r('app.string.dual_button_mode'))
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#FFFFFF')
-            .margin({ bottom: 8 })
-          Text($r('app.string.dual_button_mode_desc'))
-            .fontSize(12)
-            .fontColor('#999999')
-        }
-        .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
-
-        if (!this.useSingleButton) {
-          Circle()
-            .width(16)
-            .height(16)
-            .fill(Color.Transparent)
-            .stroke('#FFD700')
-            .strokeWidth(2)
-        }
-      }
-      .width('100%')
-        .padding(16)
-        .backgroundColor('#111111')
-        .borderRadius(8)
-        .margin({ bottom: 8 })
-        .border({
-          width: !this.useSingleButton ? 1 : 0.5,
-          color: !this.useSingleButton ? '#FFD700' : '#222222',
-          radius: 8
-        })
-        .onClick(() => {
-          this.saveButtonModePreference(false)
-          this.showButtonModeDialog = false
-        })
-        .hoverEffect(HoverEffect.Scale)
-        .focusable(true)
-
-      // 单按钮模式选项
-      Row() {
-        Column() {
-          Text($r('app.string.single_button_mode'))
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#FFFFFF')
-            .margin({ bottom: 8 })
-          Text($r('app.string.single_button_mode_desc'))
-            .fontSize(12)
-            .fontColor('#999999')
-        }
-        .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
-
-        if (this.useSingleButton) {
-          Circle()
-            .width(16)
-            .height(16)
-            .fill(Color.Transparent)
-            .stroke('#FFD700')
-            .strokeWidth(2)
-        }
-      }
-      .width('100%')
-        .padding(16)
-        .backgroundColor('#111111')
-        .borderRadius(8)
-        .border({
-          width: this.useSingleButton ? 1 : 0.5,
-          color: this.useSingleButton ? '#FFD700' : '#222222',
-          radius: 8
-        })
-        .onClick(() => {
-          this.saveButtonModePreference(true)
-          this.showButtonModeDialog = false
-        })
-        .hoverEffect(HoverEffect.Scale)
-        .focusable(true)
-    }
-    .padding(20)
-      .backgroundColor('#2A2A2A')
-      .borderRadius(12)
-      .width('90%')
-      .constraintSize({ maxWidth: 400, maxHeight: '60%' })
-  }
-
-  @Builder
   private OverlayCover() {
     Stack() {
       // 半透明遮罩，阻止穿透点击
@@ -1010,34 +760,11 @@ export struct LetterLessonPage {
         .width('100%')
         .height('100%')
         .backgroundColor('rgba(0, 0, 0, 0.5)')
-        .onClick(() => {
-          if (this.showButtonModeDialog) {
-            this.showButtonModeDialog = false
-          } else if (this.viewModel.showSettingsDialog) {
-            this.viewModel.showSettingsDialog = false
-          }
-        })
 
-      // 完成对话框（最底层）
       if (this.viewModel.showCompletionDialog) {
         this.CompletionDialog()
-      }
-
-      // 设置对话框（中间层）
-      if (this.viewModel.showSettingsDialog) {
+      } else if (this.viewModel.showSettingsDialog) {
         this.SettingsDialog()
-      }
-
-      // 输入模式选择对话框（最上层，显示在设置对话框之上）
-      if (this.showButtonModeDialog) {
-        Column() {
-          this.ButtonModeSelectorDialog()
-        }
-        .width('100%')
-          .height('100%')
-          .justifyContent(FlexAlign.Center)
-          .alignItems(HorizontalAlign.Center)
-          .zIndex(100) // 确保显示在最上层
       }
     }
     .width('100%')
@@ -1051,13 +778,13 @@ export struct LetterLessonPage {
 
         // 内容区域 - 响应式宽度，最大480vp
         Column() {
-          Blank().height(8)
+          Blank().height(20)
 
           Column() {
             this.ProgressCircle()
-            Blank().height(24)
+            Blank().height(60)
             this.MorseDisplay()
-            Blank().height(12)
+            Blank().height(20)
             this.InputDisplay()
           }
           .layoutWeight(1)
@@ -1067,7 +794,7 @@ export struct LetterLessonPage {
         }
         .width('100%')
           .constraintSize({ maxWidth: 480 })
-          .padding({ left: 12, right: 12 })
+          .padding({ left: 20, right: 20 })
           .height('100%')
           .justifyContent(FlexAlign.Center)
           .alignItems(HorizontalAlign.Center)
@@ -1075,7 +802,7 @@ export struct LetterLessonPage {
       .width('100%')
         .height('100%')
 
-      if (this.viewModel.showCompletionDialog || this.viewModel.showSettingsDialog || this.showButtonModeDialog) {
+      if (this.viewModel.showCompletionDialog || this.viewModel.showSettingsDialog) {
         this.OverlayCover()
       }
     }

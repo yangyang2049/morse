@@ -44,20 +44,6 @@ export default class EntryAbility extends UIAbility {
       // Verify the language was set
       const verifyLang = AppStorage.get<string>('currentLanguage');
       console.log(`[EntryAbility] Verified language in AppStorage: ${verifyLang}`);
-      
-      /* FORCE ENGLISH FOR SCREENSHOTS - Uncomment below to force English language
-      // Force English language for screenshots
-      const languageCode = 'en-US';
-      console.log(`[EntryAbility] FORCED language to: ${languageCode} (for screenshots)`);
-      AppStorage.setOrCreate('currentLanguage', languageCode);
-      
-      // Set system preferred language to English
-      i18n.System.setAppPreferredLanguage('en-Latn-US');
-      
-      // Verify the language was set
-      const verifyLang = AppStorage.get<string>('currentLanguage');
-      console.log(`[EntryAbility] Verified language in AppStorage: ${verifyLang}`);
-      */
     } catch (error) {
       console.error('[EntryAbility] Failed to initialize language:', error);
       AppStorage.setOrCreate('currentLanguage', 'zh-CN'); // Fallback to Chinese

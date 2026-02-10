@@ -9,50 +9,6 @@ interface ChineseTelegraphCode {
   code: string
 }
 
-// 实现 IDataSource 接口用于 LazyForEach
-class ChineseTelegraphCodeDataSource implements IDataSource {
-  private listeners: DataChangeListener[] = []
-  private originDataArray: ChineseTelegraphCode[] = []
-
-  constructor(dataArray: ChineseTelegraphCode[]) {
-    this.originDataArray = dataArray
-  }
-
-  totalCount(): number {
-    return this.originDataArray.length
-  }
-
-  getData(index: number): ChineseTelegraphCode {
-    return this.originDataArray[index]
-  }
-
-  registerDataChangeListener(listener: DataChangeListener): void {
-    if (this.listeners.indexOf(listener) < 0) {
-      this.listeners.push(listener)
-    }
-  }
-
-  unregisterDataChangeListener(listener: DataChangeListener): void {
-    const pos = this.listeners.indexOf(listener)
-    if (pos >= 0) {
-      this.listeners.splice(pos, 1)
-    }
-  }
-
-  // 更新数据源
-  updateData(dataArray: ChineseTelegraphCode[]): void {
-    this.originDataArray = dataArray
-    this.notifyDataReload()
-  }
-
-  // 通知数据变化
-  private notifyDataReload(): void {
-    this.listeners.forEach((listener: DataChangeListener) => {
-      listener.onDataReloaded()
-    })
-  }
-}
-
 @Entry
 @Component
 export struct ChineseTelegraphCodePage {
@@ -61,7 +17,6 @@ export struct ChineseTelegraphCodePage {
   @State filteredCodes: ChineseTelegraphCode[] = []
   @State isLoading: boolean = true
   @State isSearching: boolean = false
-  private dataSource: ChineseTelegraphCodeDataSource = new ChineseTelegraphCodeDataSource([])
 
   // 分页相关状态
   @State currentPage: number = 0
@@ -80,9 +35,6 @@ export struct ChineseTelegraphCodePage {
   private static allDataCache: ChineseTelegraphCode[] | null = null
   private static isDataLoaded: boolean = false
 
-  // 搜索防抖定时器
-  private searchDebounceTimer: number | null = null
-
   aboutToAppear() {
     console.log('ChineseTelegraphCodePage aboutToAppear called')
 
@@ -94,14 +46,6 @@ export struct ChineseTelegraphCodePage {
       console.log('Starting to load Chinese telegraph codes...')
       this.loadFirstPage()
     }, 100)
-  }
-
-  aboutToDisappear() {
-    // 清理搜索防抖定时器
-    if (this.searchDebounceTimer) {
-      clearTimeout(this.searchDebounceTimer)
-      this.searchDebounceTimer = null
-    }
   }
 
   private checkLanguage() {
@@ -163,14 +107,12 @@ export struct ChineseTelegraphCodePage {
       // 第一页，替换所有数据
       this.codes = pageData
       this.filteredCodes = pageData
-      this.dataSource.updateData(this.filteredCodes)
       this.isLoading = false
     } else {
       // 后续页，追加数据
       this.codes = [...this.codes, ...pageData]
       if (!this.isSearchMode) {
         this.filteredCodes = [...this.filteredCodes, ...pageData]
-        this.dataSource.updateData(this.filteredCodes)
       }
       this.isLoadingMore = false
     }
@@ -186,7 +128,6 @@ export struct ChineseTelegraphCodePage {
   private handleLoadError() {
     this.codes = []
     this.filteredCodes = []
-    this.dataSource.updateData([])
     this.isLoading = false
     this.isLoadingMore = false
   }
@@ -205,28 +146,19 @@ export struct ChineseTelegraphCodePage {
 
   private onSearchTextChange(text: string) {
     this.searchText = text
-    
-    // 清除之前的防抖定时器
-    if (this.searchDebounceTimer) {
-      clearTimeout(this.searchDebounceTimer)
-      this.searchDebounceTimer = null
-    }
-    
     if (text.trim() === '') {
       // 清空搜索，恢复分页模式
       this.isSearchMode = false
       this.filteredCodes = this.codes
-      this.dataSource.updateData(this.filteredCodes)
       this.searchResults = []
     } else {
       // 进入搜索模式
       this.isSearchMode = true
       this.isSearching = true
 
-      // 防抖搜索：300ms内多次输入只执行最后一次搜索
-      this.searchDebounceTimer = setTimeout(() => {
+      // 延迟搜索，避免频繁搜索
+      setTimeout(() => {
         this.performSearch(text)
-        this.searchDebounceTimer = null
       }, 300)
     }
   }
@@ -264,14 +196,12 @@ export struct ChineseTelegraphCodePage {
             console.error('Search failed:', error.message ?? '')
             this.searchResults = []
             this.filteredCodes = []
-            this.dataSource.updateData([])
             this.isSearching = false
           })
       }
     } catch {
       this.searchResults = []
       this.filteredCodes = []
-      this.dataSource.updateData([])
       this.isSearching = false
     }
   }
@@ -285,7 +215,6 @@ export struct ChineseTelegraphCodePage {
 
     this.searchResults = results
     this.filteredCodes = results
-    this.dataSource.updateData(this.filteredCodes)
     this.isSearching = false
 
     console.log(`Search for "${text}" found ${results.length} results`)
@@ -524,7 +453,7 @@ export struct ChineseTelegraphCodePage {
                 .alignItems(HorizontalAlign.Center)
             } else {
               List() {
-                LazyForEach(this.dataSource, (code: ChineseTelegraphCode, index: number) => {
+                ForEach(this.filteredCodes, (code: ChineseTelegraphCode, index: number) => {
                   ListItem() {
                     this.TableRow(code, index)
                   }

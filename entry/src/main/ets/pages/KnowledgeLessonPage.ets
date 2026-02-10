@@ -126,6 +126,13 @@ struct KnowledgeLessonPage {
               console.log('[KnowledgeLessonPage] Button disabled, not calling handleComplete')
             }
           })
+          .onTouch((event) => {
+            console.log('[KnowledgeLessonPage] Complete button onTouch event:', event.type)
+            if (event.type === TouchType.Up && !this.isCompleting && !this.isCompleted) {
+              console.log('[KnowledgeLessonPage] Complete button onTouch Up triggered, calling handleComplete')
+              this.handleComplete()
+            }
+          })
       }
       .width('100%')
       .alignItems(HorizontalAlign.Center)

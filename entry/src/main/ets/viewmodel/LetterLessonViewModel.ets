@@ -385,7 +385,8 @@ export class LetterLessonViewModel {
   }
 
   getCircumference(): number {
-    return 2 * Math.PI * 80
+    // 与 ProgressCircle 的 Circle 220x220 一致，半径为 110
+    return 2 * Math.PI * 110
   }
 
   getProgressVisualLength(): number {

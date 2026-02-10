@@ -5,7 +5,8 @@ import { resourceManager, i18n } from '@kit.LocalizationKit'
 import { pasteboard } from '@kit.BasicServicesKit'
 import { AudioService } from '../../services/AudioService'
 import { flashlightService } from '../../services/FlashlightService'
-import { common } from '@kit.AbilityKit'
+import { common, Context } from '@kit.AbilityKit'
+import preferences from '@ohos.data.preferences'
 
 @Component
 export struct TranslatePage {
@@ -23,6 +24,13 @@ export struct TranslatePage {
   // 手电筒服务
   @State flashlightInitialized: boolean = false
   @State isPlayingFlashlight: boolean = false
+  @State useSingleButton: boolean = false
+  @StorageLink('practice_settings_version') @Watch('onPracticeSettingsVersionChanged') practiceSettingsVersion: number = 0
+
+  private pressStartTime: number = 0
+  private longPressThreshold: number = 300
+  private longPressTimer: number | null = null
+  private practiceStore: preferences.Preferences | null = null
 
   async aboutToAppear(): Promise<void> {
     // 初始化资源管理器
@@ -35,8 +43,6 @@ export struct TranslatePage {
     // 获取当前系统语言
     this.currentLanguage = this.getCurrentLanguage()
 
-    // System bar colors are set globally in EntryAbility
-    // Preload pinyin dictionary for Chinese → pinyin conversion
     const uiContext = this.getUIContext()
     const hostContext = uiContext.getHostContext()
     if (hostContext) {
@@ -46,14 +52,64 @@ export struct TranslatePage {
         console.error('[TranslatePage] Failed to load pinyin dictionary:', error)
       }
 
-      // 初始化音频服务
       try {
         await this.audioService.init(hostContext)
       } catch (error) {
         console.error('[TranslatePage] Failed to init audio service:', error)
       }
 
-      // 手电筒服务改为延迟初始化（首次点击时才初始化）
+      // 从 practice_settings 读取单/双键与长按阈值，与课程页、练习页一致（改一处改全局）
+      try {
+        const context = hostContext as Context
+        this.practiceStore = await preferences.getPreferences(context, 'practice_settings')
+        await this.loadButtonModePreference(this.practiceStore)
+        await this.loadLongPressThresholdPreference(this.practiceStore)
+      } catch (error) {
+        console.error('[TranslatePage] Failed to load practice_settings:', error)
+      }
+    }
+  }
+
+  onPageShow(): void {
+    if (this.practiceStore) {
+      this.loadButtonModePreference(this.practiceStore)
+      this.loadLongPressThresholdPreference(this.practiceStore)
+    }
+  }
+
+  onPracticeSettingsVersionChanged(): void {
+    if (this.practiceStore) {
+      this.reloadPracticeSettingsFromStore()
+    }
+  }
+
+  private reloadPracticeSettingsFromStore(): void {
+    this.loadButtonModePreference(this.practiceStore)
+    this.loadLongPressThresholdPreference(this.practiceStore)
+  }
+
+  private async loadButtonModePreference(store: preferences.Preferences | null): Promise<void> {
+    try {
+      if (store) {
+        const hasSetPreference = await store.get('has_set_button_mode', false) as boolean
+        if (hasSetPreference) {
+          this.useSingleButton = await store.get('use_single_button', false) as boolean
+        } else {
+          this.useSingleButton = false
+        }
+      }
+    } catch (error) {
+      console.error('[TranslatePage] Failed to load button mode preference:', error)
+    }
+  }
+
+  private async loadLongPressThresholdPreference(store: preferences.Preferences | null): Promise<void> {
+    try {
+      if (store) {
+        this.longPressThreshold = await store.get('long_press_threshold', 300) as number
+      }
+    } catch (error) {
+      console.error('[TranslatePage] Failed to load long press threshold:', error)
     }
   }
 
@@ -141,6 +197,38 @@ export struct TranslatePage {
   private deleteLast() {
     if (this.morseInput.length > 0) {
       this.morseInput = this.morseInput.slice(0, -1)
+    }
+  }
+
+  private handleSingleButtonPress(): void {
+    this.pressStartTime = Date.now()
+    this.longPressTimer = setTimeout(() => {
+      this.handleLongPress()
+    }, this.longPressThreshold)
+  }
+
+  private async handleSingleButtonRelease(): Promise<void> {
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer)
+      this.longPressTimer = null
+    }
+    const pressDuration = Date.now() - this.pressStartTime
+    if (pressDuration < this.longPressThreshold) {
+      this.addDot()
+      try {
+        await this.audioService.playDit()
+      } catch (error) {
+        console.error('[TranslatePage] Failed to play dit:', error)
+      }
+    }
+  }
+
+  private async handleLongPress(): Promise<void> {
+    this.addDash()
+    try {
+      await this.audioService.playDah()
+    } catch (error) {
+      console.error('[TranslatePage] Failed to play dah:', error)
     }
   }
 
@@ -433,7 +521,7 @@ export struct TranslatePage {
             bottom: { anchor: this.isTextToMorse ? 'text_input_area' : 'morse_input_area', align: VerticalAlign.Bottom },
             right: { anchor: this.isTextToMorse ? 'text_input_area' : 'morse_input_area', align: HorizontalAlign.End }
           })
-          .margin({ right: -4, bottom: 8 })
+          .margin({ right: -12, bottom: 8 })
           .onClick(() => {
             if (this.isTextToMorse) {
               this.textInput = ''
@@ -538,7 +626,7 @@ export struct TranslatePage {
           top: { anchor: 'output_area', align: VerticalAlign.Top },
           right: { anchor: 'output_area', align: HorizontalAlign.End }
         })
-          .margin({ right: -4, top: 8 })
+          .margin({ right: -12, top: 8 })
           .zIndex(1)
       }
     }
@@ -606,55 +694,80 @@ export struct TranslatePage {
 
       Blank().height(12)
 
-      // 主要的点和划按钮
-      Row() {
-        Button() {
-          Circle({ width: 20, height: 20 })
-            .fill('#FFD700')
-        }
-        .height(80)
-          .backgroundColor('#1A1A1A')
+      // 主要的点和划按钮：单按钮（短按点、长按划）或双按钮
+      if (this.useSingleButton) {
+        Row() {
+          Column() {
+            Text('·')
+              .fontSize(28)
+              .fontColor('#000000')
+              .fontWeight(FontWeight.Bold)
+          }
+          .width('100%')
+          .height(80)
+          .justifyContent(FlexAlign.Center)
+          .backgroundColor('#FFD700')
           .borderRadius(this.pillRadius)
-          .onClick(async () => {
-            this.addDot()
-            // 播放点音
-            if (this.morseInput.length > 0) {
-              try {
-                await this.audioService.playDit()
-              } catch (error) {
-                console.error('[TranslatePage] Failed to play dit:', error)
-              }
+          .onTouch((event) => {
+            if (event.type === 0) {
+              this.handleSingleButtonPress()
+            } else if (event.type === 1) {
+              this.handleSingleButtonRelease()
             }
           })
           .hoverEffect(HoverEffect.Scale)
           .focusable(true)
           .layoutWeight(1)
-
-        Blank().width(20)
-
-        Button() {
-          Rect({ width: 40, height: 12 })
-            .fill('#FFD700')
         }
-        .height(80)
-          .backgroundColor('#1A1A1A')
-          .borderRadius(this.pillRadius)
-          .onClick(async () => {
-            this.addDash()
-            // 播放划音
-            if (this.morseInput.length > 0) {
-              try {
-                await this.audioService.playDah()
-              } catch (error) {
-                console.error('[TranslatePage] Failed to play dah:', error)
+        .padding({ left: 20, right: 20 })
+      } else {
+        Row() {
+          Button() {
+            Circle({ width: 20, height: 20 })
+              .fill('#000000')
+          }
+          .height(80)
+            .backgroundColor('#FFD700')
+            .borderRadius(this.pillRadius)
+            .onClick(async () => {
+              this.addDot()
+              if (this.morseInput.length > 0) {
+                try {
+                  await this.audioService.playDit()
+                } catch (error) {
+                  console.error('[TranslatePage] Failed to play dit:', error)
+                }
               }
-            }
-          })
-          .hoverEffect(HoverEffect.Scale)
-          .focusable(true)
-          .layoutWeight(1)
+            })
+            .hoverEffect(HoverEffect.Scale)
+            .focusable(true)
+            .layoutWeight(1)
+
+          Blank().width(20)
+
+          Button() {
+            Rect({ width: 40, height: 12 })
+              .fill('#000000')
+          }
+          .height(80)
+            .backgroundColor('#FFD700')
+            .borderRadius(this.pillRadius)
+            .onClick(async () => {
+              this.addDash()
+              if (this.morseInput.length > 0) {
+                try {
+                  await this.audioService.playDah()
+                } catch (error) {
+                  console.error('[TranslatePage] Failed to play dah:', error)
+                }
+              }
+            })
+            .hoverEffect(HoverEffect.Scale)
+            .focusable(true)
+            .layoutWeight(1)
+        }
+        .padding({ left: 20, right: 20 })
       }
-      .padding({ left: 20, right: 20, bottom: 60 })
     }
   }
 

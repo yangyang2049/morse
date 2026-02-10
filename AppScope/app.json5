@@ -2,8 +2,8 @@
   app: {
     bundleName: "com.douhua.morsecode",
     vendor: "Douhua Tech",
-    versionCode: 40,
-    versionName: "2.0.0",
+    versionCode: 44,
+    versionName: "2.1.0",
     icon: "$media:app_layered_image",
     label: "$string:app_name"
   }

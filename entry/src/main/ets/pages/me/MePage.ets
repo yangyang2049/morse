@@ -27,10 +27,12 @@ const SUPPORTED_LANGUAGES: LanguageOption[] = [
 
 @Component
 export struct MePage {
-  @State appVersion: string = '2.0.0'
+  @State appVersion: string = '2.1.0'
   @StorageLink('currentLanguage') currentLanguage: string = this.getInitialLanguage()
   @State useSingleButton: boolean = false // 是否使用单按钮模式
-  @State showButtonModeDialog: boolean = false // 是否显示按钮模式选择对话框
+  @State showKeySettingsDialog: boolean = false // 按键设置（单双键 + 长按阈值）对话框
+  @State keySettingsSingleButton: boolean = false // 对话框内选择的单键与否，默认双键
+  @State keySettingsSliderValue: number = 300
   @State vibrationEnabled: boolean = true // 振动反馈开关
   @State isMorseCodeExpanded: boolean = false // 摩斯码是否展开
   // 手电筒相关状态已移除（功能已移至翻译页面）
@@ -57,6 +59,8 @@ export struct MePage {
     await this.initPreferences()
     // 加载按钮模式偏好设置
     await this.loadButtonModePreference()
+    // 加载按键设置（长按时间）
+    await this.loadLongPressThresholdPreference()
     // 加载振动偏好设置
     await this.loadVibrationPreference()
 
@@ -167,14 +171,14 @@ export struct MePage {
   }
 
   private loadAppInfo() {
-    this.appVersion = '2.0.0'
+    this.appVersion = '2.1.0'
   }
 
   // 初始化偏好设置存储
   private async initPreferences(): Promise<void> {
     try {
       const context = getContext(this)
-      this.preferencesStore = await preferences.getPreferences(context, 'practice_preferences')
+      this.preferencesStore = await preferences.getPreferences(context, 'practice_settings')
       console.log('[MePage] Preferences store initialized')
     } catch (error) {
       console.error('[MePage] Failed to initialize preferences:', error)
@@ -193,6 +197,12 @@ export struct MePage {
     }
   }
 
+  // 通知其他页面（如翻译页 Tab）按键设置已变更，便于其从 practice_settings 重载
+  private notifyPracticeSettingsChanged(): void {
+    const v = (AppStorage.get<number>('practice_settings_version') as number) ?? 0
+    AppStorage.setOrCreate('practice_settings_version', v + 1)
+  }
+
   // 保存按钮模式偏好设置
   private async saveButtonModePreference(useSingle: boolean): Promise<void> {
     try {
@@ -205,6 +215,31 @@ export struct MePage {
       }
     } catch (error) {
       console.error('[MePage] Failed to save button mode preference:', error)
+    }
+  }
+
+  // 加载长按时间偏好（按键设置）
+  private async loadLongPressThresholdPreference(): Promise<void> {
+    try {
+      if (this.preferencesStore) {
+        const v = await this.preferencesStore.get('long_press_threshold', 300) as number
+        this.keySettingsSliderValue = v
+      }
+    } catch (error) {
+      console.error('[MePage] Failed to load long press threshold:', error)
+    }
+  }
+
+  // 保存长按时间偏好
+  private async saveLongPressThresholdPreference(threshold: number): Promise<void> {
+    try {
+      if (this.preferencesStore) {
+        await this.preferencesStore.put('long_press_threshold', threshold)
+        await this.preferencesStore.flush()
+        this.keySettingsSliderValue = threshold
+      }
+    } catch (error) {
+      console.error('[MePage] Failed to save long press threshold:', error)
     }
   }
 
@@ -239,7 +274,7 @@ export struct MePage {
   // 获取当前语言的显示名称
   private getCurrentLanguageDisplayName(): string {
     const language = SUPPORTED_LANGUAGES.find(lang => lang.code === this.currentLanguage)
-    return language ? language.nativeName : '简体中文'
+    return language ? language.nativeName : SUPPORTED_LANGUAGES[0].nativeName
   }
 
   // 手电筒相关方法已移除（功能已移至翻译页面）
@@ -252,23 +287,18 @@ export struct MePage {
   // 分享应用 - 使用 HarmonyOS 标准分享框架
   private async shareApp(): Promise<void> {
     try {
-      // 获取分享文本
-      const isZh = this.currentLanguage.startsWith('zh')
-      const shareText = isZh ? (
-        '推荐一个超棒的摩尔斯电码学习应用！📟✨\n《摩斯电码通》\n\n📱 摩斯电码通\n🎓 从零开始学习摩尔斯电码\n🎮 趣味练习，边玩边学\n🔦 手电筒闪烁显示摩尔斯码\n🌙 支持深色模式，护眼舒适\n🌏 支持简繁英多语言\n\n立即下载体验：\nhttps://appgallery.huawei.com/app/detail?id=com.douhua.morsecode'
-      ) : (
-        'Highly recommend this great Morse code learning app! 📟✨\nMorse Code Trainer\n\n📱 Learn Morse Code from scratch\n🎓 Step-by-step lessons for beginners\n🎮 Fun practice modes\n🔦 Flashlight Morse code display\n🌙 Light and Dark themes\n🌏 Multi-language support\n\nTry it now:\nhttps://appgallery.huawei.com/app/detail?id=com.douhua.morsecode'
-      )
+      if (!this.resourceMgr) {
+        return
+      }
+      const shareText = await this.resourceMgr.getStringByName('share_text')
+      const shareTitle = await this.resourceMgr.getStringByName('share_title')
+      const shareDescription = await this.resourceMgr.getStringByName('share_description')
 
-      // 获取分享标题
-      const shareTitle = isZh ? '推荐摩斯电码通' : 'Recommend Morse Code Trainer'
-
-      // 创建分享数据
       const shareData: systemShare.SharedData = new systemShare.SharedData({
         utd: uniformTypeDescriptor.UniformDataType.TEXT,
         content: shareText,
         title: shareTitle,
-        description: isZh ? '推荐摩尔斯电码学习应用' : 'Recommend Morse Code Learning App'
+        description: shareDescription
       })
 
       // 创建分享控制器
@@ -288,19 +318,15 @@ export struct MePage {
 
       // 如果分享失败，回退到复制到剪贴板
       try {
-        const isZh = this.currentLanguage.startsWith('zh')
-        const shareText = isZh ? (
-          '推荐一个超棒的摩尔斯电码学习应用！📟✨\n《摩斯电码通》\n\n📱 摩斯电码通\n🎓 从零开始学习摩尔斯电码\n🎮 趣味练习，边玩边学\n🔦 手电筒闪烁显示摩尔斯码\n🌙 支持深色模式，护眼舒适\n🌏 支持简繁英多语言\n\n立即下载体验：\nhttps://appgallery.huawei.com/app/detail?id=com.douhua.morsecode'
-        ) : (
-          'Highly recommend this great Morse code learning app! 📟✨\nMorse Code Trainer\n\n📱 Learn Morse Code from scratch\n🎓 Step-by-step lessons for beginners\n🎮 Fun practice modes\n🔦 Flashlight Morse code display\n🌙 Light and Dark themes\n🌏 Multi-language support\n\nTry it now:\nhttps://appgallery.huawei.com/app/detail?id=com.douhua.morsecode'
-        )
-
+        if (!this.resourceMgr) {
+          return
+        }
+        const shareText = await this.resourceMgr.getStringByName('share_text')
         const sysPB = pasteboard.getSystemPasteboard()
         const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, shareText)
         await sysPB.setPasteData(pasteData)
 
-        // 显示复制成功提示
-        const message = isZh ? '分享内容已复制到剪贴板' : 'Share content copied to clipboard'
+        const message = await this.resourceMgr.getStringByName('share_copied')
         promptAction.showToast({
           message: message,
           duration: 2000,
@@ -656,121 +682,6 @@ export struct MePage {
 
   @State private showLanguageDialog: boolean = false
 
-  @Builder ButtonModeSelectorDialog() {
-    Column() {
-      Row() {
-        Text($r('app.string.select_practice_input_mode'))
-          .fontSize(18)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#FFFFFF')
-        Blank()
-        Button() {
-          Image($rawfile('ic_close.svg'))
-            .width(20)
-            .height(20)
-            .fillColor('#FFFFFF')
-        }
-        .width(32)
-          .height(32)
-          .backgroundColor('rgba(128, 128, 128, 0.2)')
-          .borderRadius(16)
-          .onClick(() => {
-            this.showButtonModeDialog = false
-          })
-          .hoverEffect(HoverEffect.Scale)
-          .focusable(true)
-      }
-      .width('100%')
-        .margin({ bottom: 20 })
-
-      // 双按钮模式选项
-      Row() {
-        Column() {
-          Text($r('app.string.dual_button_mode'))
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#FFFFFF')
-            .margin({ bottom: 8 })
-          Text($r('app.string.dual_button_mode_desc'))
-            .fontSize(12)
-            .fontColor('#999999')
-        }
-        .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
-
-        if (!this.useSingleButton) {
-          Circle()
-            .width(16)
-            .height(16)
-            .fill(Color.Transparent)
-            .stroke('#FFD700')
-            .strokeWidth(2)
-        }
-      }
-      .width('100%')
-        .padding(16)
-        .backgroundColor('#111111')
-        .borderRadius(8)
-        .margin({ bottom: 8 })
-        .border({
-          width: !this.useSingleButton ? 1 : 0.5,
-          color: !this.useSingleButton ? '#FFD700' : '#222222',
-          radius: 8
-        })
-        .onClick(() => {
-          this.saveButtonModePreference(false)
-          this.showButtonModeDialog = false
-        })
-        .hoverEffect(HoverEffect.Scale)
-        .focusable(true)
-
-      // 单按钮模式选项
-      Row() {
-        Column() {
-          Text($r('app.string.single_button_mode'))
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#FFFFFF')
-            .margin({ bottom: 8 })
-          Text($r('app.string.single_button_mode_desc'))
-            .fontSize(12)
-            .fontColor('#999999')
-        }
-        .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
-
-        if (this.useSingleButton) {
-          Circle()
-            .width(16)
-            .height(16)
-            .fill(Color.Transparent)
-            .stroke('#FFD700')
-            .strokeWidth(2)
-        }
-      }
-      .width('100%')
-        .padding(16)
-        .backgroundColor('#111111')
-        .borderRadius(8)
-        .border({
-          width: this.useSingleButton ? 1 : 0.5,
-          color: this.useSingleButton ? '#FFD700' : '#222222',
-          radius: 8
-        })
-        .onClick(() => {
-          this.saveButtonModePreference(true)
-          this.showButtonModeDialog = false
-        })
-        .hoverEffect(HoverEffect.Scale)
-        .focusable(true)
-    }
-    .padding(20)
-      .backgroundColor('#2A2A2A')
-      .borderRadius(12)
-      .width('90%')
-      .constraintSize({ maxWidth: 400, maxHeight: '60%' })
-  }
-
   @Builder LanguageSelectorDialog() {
     Column() {
       Row() {
@@ -952,10 +863,10 @@ export struct MePage {
       .focusable(true)
   }
 
-  @Builder PrivacyPolicySettingsItem() {
+  @Builder KeySettingsSettingsItem() {
     Row() {
       Column() {
-        Text($r('app.string.privacy_title'))
+        Text($r('app.string.key_settings'))
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
           .fontColor('#FFFFFF')
@@ -976,40 +887,178 @@ export struct MePage {
       .height(56)
       .padding({ left: 16, right: 16 })
       .onClick(() => {
-        this.openPrivacyPolicy()
+        this.keySettingsSingleButton = this.useSingleButton
+        this.showKeySettingsDialog = true
       })
       .hoverEffect(HoverEffect.Scale)
       .focusable(true)
   }
 
-  @Builder ButtonModeSettingsItem() {
-    Row() {
-      Column() {
-        Text($r('app.string.practice_input_mode'))
-          .fontSize(16)
-          .fontWeight(FontWeight.Medium)
+  @Builder KeySettingsDialog() {
+    Column() {
+      Row() {
+        Text($r('app.string.key_settings'))
+          .fontSize(18)
+          .fontWeight(FontWeight.Bold)
           .fontColor('#FFFFFF')
-          .textAlign(TextAlign.Start)
-          .width('100%')
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
+        Blank()
+        Button() {
+          Image($rawfile('ic_close.svg'))
+            .width(20)
+            .height(20)
+            .fillColor(Color.White)
+        }
+        .width(32)
+          .height(32)
+          .backgroundColor('rgba(128, 128, 128, 0.2)')
+          .borderRadius(16)
+          .onClick(() => {
+            this.showKeySettingsDialog = false
+          })
       }
-      .layoutWeight(1)
-        .alignItems(HorizontalAlign.Start)
+      .width('100%')
+        .margin({ bottom: 20 })
 
-      Image($rawfile('ic_arrow_right.svg'))
-        .width(16)
-        .height(16)
-        .fillColor('#666666')
+      // 双键
+      Row() {
+        Column() {
+          Text($r('app.string.dual_button_mode'))
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#FFFFFF')
+            .margin({ bottom: 8 })
+          Text($r('app.string.dual_button_mode_desc'))
+            .fontSize(12)
+            .fontColor('#999999')
+        }
+        .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
+
+        if (!this.keySettingsSingleButton) {
+          Circle()
+            .width(16)
+            .height(16)
+            .fill(Color.Transparent)
+            .stroke('#FFD700')
+            .strokeWidth(2)
+        }
+      }
+      .width('100%')
+        .padding(16)
+        .backgroundColor('#111111')
+        .borderRadius(8)
+        .margin({ bottom: 8 })
+        .border({
+          width: !this.keySettingsSingleButton ? 1 : 0.5,
+          color: !this.keySettingsSingleButton ? '#FFD700' : '#222222',
+          radius: 8
+        })
+        .onClick(() => {
+          this.keySettingsSingleButton = false
+        })
+        .hoverEffect(HoverEffect.Scale)
+        .focusable(true)
+
+      // 单键
+      Row() {
+        Column() {
+          Text($r('app.string.single_button_mode'))
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#FFFFFF')
+            .margin({ bottom: 8 })
+          Text($r('app.string.single_button_mode_desc'))
+            .fontSize(12)
+            .fontColor('#999999')
+        }
+        .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
+
+        if (this.keySettingsSingleButton) {
+          Circle()
+            .width(16)
+            .height(16)
+            .fill(Color.Transparent)
+            .stroke('#FFD700')
+            .strokeWidth(2)
+        }
+      }
+      .width('100%')
+        .padding(16)
+        .backgroundColor('#111111')
+        .borderRadius(8)
+        .margin({ bottom: 8 })
+        .border({
+          width: this.keySettingsSingleButton ? 1 : 0.5,
+          color: this.keySettingsSingleButton ? '#FFD700' : '#222222',
+          radius: 8
+        })
+        .onClick(() => {
+          this.keySettingsSingleButton = true
+        })
+        .hoverEffect(HoverEffect.Scale)
+        .focusable(true)
+
+      // 单键时显示长按阈值
+      if (this.keySettingsSingleButton) {
+        Row() {
+          Column() {
+            Text($r('app.string.long_press_time'))
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .fontColor('#FFFFFF')
+              .margin({ bottom: 8 })
+            Text(`${this.keySettingsSliderValue}ms`)
+              .fontSize(14)
+              .fontColor('#FFD700')
+          }
+          .layoutWeight(1)
+            .alignItems(HorizontalAlign.Start)
+        }
+        .width('100%')
+          .padding(16)
+          .backgroundColor('#111111')
+          .borderRadius(8)
+          .margin({ bottom: 8 })
+
+        Slider({
+          value: this.keySettingsSliderValue,
+          min: 100,
+          max: 600,
+          step: 25,
+          style: SliderStyle.OutSet
+        })
+          .blockColor('#FFD700')
+          .trackColor('#333333')
+          .selectedColor('#FFD700')
+          .trackThickness(6)
+          .blockSize({ width: 20, height: 20 })
+          .onChange((value: number) => {
+            this.keySettingsSliderValue = value
+          })
+          .margin({ bottom: 20 })
+      }
+
+      Button($r('app.string.confirm'))
+        .width('100%')
+        .height(48)
+        .backgroundColor('#FFD700')
+        .borderRadius(8)
+        .fontColor(Color.Black)
+        .fontWeight(FontWeight.Bold)
+        .onClick(async () => {
+          await this.saveButtonModePreference(this.keySettingsSingleButton)
+          await this.saveLongPressThresholdPreference(this.keySettingsSliderValue)
+          this.useSingleButton = this.keySettingsSingleButton
+          this.showKeySettingsDialog = false
+          this.notifyPracticeSettingsChanged()
+        })
     }
-    .width('100%')
-      .height(56)
-      .padding({ left: 16, right: 16 })
-      .onClick(() => {
-        this.showButtonModeDialog = true
-      })
-      .hoverEffect(HoverEffect.Scale)
-      .focusable(true)
+    .padding(20)
+      .backgroundColor('#2A2A2A')
+      .borderRadius(12)
+      .width('90%')
+      .constraintSize({ maxWidth: 400 })
   }
 
   @Builder VibrationSettingsItem() {
@@ -1058,15 +1107,16 @@ export struct MePage {
       const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, content)
       const systemPasteboard = pasteboard.getSystemPasteboard()
       await systemPasteboard.setData(pasteData)
-      
-      const uiContext = this.getUIContext()
-      if (uiContext) {
-        const promptActionInstance = uiContext.getPromptAction()
-        const message = this.currentLanguage.startsWith('zh') ? '已复制到剪贴板' : 'Copied to clipboard'
-        promptActionInstance.showToast({
-          message: message,
-          duration: 2000
-        })
+
+      if (this.resourceMgr) {
+        const message = await this.resourceMgr.getStringByName('copied')
+        const uiContext = this.getUIContext()
+        if (uiContext) {
+          uiContext.getPromptAction().showToast({
+            message: message,
+            duration: 2000
+          })
+        }
       }
     } catch (error) {
       console.error('[MePage] Failed to copy morse code:', error)
@@ -1101,7 +1151,7 @@ export struct MePage {
         // 展开/收起按钮和复制按钮
         Row() {
           Row() {
-            Text(this.isMorseCodeExpanded ? '收起' : '展开')
+            Text(this.isMorseCodeExpanded ? $r('app.string.collapse') : $r('app.string.expand'))
               .fontSize(12)
               .fontColor('#999999')
             
@@ -1151,44 +1201,7 @@ export struct MePage {
         .margin({ top: 30, bottom: 12, left: 16 })
         .alignSelf(ItemAlign.Start)
 
-      // 独立开发助手应用卡片
-      Row() {
-        Image($rawfile('appicon_devassistant.png'))
-          .width(48)
-          .height(48)
-          .borderRadius(8)
-          .margin({ right: 16 })
-
-        Column() {
-          Text(this.currentLanguage.startsWith('zh') ? '独立开发助手' : 'Dev Assistant')
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#FFFFFF')
-            .textAlign(TextAlign.Start)
-            .width('100%')
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-        }
-        .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
-
-        Image($rawfile('ic_arrow_right.svg'))
-          .width(16)
-          .height(16)
-          .fillColor('#666666')
-      }
-      .width('100%')
-        .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-        .backgroundColor('#111111')
-        .borderRadius(12)
-        .margin({ bottom: 8 })
-        .onClick(() => {
-          this.openDevAssistantApp()
-        })
-        .hoverEffect(HoverEffect.Scale)
-        .focusable(true)
-
-      // 财会工具箱应用卡片
+      // 财会工具箱应用卡片（首位）
       Row() {
         Image($rawfile('appicon_caikuai.png'))
           .width(48)
@@ -1197,7 +1210,7 @@ export struct MePage {
           .margin({ right: 16 })
 
         Column() {
-          Text(this.currentLanguage.startsWith('zh') ? '财会工具箱' : 'Accounting Tools')
+          Text($r('app.string.app_name_caikuai'))
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
             .fontColor('#FFFFFF')
@@ -1225,6 +1238,43 @@ export struct MePage {
         .hoverEffect(HoverEffect.Scale)
         .focusable(true)
 
+      // 独立开发助手应用卡片
+      Row() {
+        Image($rawfile('appicon_devassistant.png'))
+          .width(48)
+          .height(48)
+          .borderRadius(8)
+          .margin({ right: 16 })
+
+        Column() {
+          Text($r('app.string.app_name_dev_assistant'))
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#FFFFFF')
+            .textAlign(TextAlign.Start)
+            .width('100%')
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+        }
+        .layoutWeight(1)
+          .alignItems(HorizontalAlign.Start)
+
+        Image($rawfile('ic_arrow_right.svg'))
+          .width(16)
+          .height(16)
+          .fillColor('#666666')
+      }
+      .width('100%')
+        .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+        .backgroundColor('#111111')
+        .borderRadius(12)
+        .margin({ bottom: 8 })
+        .onClick(() => {
+          this.openDevAssistantApp()
+        })
+        .hoverEffect(HoverEffect.Scale)
+        .focusable(true)
+
       // 码上学（Rust Master）应用卡片，图标与名称来自 rustmaster 项目
       Row() {
         Image($rawfile('appicon_rustmaster.png'))
@@ -1234,7 +1284,7 @@ export struct MePage {
           .margin({ right: 16 })
 
         Column() {
-          Text(this.currentLanguage.startsWith('zh') ? '码上学' : 'Rust Master')
+          Text($r('app.string.app_name_rustmaster'))
             .fontSize(16)
             .fontWeight(FontWeight.Medium)
             .fontColor('#FFFFFF')
@@ -1315,12 +1365,12 @@ export struct MePage {
             Column() {
               // 盒子容器
               Column() {
-                // 练习输入模式设置
-                this.ButtonModeSettingsItem()
+                // 振动反馈设置（首位）
+                this.VibrationSettingsItem()
                 Divider().strokeWidth(1).color('#222222')
 
-                // 振动反馈设置
-                this.VibrationSettingsItem()
+                // 按键设置（单双键 + 长按阈值）
+                this.KeySettingsSettingsItem()
                 Divider().strokeWidth(1).color('#222222')
 
                 // 手电筒测试功能已移至翻译页面
@@ -1339,9 +1389,6 @@ export struct MePage {
                 Divider().strokeWidth(1).color('#222222')
 
                 this.ShareSettingsItem()
-                Divider().strokeWidth(1).color('#222222')
-
-                this.PrivacyPolicySettingsItem()
               }
               .width('100%')
                 .backgroundColor('#111111')
@@ -1408,21 +1455,18 @@ export struct MePage {
             .height('100%')
         }
 
-        // 按钮模式选择对话框
-        if (this.showButtonModeDialog) {
+        // 按键设置对话框（单双键 + 长按阈值）
+        if (this.showKeySettingsDialog) {
           Stack() {
-            // 半透明背景
             Column()
               .width('100%')
               .height('100%')
               .backgroundColor('rgba(0, 0, 0, 0.5)')
               .onClick(() => {
-                this.showButtonModeDialog = false
+                this.showKeySettingsDialog = false
               })
-
-            // 对话框内容 - 使用Column居中
             Column() {
-              this.ButtonModeSelectorDialog()
+              this.KeySettingsDialog()
             }
             .width('100%')
               .height('100%')
