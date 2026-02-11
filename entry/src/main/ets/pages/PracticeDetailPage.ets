@@ -458,13 +458,13 @@ struct PracticeDetailPage {
             } else if (this.mode === 'text_to_code') {
               // 双键模式（仅字母转代码模式）
               Row() {
-                Button('·')
-                  .width(60)
+                Button() {
+                  Circle({ width: 20, height: 20 })
+                    .fill('#444444')
+                }
+                .width(60)
                   .height(60)
                   .backgroundColor('#FFD700')
-                  .fontColor(Color.Black)
-                  .fontSize(24)
-                  .fontWeight(FontWeight.Bold)
                   .borderRadius(30)
                   .onClick(() => {
                     this.addDot()
@@ -475,8 +475,8 @@ struct PracticeDetailPage {
                   .width(60)
                   .height(60)
                   .backgroundColor('#FFD700')
-                  .fontColor(Color.Black)
-                  .fontSize(24)
+                  .fontColor('#444444')
+                  .fontSize(16)
                   .fontWeight(FontWeight.Bold)
                   .borderRadius(30)
                   .onClick(() => {
@@ -510,7 +510,6 @@ struct PracticeDetailPage {
                           (this.selectedChar && char === this.practiceChar ? '#00FF00' : 'rgba(255, 255, 255, 0.1)'))
                     )
                     .borderRadius(8)
-                    .border({ width: 1, color: '#333333' })
                     .onClick(() => {
                       if (!this.selectedChar) {
                         this.selectChar(char)

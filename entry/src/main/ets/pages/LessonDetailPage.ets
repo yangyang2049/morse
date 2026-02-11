@@ -436,13 +436,13 @@ struct LessonDetailPage {
             } else {
               // 双键模式
               Row() {
-                Button('·')
-                  .width(55)
+                Button() {
+                  Circle({ width: 20, height: 20 })
+                    .fill('#444444')
+                }
+                .width(55)
                   .height(55)
                   .backgroundColor('#FFD700')
-                  .fontColor(Color.Black)
-                  .fontSize(22)
-                  .fontWeight(FontWeight.Bold)
                   .borderRadius(28)
                   .onClick(() => {
                     this.addDot()
@@ -453,8 +453,8 @@ struct LessonDetailPage {
                   .width(55)
                   .height(55)
                   .backgroundColor('#FFD700')
-                  .fontColor(Color.Black)
-                  .fontSize(22)
+                  .fontColor('#444444')
+                  .fontSize(16)
                   .fontWeight(FontWeight.Bold)
                   .borderRadius(28)
                   .onClick(() => {

@@ -143,7 +143,7 @@ export struct CodeTablePage {
       Text(LocalizationHelper.getString('watch_code_table'))
         .fontSize(14)
         .fontWeight(FontWeight.Medium)
-        .fontColor('#FFFFFF')
+        .fontColor('#FFD700')
         .width('100%')
         .textAlign(TextAlign.Center)
         .margin({ top: 8, bottom: 8 })

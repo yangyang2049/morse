@@ -1,10 +1,10 @@
 import router from '@ohos.router'
 import preferences from '@ohos.data.preferences'
-import { Context } from '@kit.AbilityKit'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
 import common from '@ohos.app.ability.common'
 import { generateBarcode, scanCore } from '@kit.ScanKit'
 import { image } from '@kit.ImageKit'
+import { ArcButton, ArcButtonOptions, ArcButtonPosition, ArcButtonStyleMode, ColorMetrics } from '@kit.ArkUI'
 
 @Entry
 @Component
@@ -40,7 +40,7 @@ struct PrivacyPage {
       const preferencesStore = await preferences.getPreferences(this.context, 'app_settings')
       await preferencesStore.put('privacy_agreed', true)
       await preferencesStore.flush()
-      
+
       router.replaceUrl({
         url: 'pages/watch/Index'
       })
@@ -58,27 +58,17 @@ struct PrivacyPage {
       Scroll() {
         Column() {
           Text(LocalizationHelper.getString('privacy_title'))
-            .fontSize(16)
-            .fontWeight(FontWeight.Bold)
+            .fontSize(14)
+            .fontWeight(FontWeight.Medium)
             .fontColor('#FFFFFF')
-            .margin({ top: 8, bottom: 6 })
-            .textAlign(TextAlign.Center)
-            .width('100%')
+            .margin({ top: 16, bottom: 8 })
 
-          // QR Code Section
           Column() {
-            Text(LocalizationHelper.getString('scan_to_read'))
-              .fontSize(14)
-              .fontColor('#FFFFFF')
-              .margin({ bottom: 6 })
-
             if (this.qrCode) {
               Image(this.qrCode)
-                .width(120)
-                .height(120)
-                .backgroundColor(Color.White)
-                .borderRadius(12)
-                .padding(12)
+                .width('100%')
+                .height('100%')
+                .objectFit(ImageFit.Contain)
             } else {
               Column() {
                 LoadingProgress()
@@ -86,53 +76,64 @@ struct PrivacyPage {
                   .height(32)
                   .color('#FFD700')
                 Text(this.qrCodeGenerating ? LocalizationHelper.getString('qr_code_generating') : LocalizationHelper.getString('watch_loading_failed'))
-                  .fontSize(12)
+                  .fontSize(10)
                   .fontColor('#666666')
-                  .margin({ top: 8 })
+                  .margin({ top: 4 })
               }
-              .width(120)
-              .height(120)
-              .backgroundColor('#FFFFFF')
-              .borderRadius(12)
+              .width('100%')
+              .height('100%')
               .justifyContent(FlexAlign.Center)
               .alignItems(HorizontalAlign.Center)
             }
           }
-          .width('100%')
-          .alignItems(HorizontalAlign.Center)
-          .margin({ bottom: 12 })
+          .width('35%')
+          .aspectRatio(1)
+          .backgroundColor(Color.White)
+          .borderRadius(8)
+          .padding(8)
+          .margin({ bottom: 4 })
 
-          Column() {
-            Button(LocalizationHelper.getString('agree'))
-              .width(140)
-              .height(40)
-              .backgroundColor('#FFD700')
-              .fontColor('#000000')
-              .margin({ bottom: 8 })
-              .onClick(() => {
-                this.agreePrivacy()
-              })
-
-            Button(LocalizationHelper.getString('exit_app'))
-              .fontColor('#FFFFFF')
-              .fontSize(14)
-              .backgroundColor(Color.Transparent)
-              .onClick(() => {
-                this.exitApp()
-              })
-          }
-          .width('100%')
-          .alignItems(HorizontalAlign.Center)
-          .padding({ bottom: 12 })
+          Text(LocalizationHelper.getString('scan_to_read'))
+            .fontSize(10)
+            .fontColor('rgba(255, 255, 255, 0.7)')
+            .margin({ bottom: 8 })
         }
         .width('100%')
-        .padding({ top: 8, left: 16, right: 16, bottom: 16 })
+        .alignItems(HorizontalAlign.Center)
       }
-      .layoutWeight(1)
       .width('100%')
+      .layoutWeight(1)
+      .scrollable(ScrollDirection.Vertical)
       .scrollBar(BarState.Off)
+      .edgeEffect(EdgeEffect.Spring)
       .focusable(true)
       .defaultFocus(true)
+
+      Column() {
+        Text(LocalizationHelper.getString('exit_app'))
+          .fontSize(12)
+          .fontColor('rgba(255, 255, 255, 0.7)')
+          .padding({ top: 0, bottom: 12 })
+          .onClick(() => {
+            this.exitApp()
+          })
+
+        ArcButton({
+          options: new ArcButtonOptions({
+            label: LocalizationHelper.getString('agree'),
+            position: ArcButtonPosition.BOTTOM_EDGE,
+            styleMode: ArcButtonStyleMode.CUSTOM,
+            backgroundColor: ColorMetrics.resourceColor('#FFD700'),
+            fontColor: ColorMetrics.resourceColor('#000000'),
+            onClick: () => {
+              this.agreePrivacy()
+            }
+          })
+        })
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Center)
+      .backgroundColor('#000000')
     }
     .width('100%')
     .height('100%')

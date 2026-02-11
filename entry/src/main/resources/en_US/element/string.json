@@ -98,7 +98,7 @@
     },
     {
       "name": "agent_morse_fun_facts",
-      "value": "Morse Code Fun Facts"
+      "value": "Fun Facts"
     },
     {
       "name": "agent_morse_fun_facts_prompt",
@@ -858,7 +858,7 @@
     },
     {
       "name": "app_name_rustmaster",
-      "value": "Rust Master"
+      "value": "Code Now"
     },
     {
       "name": "select_practice_input_mode",
@@ -866,7 +866,7 @@
     },
     {
       "name": "dual_button_mode",
-      "value": "Dual Button"
+      "value": "Dual Buttons"
     },
     {
       "name": "dual_button_mode_desc",
@@ -951,6 +951,154 @@
     {
       "name": "try_again",
       "value": "Try again"
+    },
+    {
+      "name": "agree",
+      "value": "Agree"
+    },
+    {
+      "name": "exit_app",
+      "value": "Exit"
+    },
+    {
+      "name": "scan_to_read",
+      "value": "Scan to read privacy policy"
+    },
+    {
+      "name": "qr_code_generating",
+      "value": "Generating QR code..."
+    },
+    {
+      "name": "watch_loading_failed",
+      "value": "Loading failed"
+    },
+    {
+      "name": "watch_settings",
+      "value": "Settings"
+    },
+    {
+      "name": "watch_vibration_feedback",
+      "value": "Vibration"
+    },
+    {
+      "name": "watch_long_press_duration",
+      "value": "Long Press"
+    },
+    {
+      "name": "watch_phone_version_richer",
+      "value": "Phone version has more features"
+    },
+    {
+      "name": "watch_company_name",
+      "value": "Chongqing Douhua Technology Co., Ltd."
+    },
+    {
+      "name": "watch_learn",
+      "value": "Learn"
+    },
+    {
+      "name": "watch_basics",
+      "value": "Basics"
+    },
+    {
+      "name": "watch_alphabet",
+      "value": "Alphabet"
+    },
+    {
+      "name": "watch_numbers",
+      "value": "Numbers"
+    },
+    {
+      "name": "watch_practice",
+      "value": "Practice"
+    },
+    {
+      "name": "watch_text_to_code",
+      "value": "Text → Code"
+    },
+    {
+      "name": "watch_code_to_text",
+      "value": "Code → Text"
+    },
+    {
+      "name": "watch_mistakes",
+      "value": "Mistakes"
+    },
+    {
+      "name": "watch_mistakes_empty",
+      "value": "No mistakes yet"
+    },
+    {
+      "name": "watch_code_table",
+      "value": "Code Table"
+    },
+    {
+      "name": "click_to_play_vibrate",
+      "value": "Tap to play vibration"
+    },
+    {
+      "name": "watch_try_again",
+      "value": "Try again"
+    },
+    {
+      "name": "watch_back",
+      "value": "Back"
+    },
+    {
+      "name": "watch_delete",
+      "value": "Delete"
+    },
+    {
+      "name": "watch_clear",
+      "value": "Clear"
+    },
+    {
+      "name": "watch_completed",
+      "value": "Completed!"
+    },
+    {
+      "name": "watch_next_group",
+      "value": "Next Group"
+    },
+    {
+      "name": "watch_correct",
+      "value": "Correct"
+    },
+    {
+      "name": "watch_wrong",
+      "value": "Wrong"
+    },
+    {
+      "name": "watch_correct_answer",
+      "value": "Answer: "
+    },
+    {
+      "name": "watch_next_question",
+      "value": "Next"
+    },
+    {
+      "name": "watch_morse_code_basics_title",
+      "value": "Morse Code Basics"
+    },
+    {
+      "name": "watch_guide_text_letter_lesson",
+      "value": "Short press for dot, long press for dash"
+    },
+    {
+      "name": "watch_guide_button_got_it",
+      "value": "Got it"
+    },
+    {
+      "name": "watch_guide_text_practice_code_to_text",
+      "value": "See Morse code, select the character"
+    },
+    {
+      "name": "hint",
+      "value": "Hint"
+    },
+    {
+      "name": "watch_guide_click_to_input_code",
+      "value": "Tap to input code; tap eye icon to reveal when unsure"
     }
   ]
 }

@@ -18,7 +18,6 @@ struct PracticeMistakesPage {
   @State mistakeCode: MorseCode | null = null
   @State practiceAnswer: string = ''
   @State showAnswer: boolean = false
-  @State useSingleButton: boolean = false
   @State longPressThreshold: number = 300
   @State isCorrectFeedback: boolean = false
   @State showHint: boolean = false
@@ -51,7 +50,6 @@ struct PracticeMistakesPage {
       const context = this.getUIContext()?.getHostContext() as Context
       if (context) {
         this.preferencesStore = await preferences.getPreferences(context, 'practice_settings')
-        await this.loadButtonModePreference()
         await this.loadLongPressThresholdPreference()
         await this.loadVibrationPreference()
         
@@ -115,22 +113,6 @@ struct PracticeMistakesPage {
       this.showHint = false
       this.hintTimer = null
     }, 2000)
-  }
-
-  // Load button mode preference
-  private async loadButtonModePreference(): Promise<void> {
-    try {
-      if (this.preferencesStore) {
-        const hasSetPreference = await this.preferencesStore.get('has_set_button_mode', false) as boolean
-        if (hasSetPreference) {
-          this.useSingleButton = await this.preferencesStore.get('use_single_button', false) as boolean
-        } else {
-          this.useSingleButton = true
-        }
-      }
-    } catch (error) {
-      console.error('[PracticeMistakesPage] Failed to load button mode preference:', error)
-    }
   }
 
   // Load long press threshold preference
@@ -485,23 +467,7 @@ struct PracticeMistakesPage {
         .justifyContent(FlexAlign.Center)
         .alignItems(HorizontalAlign.Center)
       } else {
-        Stack({ alignContent: Alignment.TopEnd }) {
-          // Back button
-          Button() {
-            Image($rawfile('ic_back.svg'))
-              .width(16)
-              .height(16)
-              .fillColor(Color.White)
-          }
-          .width(36)
-          .height(36)
-          .backgroundColor('rgba(255, 255, 255, 0.1)')
-          .borderRadius(18)
-          .margin({ top: 8, right: 8 })
-          .onClick(() => {
-            router.back()
-          })
-
+        Stack() {
           // Main content
           Column() {
             if (!this.showAnswer && this.mistakeCode) {
@@ -577,59 +543,26 @@ struct PracticeMistakesPage {
                 .justifyContent(FlexAlign.Center)
                 .opacity(this.isContentVisible ? 1 : 0)
 
-                // Input Buttons
-                if (this.useSingleButton) {
-                  ArcButton({
-                    options: new ArcButtonOptions({
-                      label: '·',
-                      position: ArcButtonPosition.BOTTOM_EDGE,
-                      styleMode: ArcButtonStyleMode.CUSTOM,
-                      backgroundColor: ColorMetrics.resourceColor('#FFD700'),
-                      fontColor: ColorMetrics.resourceColor('#000000')
-                    })
+                // 手表端仅单键 ArcButton
+                ArcButton({
+                  options: new ArcButtonOptions({
+                    label: '·',
+                    position: ArcButtonPosition.BOTTOM_EDGE,
+                    styleMode: ArcButtonStyleMode.CUSTOM,
+                    backgroundColor: ColorMetrics.resourceColor('#FFD700'),
+                    fontColor: ColorMetrics.resourceColor('#000000')
                   })
-                  .onClick(() => {
+                })
+                .onClick(() => {
+                  this.handleSingleButtonRelease()
+                })
+                .onTouch((event: TouchEvent) => {
+                  if (event.type === TouchType.Down) {
+                    this.handleSingleButtonPress()
+                  } else if (event.type === TouchType.Up) {
                     this.handleSingleButtonRelease()
-                  })
-                  .onTouch((event: TouchEvent) => {
-                    if (event.type === TouchType.Down) {
-                      this.handleSingleButtonPress()
-                    } else if (event.type === TouchType.Up) {
-                      this.handleSingleButtonRelease()
-                    }
-                  })
-                } else {
-                  Row() {
-                    Button('·')
-                      .width(60)
-                      .height(60)
-                      .backgroundColor('#FFD700')
-                      .fontColor(Color.Black)
-                      .fontSize(24)
-                      .fontWeight(FontWeight.Bold)
-                      .borderRadius(30)
-                      .onClick(() => {
-                        this.addDot()
-                        audioService.playDit()
-                      })
-
-                    Button('-')
-                      .width(60)
-                      .height(60)
-                      .backgroundColor('#FFD700')
-                      .fontColor(Color.Black)
-                      .fontSize(24)
-                      .fontWeight(FontWeight.Bold)
-                      .borderRadius(30)
-                      .onClick(() => {
-                        this.addDash()
-                        audioService.playDah()
-                      })
                   }
-                  .width('80%')
-                  .justifyContent(FlexAlign.SpaceEvenly)
-                  .margin({ top: 8, bottom: 8 })
-                }
+                })
               } else {
                 // --- Code to Text Mode UI ---
                 Column() {

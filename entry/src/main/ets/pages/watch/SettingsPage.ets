@@ -93,7 +93,7 @@ export struct SettingsPage {
       Text(LocalizationHelper.getString('watch_settings'))
         .fontSize(14)
         .fontWeight(FontWeight.Medium)
-        .fontColor('#FFFFFF')
+        .fontColor('#FFD700')
         .width('100%')
         .textAlign(TextAlign.Center)
         .margin({ top: 15, bottom: 10 })

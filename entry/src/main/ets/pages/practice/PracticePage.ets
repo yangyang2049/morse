@@ -39,6 +39,8 @@ export struct PracticePage {
   @State hintTextColor: string = ''
   @State hintTextOpacity: number = 0
   @State showCandidateGrid: boolean = true
+  /** code_to_text / sound_to_text 下当前题错误次数，第 3 次错误才在候选格高亮正确答案 */
+  @State candidateWrongTries: number = 0
 
   private preferencesStore: preferences.Preferences | null = null
   private progressTimer: number | null = null
@@ -256,6 +258,7 @@ export struct PracticePage {
       // 隐藏网格，然后显示新内容
       this.showCandidateGrid = false
       setTimeout(() => {
+        this.candidateWrongTries = 0
         this.generateCandidates()
         this.showCandidateGrid = true
 
@@ -386,6 +389,13 @@ export struct PracticePage {
 
     // 如果答错，显示提示但不自动进入下一题
     if (!isCorrect) {
+      this.candidateWrongTries = this.candidateWrongTries + 1
+      // 第 3 次错误时先高亮正确答案，约 1s 后取消高亮（与第 1、2 次一致的无高亮状态）
+      if (this.candidateWrongTries >= 3) {
+        setTimeout(() => {
+          this.candidateWrongTries = 0
+        }, 1000)
+      }
       // 显示"再试一次"提示
       try {
         promptAction.showToast({
@@ -481,6 +491,7 @@ export struct PracticePage {
     // 逻辑3: 更新数据并显示新题目（code_to_text=600ms, sound_to_text=1800ms）
     setTimeout(() => {
       this.vm.generateNewCharacter()
+      this.candidateWrongTries = 0
 
       if (this.mode === 'code_to_text' || this.mode === 'sound_to_text') {
         this.generateCandidates()
@@ -558,6 +569,7 @@ export struct PracticePage {
 
           // 更新候选字符
           if (this.mode === 'code_to_text' || this.mode === 'sound_to_text') {
+            this.candidateWrongTries = 0
             this.generateCandidates()
           }
 
@@ -832,10 +844,8 @@ export struct PracticePage {
     if (this.useSingleButton) {
       Row() {
         Column() {
-          Text('·')
-            .fontSize(28)
-            .fontColor('#000000')
-            .fontWeight(FontWeight.Bold)
+          Circle({ width: 20, height: 20 })
+            .fill('#444444')
         }
         .height(80)
           .layoutWeight(1)
@@ -860,7 +870,7 @@ export struct PracticePage {
       Row() {
         Button() {
           Circle({ width: 20, height: 20 })
-            .fill('#000000')
+            .fill('#444444')
         }
         .height(80)
           .backgroundColor('#FFD700')
@@ -878,7 +888,7 @@ export struct PracticePage {
 
         Button() {
           Rect({ width: 40, height: 12 })
-            .fill('#000000')
+            .fill('#444444')
         }
         .height(80)
           .backgroundColor('#FFD700')
@@ -973,12 +983,10 @@ export struct PracticePage {
                 .height('100%')
                 .justifyContent(FlexAlign.Center)
                 .backgroundColor(
-                  this.selectedChar === char && char === this.vm.getCurrentCharacter() ? Color.Green :
-                    (this.selectedChar === char ? Color.Red :
-                      (this.selectedChar && char === this.vm.getCurrentCharacter() ? Color.Green : '#1A1A1A'))
+                  char === this.vm.getCurrentCharacter() && (this.selectedChar === char || this.candidateWrongTries >= 3) ? Color.Green :
+                    (this.selectedChar === char ? Color.Red : '#1A1A1A')
                 )
                 .borderRadius(12)
-                .border({ width: 1, color: '#333333' })
                 .onClick(() => {
                   if (!this.selectedChar) {
                     this.selectChar(char)
@@ -1087,12 +1095,10 @@ export struct PracticePage {
                 .height('100%')
                 .justifyContent(FlexAlign.Center)
                 .backgroundColor(
-                  this.selectedChar === char && char === this.vm.getCurrentCharacter() ? Color.Green :
-                    (this.selectedChar === char ? Color.Red :
-                      (this.selectedChar && char === this.vm.getCurrentCharacter() ? Color.Green : '#1A1A1A'))
+                  char === this.vm.getCurrentCharacter() && (this.selectedChar === char || this.candidateWrongTries >= 3) ? Color.Green :
+                    (this.selectedChar === char ? Color.Red : '#1A1A1A')
                 )
                 .borderRadius(12)
-                .border({ width: 1, color: '#333333' })
                 .onClick(() => {
                   if (!this.selectedChar) {
                     this.selectChar(char)

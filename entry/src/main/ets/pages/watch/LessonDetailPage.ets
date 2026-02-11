@@ -20,7 +20,6 @@ struct LessonDetailPage {
   @State currentLessonIndex: number = 0
   @State lessonCharIndex: number = 0
   @State lessonInput: string = ''
-  @State useSingleButton: boolean = true
   @State longPressThreshold: number = 300
   @State isCurrentCharCorrect: boolean = false
   @State showGuideDialog: boolean = false
@@ -43,7 +42,6 @@ struct LessonDetailPage {
       if (context) {
         this.preferencesStore = await preferences.getPreferences(context, 'lesson_progress')
         const practiceStore = await preferences.getPreferences(context, 'practice_settings')
-        await this.loadButtonModePreference(practiceStore)
         await this.loadLongPressThresholdPreference(practiceStore)
         await this.loadVibrationPreference(practiceStore)
         await this.checkAndShowGuide()
@@ -104,7 +102,8 @@ struct LessonDetailPage {
     // 确保保存待处理的进度
     if (this.pendingSave && this.preferencesStore) {
       const nextIndex = this.currentLessonIndex + 1
-      const key = this.lessonType === 'alphabet' ? 'alphabet_progress' : 'numbers_progress'
+      const key = this.lessonType === 'alphabet' ? 'alphabet_progress' :
+        this.lessonType === 'numbers' ? 'numbers_progress' : 'punctuation_progress'
       this.preferencesStore.put(key, nextIndex).then(() => {
         return this.preferencesStore?.flush()
       }).catch((error: Error) => {
@@ -115,22 +114,6 @@ struct LessonDetailPage {
     if (this.saveTimer) {
       clearTimeout(this.saveTimer)
       this.saveTimer = null
-    }
-  }
-
-  // 加载按钮模式偏好
-  private async loadButtonModePreference(store: preferences.Preferences | null): Promise<void> {
-    try {
-      if (store) {
-        const hasSetPreference = await store.get('has_set_button_mode', false) as boolean
-        if (hasSetPreference) {
-          this.useSingleButton = await store.get('use_single_button', true) as boolean
-        } else {
-          this.useSingleButton = true // 默认单键模式
-        }
-      }
-    } catch (error) {
-      console.error('[LessonDetailPage] Failed to load button mode preference:', error)
     }
   }
 
@@ -446,6 +429,16 @@ struct LessonDetailPage {
     }, 500)
   }
 
+  // 是否为当前类型的最后一组课程
+  private isLastLessonGroup(): boolean {
+    const groups = this.lessonType === 'alphabet'
+      ? LessonGroups.getAlphabetGroups()
+      : this.lessonType === 'numbers'
+      ? LessonGroups.getNumberGroups()
+      : LessonGroups.getPunctuationGroups()
+    return this.currentLessonIndex >= groups.length - 1
+  }
+
   // 下一组课程
   private async nextLessonGroup(): Promise<void> {
     const groups = this.lessonType === 'alphabet'
@@ -499,7 +492,7 @@ struct LessonDetailPage {
   @Builder
   private GuideDialog() {
     Column() {
-      Text('提示')
+      Text(LocalizationHelper.getString('hint'))
         .fontSize(18)
         .fontWeight(FontWeight.Bold)
         .fontColor('#FFFFFF')
@@ -536,217 +529,141 @@ struct LessonDetailPage {
 
   build() {
     Stack() {
-      Scroll() {
-        Column() {
+      Column() {
         if (this.lessonCharIndex < this.currentLessonGroup.length) {
-          // 学习单个字符
+          // 学习单个字符（收紧垂直间距，使 ArcButton 贴底且完全可见）
           Column() {
-            // 显示所有字母，高亮当前字母
-            Scroll() {
-              Row() {
-                ForEach(this.currentLessonGroup, (char: string, index: number) => {
-                  Text(char)
-                    .fontSize(14)
-                    .fontWeight(FontWeight.Bold)
-                    .fontColor(
-                      index < this.lessonCharIndex ? '#4CAF50' :  // Completed characters in green
-                      index === this.lessonCharIndex ? '#FFD700' : '#FFFFFF'  // Current in gold, future in white
-                    )
-                    .margin({ right: 8 })
-                })
+            Column() {
+              // 显示所有字母，高亮当前字母
+              Scroll() {
+                Row() {
+                  ForEach(this.currentLessonGroup, (char: string, index: number) => {
+                    Text(char)
+                      .fontSize(14)
+                      .fontWeight(FontWeight.Bold)
+                      .fontColor(
+                        index < this.lessonCharIndex ? '#4CAF50' :  // Completed characters in green
+                        index === this.lessonCharIndex ? '#FFD700' : '#FFFFFF'  // Current in gold, future in white
+                      )
+                      .margin({ right: 6 })
+                  })
+                }
+                .justifyContent(FlexAlign.Center)
               }
-              .justifyContent(FlexAlign.Center)
+              .width('100%')
+              .scrollable(ScrollDirection.Horizontal)
+              .scrollBar(BarState.Off)
+              .margin({ bottom: 4 })
+
+              Text(this.getCurrentLessonChar())
+                .fontSize(56)
+                .fontColor(this.isCurrentCharCorrect ? '#4CAF50' : '#FFD700')
+                .fontWeight(FontWeight.Bold)
+                .margin({ bottom: 0 })
+
+              if (this.getCurrentLessonCharCode()) {
+                Text(this.getCurrentLessonCharCode()!.morse.replace(/\./g, '·'))
+                  .fontSize(20)
+                  .fontColor('#FFFFFF')
+                  .margin({ bottom: 6 })
+              }
+
+              // 输入显示
+              Scroll() {
+                Text(this.lessonInput || '')
+                  .fontSize(20)
+                  .fontColor('#FFFFFF')
+                  .textAlign(TextAlign.Center)
+              }
+              .width('80%')
+              .height(28)
+              .scrollable(ScrollDirection.Horizontal)
+              .scrollBar(BarState.Off)
+              .padding(6)
+              .backgroundColor('rgba(255, 255, 255, 0.1)')
+              .borderRadius(8)
+              .margin({ bottom: 4 })
             }
             .width('100%')
-            .scrollable(ScrollDirection.Horizontal)
-            .scrollBar(BarState.Off)
-            .margin({ bottom: 8 })
+            .layoutWeight(1)
+            .justifyContent(FlexAlign.Center)
 
-            Text(this.getCurrentLessonChar())
-              .fontSize(64)
-              .fontColor(this.isCurrentCharCorrect ? '#4CAF50' : '#FFD700')
-              .fontWeight(FontWeight.Bold)
-              .margin({ bottom: 2 })
-
-            if (this.getCurrentLessonCharCode()) {
-              // 将普通点转换为中间点显示
-              Text(this.getCurrentLessonCharCode()!.morse.replace(/\./g, '·'))
-                .fontSize(22)
-                .fontColor('#FFFFFF')
-                .margin({ bottom: 12 })
-            }
-
-            // 输入显示 - 使用 Scroll 支持横向滚动
-            Scroll() {
-              Text(this.lessonInput || '')
-                .fontSize(20)
-                .fontColor('#FFFFFF')
-                .textAlign(TextAlign.Center)
-            }
-            .width('80%')
-            .height(32)
-            .scrollable(ScrollDirection.Horizontal)
-            .scrollBar(BarState.Off)
-            .padding(8)
-            .backgroundColor('rgba(255, 255, 255, 0.1)')
-            .borderRadius(8)
-            .margin({ bottom: 8 })
-
-            // 单键输入按钮 - 使用 ArcButton 自定义金色样式
-            if (this.useSingleButton) {
-              ArcButton({
-                options: new ArcButtonOptions({
-                  label: '·',
-                  position: ArcButtonPosition.BOTTOM_EDGE,
-                  styleMode: ArcButtonStyleMode.CUSTOM,
-                  backgroundColor: ColorMetrics.resourceColor('#FFD700'),
-                  fontColor: ColorMetrics.resourceColor('#000000')
-                })
+            // 手表端仅单键 ArcButton
+            ArcButton({
+              options: new ArcButtonOptions({
+                label: '·',
+                position: ArcButtonPosition.BOTTOM_EDGE,
+                styleMode: ArcButtonStyleMode.CUSTOM,
+                backgroundColor: ColorMetrics.resourceColor('#FFD700'),
+                fontColor: ColorMetrics.resourceColor('#000000')
               })
-              .onClick(() => {
-                // 短按处理
+            })
+            .onClick(() => {
+              this.handleSingleButtonRelease()
+            })
+            .onTouch((event: TouchEvent) => {
+              if (event.type === TouchType.Down) {
+                this.handleSingleButtonPress()
+              } else if (event.type === TouchType.Up) {
                 this.handleSingleButtonRelease()
-              })
-              .onTouch((event: TouchEvent) => {
-                if (event.type === TouchType.Down) {
-                  this.handleSingleButtonPress()
-                } else if (event.type === TouchType.Up) {
-                  this.handleSingleButtonRelease()
-                }
-              })
-              .margin({ bottom: 8 })
-
-              // 控制按钮
-              Row() {
-                Button(LocalizationHelper.getString('watch_delete'))
-                  .layoutWeight(1)
-                  .height(32)
-                  .backgroundColor('#222222')
-                  .fontColor('#FFFFFF')
-                  .fontSize(11)
-                  .onClick(() => {
-                    this.deleteLastChar()
-                  })
-
-                Button(LocalizationHelper.getString('watch_clear'))
-                  .layoutWeight(1)
-                  .height(32)
-                  .backgroundColor('#222222')
-                  .fontColor('#FFFFFF')
-                  .fontSize(11)
-                  .margin({ left: 6 })
-                  .onClick(() => {
-                    this.clearInput()
-                  })
               }
-              .width('80%')
-              .margin({ bottom: 8 })
-            } else {
-              // 双键模式
-              Row() {
-                Button('·')
-                  .width(55)
-                  .height(55)
-                  .backgroundColor('#FFD700')
-                  .fontColor(Color.Black)
-                  .fontSize(22)
-                  .fontWeight(FontWeight.Bold)
-                  .borderRadius(28)
-                  .onClick(() => {
-                    this.addDot()
-                    audioService.playDit()
-                  })
-
-                Button('-')
-                  .width(55)
-                  .height(55)
-                  .backgroundColor('#FFD700')
-                  .fontColor(Color.Black)
-                  .fontSize(22)
-                  .fontWeight(FontWeight.Bold)
-                  .borderRadius(28)
-                  .onClick(() => {
-                    this.addDash()
-                    audioService.playDah()
-                  })
-              }
-              .width('80%')
-              .justifyContent(FlexAlign.SpaceEvenly)
-              .margin({ bottom: 8 })
-
-              // 控制按钮
-              Row() {
-                Button(LocalizationHelper.getString('watch_delete'))
-                  .layoutWeight(1)
-                  .height(32)
-                  .backgroundColor('#222222')
-                  .fontColor('#FFFFFF')
-                  .fontSize(11)
-                  .onClick(() => {
-                    this.deleteLastChar()
-                  })
-
-                Button(LocalizationHelper.getString('watch_clear'))
-                  .layoutWeight(1)
-                  .height(32)
-                  .backgroundColor('#222222')
-                  .fontColor('#FFFFFF')
-                  .fontSize(11)
-                  .margin({ left: 6 })
-                  .onClick(() => {
-                    this.clearInput()
-                  })
-              }
-              .width('80%')
-              .margin({ bottom: 8 })
-            }
+            })
+            .margin({ top: 4, bottom: 0 })
           }
           .width('80%')
           .layoutWeight(1)
-          .justifyContent(FlexAlign.Center)
+          .height('100%')
         } else {
-          // 课程完成
+          // 课程完成：上方居中，两按钮紧凑贴底
           Column() {
-            Text(LocalizationHelper.getString('watch_completed'))
-              .fontSize(32)
-              .fontColor('#4CAF50')
-              .margin({ bottom: 16 })
+            Column() {
+              Text(LocalizationHelper.getString('watch_completed'))
+                .fontSize(28)
+                .fontColor('#4CAF50')
+                .fontWeight(FontWeight.Bold)
+                .margin({ bottom: 8 })
 
-            Text(this.currentLessonGroup.join(' '))
-              .fontSize(14)
-              .fontColor('#FFFFFF')
-              .margin({ bottom: 24 })
+              Text(this.currentLessonGroup.join(' '))
+                .fontSize(14)
+                .fontColor('#FFFFFF')
+            }
+            .width('100%')
+            .layoutWeight(1)
+            .justifyContent(FlexAlign.Center)
 
-            Button(LocalizationHelper.getString('watch_next_group'))
-              .width('80%')
-              .height(50)
-              .backgroundColor('#FFD700')
-              .fontColor('#000000')
-              .margin({ bottom: 16 })
-              .onClick(() => {
-                this.nextLessonGroup()
-              })
+            if (!this.isLastLessonGroup()) {
+              Button(LocalizationHelper.getString('watch_next_group'))
+                .width('80%')
+                .height(44)
+                .backgroundColor('#FFD700')
+                .fontColor('#000000')
+                .fontWeight(FontWeight.Medium)
+                .margin({ bottom: 6 })
+                .onClick(() => {
+                  this.nextLessonGroup()
+                })
+            }
 
             Button(LocalizationHelper.getString('watch_back'))
               .width('80%')
-              .height(50)
+              .height(44)
               .backgroundColor('#222222')
               .fontColor('#FFFFFF')
+              .margin({ bottom: 8 })
               .onClick(() => {
                 router.back()
               })
           }
           .width('80%')
           .layoutWeight(1)
-          .justifyContent(FlexAlign.Center)
+          .height('100%')
+          .alignItems(HorizontalAlign.Center)
         }
       }
       .width('100%')
-      .alignItems(HorizontalAlign.Center)
-      .padding({ top: 8, bottom: 8, left: 12, right: 12 })
-      }
-      .width('100%')
       .height('100%')
+      .alignItems(HorizontalAlign.Center)
+      .padding({ top: 4, bottom: 0, left: 12, right: 12 })
       .backgroundColor('#000000')
       .focusable(true)
       .defaultFocus(true)

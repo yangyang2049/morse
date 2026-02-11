@@ -698,10 +698,8 @@ export struct TranslatePage {
       if (this.useSingleButton) {
         Row() {
           Column() {
-            Text('·')
-              .fontSize(28)
-              .fontColor('#000000')
-              .fontWeight(FontWeight.Bold)
+            Circle({ width: 20, height: 20 })
+              .fill('#444444')
           }
           .width('100%')
           .height(80)
@@ -724,7 +722,7 @@ export struct TranslatePage {
         Row() {
           Button() {
             Circle({ width: 20, height: 20 })
-              .fill('#000000')
+              .fill('#444444')
           }
           .height(80)
             .backgroundColor('#FFD700')
@@ -747,7 +745,7 @@ export struct TranslatePage {
 
           Button() {
             Rect({ width: 40, height: 12 })
-              .fill('#000000')
+              .fill('#444444')
           }
           .height(80)
             .backgroundColor('#FFD700')

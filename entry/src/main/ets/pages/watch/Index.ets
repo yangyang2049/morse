@@ -1,4 +1,4 @@
-import { ArcSwiper, ArcSwiperAttribute, ArcSwiperController, ArcDotIndicator } from '@kit.ArkUI'
+import { ArcSwiper, ArcSwiperController, ArcDotIndicator } from '@kit.ArkUI'
 import { LearnPage } from './LearnPage'
 import { PracticePage } from './PracticePage'
 import { CodeTablePage } from './CodeTablePage'

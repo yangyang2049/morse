@@ -83,7 +83,7 @@ export struct LearnPage {
       Text(LocalizationHelper.getString('watch_learn'))
         .fontSize(14)
         .fontWeight(FontWeight.Medium)
-        .fontColor('#FFFFFF')
+        .fontColor('#FFD700')
         .width('100%')
         .textAlign(TextAlign.Center)
         .margin({ top: 8, bottom: 8 })
@@ -209,7 +209,7 @@ export struct LearnPage {
               .width(24)
               .margin({ right: 12 })
 
-            Text('标点')
+            Text(LocalizationHelper.getString('punctuation'))
               .fontSize(16)
               .fontColor('#FFFFFF')
 

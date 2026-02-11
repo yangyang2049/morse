@@ -3,7 +3,30 @@
     {
       "name": "start_window_background",
       "value": "#000000"
+    },
+    {
+      "name": "background_primary",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "background_secondary",
+      "value": "#F5F5F5"
+    },
+    {
+      "name": "text_primary",
+      "value": "#000000"
+    },
+    {
+      "name": "text_secondary",
+      "value": "#666666"
+    },
+    {
+      "name": "accent",
+      "value": "#0A59F7"
+    },
+    {
+      "name": "divider",
+      "value": "#E0E0E0"
     }
   ]
 }
-

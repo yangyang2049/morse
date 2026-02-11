@@ -951,6 +951,154 @@
     {
       "name": "try_again",
       "value": "再试一次"
+    },
+    {
+      "name": "agree",
+      "value": "同意"
+    },
+    {
+      "name": "exit_app",
+      "value": "退出"
+    },
+    {
+      "name": "scan_to_read",
+      "value": "扫码阅读隐私政策"
+    },
+    {
+      "name": "qr_code_generating",
+      "value": "正在生成二维码..."
+    },
+    {
+      "name": "watch_loading_failed",
+      "value": "加载失败"
+    },
+    {
+      "name": "watch_settings",
+      "value": "设置"
+    },
+    {
+      "name": "watch_vibration_feedback",
+      "value": "振动反馈"
+    },
+    {
+      "name": "watch_long_press_duration",
+      "value": "长按时间"
+    },
+    {
+      "name": "watch_phone_version_richer",
+      "value": "手机版功能更丰富"
+    },
+    {
+      "name": "watch_company_name",
+      "value": "重庆豆花科技有限公司"
+    },
+    {
+      "name": "watch_learn",
+      "value": "学习"
+    },
+    {
+      "name": "watch_basics",
+      "value": "基础"
+    },
+    {
+      "name": "watch_alphabet",
+      "value": "字母"
+    },
+    {
+      "name": "watch_numbers",
+      "value": "数字"
+    },
+    {
+      "name": "watch_practice",
+      "value": "练习"
+    },
+    {
+      "name": "watch_text_to_code",
+      "value": "文本 → 代码"
+    },
+    {
+      "name": "watch_code_to_text",
+      "value": "代码 → 文本"
+    },
+    {
+      "name": "watch_mistakes",
+      "value": "错题本"
+    },
+    {
+      "name": "watch_mistakes_empty",
+      "value": "错题本为空"
+    },
+    {
+      "name": "watch_code_table",
+      "value": "码表"
+    },
+    {
+      "name": "click_to_play_vibrate",
+      "value": "点击播放振动"
+    },
+    {
+      "name": "watch_try_again",
+      "value": "再试一次"
+    },
+    {
+      "name": "watch_back",
+      "value": "返回"
+    },
+    {
+      "name": "watch_delete",
+      "value": "删除"
+    },
+    {
+      "name": "watch_clear",
+      "value": "清除"
+    },
+    {
+      "name": "watch_completed",
+      "value": "完成！"
+    },
+    {
+      "name": "watch_next_group",
+      "value": "下一组"
+    },
+    {
+      "name": "watch_correct",
+      "value": "正确"
+    },
+    {
+      "name": "watch_wrong",
+      "value": "错误"
+    },
+    {
+      "name": "watch_correct_answer",
+      "value": "正确答案："
+    },
+    {
+      "name": "watch_next_question",
+      "value": "下一题"
+    },
+    {
+      "name": "watch_morse_code_basics_title",
+      "value": "摩斯电码基础"
+    },
+    {
+      "name": "watch_guide_text_letter_lesson",
+      "value": "短按输入点，长按输入划"
+    },
+    {
+      "name": "watch_guide_button_got_it",
+      "value": "知道了"
+    },
+    {
+      "name": "watch_guide_text_practice_code_to_text",
+      "value": "看摩斯码，选择对应字符"
+    },
+    {
+      "name": "hint",
+      "value": "提示"
+    },
+    {
+      "name": "watch_guide_click_to_input_code",
+      "value": "点击输入电码，不确定时点击眼睛图标查看"
     }
   ]
 }

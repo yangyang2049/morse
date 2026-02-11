@@ -380,10 +380,10 @@ export struct LetterLessonPage {
   private BottomKeys() {
     Row() {
       if (this.isWordLesson()) {
-        // 单词课程：三个按钮（点、空格、划），不区分单/双键；点/划黄底黑字
+        // 单词课程：三个按钮（点、空格、划），不区分单/双键；点/划黄底
         Button() {
           Circle({ width: 20, height: 20 })
-            .fill('#000000')
+            .fill('#444444')
         }
         .height(80)
           .backgroundColor('#FFD700')
@@ -426,7 +426,7 @@ export struct LetterLessonPage {
 
         Button() {
           Rect({ width: 40, height: 12 })
-            .fill('#000000')
+            .fill('#444444')
         }
         .height(80)
           .backgroundColor('#FFD700')
@@ -442,12 +442,10 @@ export struct LetterLessonPage {
           .focusable(true)
           .layoutWeight(1)
       } else if (this.useSingleButton) {
-        // 非单词课程 + 单键模式：一个按钮，短按点、长按划；黄底黑字
+        // 非单词课程 + 单键模式：一个按钮，短按点、长按划；黄底，手绘圆点
         Column() {
-          Text('·')
-            .fontSize(28)
-            .fontColor('#000000')
-            .fontWeight(FontWeight.Bold)
+          Circle({ width: 20, height: 20 })
+            .fill('#444444')
         }
         .height(80)
           .layoutWeight(1)
@@ -466,10 +464,10 @@ export struct LetterLessonPage {
           .hoverEffect(HoverEffect.Scale)
           .focusable(true)
       } else {
-        // 非单词课程 + 双键模式：两个按钮（点、划）；黄底黑字
+        // 非单词课程 + 双键模式：两个按钮（点、划）；黄底
         Button() {
           Circle({ width: 20, height: 20 })
-            .fill('#000000')
+            .fill('#444444')
         }
         .height(80)
           .backgroundColor('#FFD700')
@@ -489,7 +487,7 @@ export struct LetterLessonPage {
 
         Button() {
           Rect({ width: 40, height: 12 })
-            .fill('#000000')
+            .fill('#444444')
         }
         .height(80)
           .backgroundColor('#FFD700')

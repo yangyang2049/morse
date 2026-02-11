@@ -6,7 +6,7 @@ import vibrator from '@ohos.vibrator'
 import { BusinessError } from '@kit.BasicServicesKit'
 import preferences from '@ohos.data.preferences'
 import { Context } from '@kit.AbilityKit'
-import { promptAction } from '@kit.ArkUI'
+import { promptAction, ArcButton, ArcButtonOptions, ArcButtonPosition, ArcButtonStyleMode, ColorMetrics } from '@kit.ArkUI'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
 import { FavoritesStore } from '../../store/FavoritesStore'
 
@@ -19,7 +19,6 @@ struct PracticeDetailPage {
   @State practiceChar: string = ''
   @State practiceAnswer: string = ''
   @State showAnswer: boolean = false
-  @State useSingleButton: boolean = false
   @State longPressThreshold: number = 300
   @State candidateChars: string[] = []
   @State selectedChar: string = ''
@@ -30,6 +29,10 @@ struct PracticeDetailPage {
   @State isContentVisible: boolean = true
   @State showGuideDialog: boolean = false
   @State vibrationEnabled: boolean = true
+  /** code_to_text 模式下当前题的错误次数，第 3 次错误才高亮正确答案 */
+  @State codeToTextWrongTries: number = 0
+  /** 是否在候选格中显示正确答案高亮（仅当错误次数 >= 3 时为 true） */
+  @State showCorrectInGrid: boolean = false
   
   private pressStartTime: number = 0
   private longPressTimer: number | null = null
@@ -49,7 +52,6 @@ struct PracticeDetailPage {
       const context = this.getUIContext()?.getHostContext() as Context
       if (context) {
         this.preferencesStore = await preferences.getPreferences(context, 'practice_settings')
-        await this.loadButtonModePreference()
         await this.loadLongPressThresholdPreference()
         await this.loadVibrationPreference()
       }
@@ -118,23 +120,6 @@ struct PracticeDetailPage {
       this.showHint = false
       this.hintTimer = null
     }, 2000)
-  }
-
-  // 加载按钮模式偏好
-  private async loadButtonModePreference(): Promise<void> {
-    try {
-      if (this.preferencesStore) {
-        const hasSetPreference = await this.preferencesStore.get('has_set_button_mode', false) as boolean
-        if (hasSetPreference) {
-          this.useSingleButton = await this.preferencesStore.get('use_single_button', false) as boolean
-        } else {
-          // 默认使用单键模式
-          this.useSingleButton = true
-        }
-      }
-    } catch (error) {
-      console.error('[PracticeDetailPage] Failed to load button mode preference:', error)
-    }
   }
 
   // 加载长按时间偏好
@@ -293,6 +278,8 @@ struct PracticeDetailPage {
         
         if (this.mode === 'code_to_text') {
           this.selectedChar = ''
+          this.codeToTextWrongTries = 0
+          this.showCorrectInGrid = false
           this.generateCandidates()
           this.showMorseCode = true
           this.showCandidateGrid = true
@@ -374,13 +361,29 @@ struct PracticeDetailPage {
       this.selectCharTimers.push(t3)
     } else {
       FavoritesStore.getInstance().addToMistakes(this.practiceChar)
+      const wrongTries = this.codeToTextWrongTries + 1
+      this.codeToTextWrongTries = wrongTries
+      // 第 3 次错误才在候选格中高亮正确答案
+      if (wrongTries >= 3) {
+        this.showCorrectInGrid = true
+        // 先高亮正确答案，约 1s 后取消高亮，再进入下一题
+        const tDehighlight = setTimeout(() => {
+          this.showCorrectInGrid = false
+          this.selectedChar = ''
+        }, 1000)
+        this.selectCharTimers.push(tDehighlight)
+      }
       // 错误：错误振动
       if (vibratorService.isVibrationEnabled()) {
         vibrator.vibrate(250, () => {})
       }
-      // 延迟后切换到下一题
+      // 第 3 次错误才进入下一题；前两次仅清除选择允许重试
       const t4 = setTimeout(() => {
-        this.nextQuestion()
+        if (wrongTries >= 3) {
+          this.nextQuestion()
+        } else {
+          this.selectedChar = ''
+        }
       }, 1500)
       this.selectCharTimers.push(t4)
     }
@@ -580,116 +583,85 @@ struct PracticeDetailPage {
         if (!this.showAnswer) {
           Column() {
             if (this.mode === 'text_to_code') {
-              // --- Text to Code Mode UI ---
+              // --- Text to Code Mode UI ---（加高内容区，使 ArcButton 贴底）
               Column() {
-                // Character display
-                Text(this.practiceChar)
-                  .fontSize(48)
-                  .fontColor(this.isCorrectFeedback ? '#4CAF50' : '#FFD700')
-                  .fontWeight(FontWeight.Bold)
-                  .margin({ top: 8, bottom: 8 })
-
-                // Input display - 使用 Scroll 支持横向滚动
-                Scroll() {
-                  Text(this.practiceAnswer)
-                    .fontSize(20)
-                    .fontColor(this.isCorrectFeedback ? '#4CAF50' : '#FFFFFF')
-                    .textAlign(TextAlign.Center)
-                }
-                .width('80%')
-                .height(32)
-                .scrollable(ScrollDirection.Horizontal)
-                .scrollBar(BarState.Off)
-                .padding(8)
-                .backgroundColor('rgba(255, 255, 255, 0.1)')
-                .borderRadius(8)
-                .margin({ bottom: 8 })
-
-                // Hint button
-                if (this.showHint) {
-                  Text(this.getCorrectMorse())
-                    .fontSize(20)
-                    .fontColor('#FFD700')
+                Column() {
+                  // Character display
+                  Text(this.practiceChar)
+                    .fontSize(48)
+                    .fontColor(this.isCorrectFeedback ? '#4CAF50' : '#FFD700')
                     .fontWeight(FontWeight.Bold)
-                    .height(32)
-                    .margin({ bottom: 8 })
-                } else {
-                  Button() {
-                    SymbolGlyph($r('sys.symbol.eye'))
+                    .margin({ top: 8, bottom: 8 })
+
+                  // Input display - 使用 Scroll 支持横向滚动
+                  Scroll() {
+                    Text(this.practiceAnswer)
                       .fontSize(20)
-                      .fontColor(['#FFFFFF'])
+                      .fontColor(this.isCorrectFeedback ? '#4CAF50' : '#FFFFFF')
+                      .textAlign(TextAlign.Center)
                   }
-                  .width(32)
+                  .width('80%')
                   .height(32)
+                  .scrollable(ScrollDirection.Horizontal)
+                  .scrollBar(BarState.Off)
+                  .padding(8)
                   .backgroundColor('rgba(255, 255, 255, 0.1)')
-                  .onClick(() => {
-                    this.toggleHint()
-                  })
+                  .borderRadius(8)
                   .margin({ bottom: 8 })
+
+                  // Hint button
+                  if (this.showHint) {
+                    Text(this.getCorrectMorse())
+                      .fontSize(20)
+                      .fontColor('#FFD700')
+                      .fontWeight(FontWeight.Bold)
+                      .height(32)
+                      .margin({ bottom: 8 })
+                  } else {
+                    Button() {
+                      SymbolGlyph($r('sys.symbol.eye'))
+                        .fontSize(20)
+                        .fontColor(['#FFFFFF'])
+                    }
+                    .width(32)
+                    .height(32)
+                    .backgroundColor('rgba(255, 255, 255, 0.1)')
+                    .onClick(() => {
+                      this.toggleHint()
+                    })
+                    .margin({ bottom: 8 })
+                  }
                 }
+                .width('100%')
+                .layoutWeight(1)
+                .justifyContent(FlexAlign.Center)
+                .opacity(this.isContentVisible ? 1 : 0)
+
+                // 手表端仅单键 ArcButton，贴底（与 LessonDetailPage 一致）
+                ArcButton({
+                  options: new ArcButtonOptions({
+                    label: '·',
+                    position: ArcButtonPosition.BOTTOM_EDGE,
+                    styleMode: ArcButtonStyleMode.CUSTOM,
+                    backgroundColor: ColorMetrics.resourceColor('#FFD700'),
+                    fontColor: ColorMetrics.resourceColor('#000000')
+                  })
+                })
+                .onClick(() => {
+                  this.handleSingleButtonRelease()
+                })
+                .onTouch((event: TouchEvent) => {
+                  if (event.type === TouchType.Down) {
+                    this.handleSingleButtonPress()
+                  } else if (event.type === TouchType.Up) {
+                    this.handleSingleButtonRelease()
+                  }
+                })
+                .margin({ top: 4, bottom: 0 })
               }
               .width('100%')
               .layoutWeight(1)
-              .justifyContent(FlexAlign.Center)
-              .opacity(this.isContentVisible ? 1 : 0)
-
-              // Input Buttons
-              if (this.useSingleButton) {
-                Row() {
-                  Button('·')
-                    .width(60)
-                    .height(60)
-                    .backgroundColor('#FFD700')
-                    .fontColor(Color.Black)
-                    .fontSize(24)
-                    .fontWeight(FontWeight.Bold)
-                    .borderRadius(30)
-                    .onClick(() => {
-                      this.handleSingleButtonRelease()
-                    })
-                    .onTouch((event: TouchEvent) => {
-                      if (event.type === TouchType.Down) {
-                        this.handleSingleButtonPress()
-                      } else if (event.type === TouchType.Up) {
-                        this.handleSingleButtonRelease()
-                      }
-                    })
-                }
-                .width('80%')
-                .justifyContent(FlexAlign.Center)
-                .margin({ top: 8, bottom: 8 })
-              } else {
-                Row() {
-                  Button('·')
-                    .width(60)
-                    .height(60)
-                    .backgroundColor('#FFD700')
-                    .fontColor(Color.Black)
-                    .fontSize(24)
-                    .fontWeight(FontWeight.Bold)
-                    .borderRadius(30)
-                    .onClick(() => {
-                      this.addDot()
-                      audioService.playDit()
-                    })
-
-                  Button('-')
-                    .width(60)
-                    .height(60)
-                    .backgroundColor('#FFD700')
-                    .fontColor(Color.Black)
-                    .fontSize(24)
-                    .fontWeight(FontWeight.Bold)
-                    .borderRadius(30)
-                    .onClick(() => {
-                      this.addDash()
-                      audioService.playDah()
-                    })
-                }
-                .width('80%')
-                .justifyContent(FlexAlign.SpaceEvenly)
-                .margin({ top: 8, bottom: 8 })
-              }
+              .height('100%')
             } else {
               // --- Code to Text Mode UI ---
               Column() {
@@ -717,9 +689,8 @@ struct PracticeDetailPage {
                       .height('100%')
                       .justifyContent(FlexAlign.Center)
                       .backgroundColor(
-                        this.selectedChar === char && char === this.practiceChar ? '#4CAF50' :
-                          (this.selectedChar === char ? '#F44336' :
-                            (this.selectedChar && char === this.practiceChar ? '#4CAF50' : 'rgba(255, 255, 255, 0.1)'))
+                        char === this.practiceChar && (this.selectedChar === char || this.showCorrectInGrid) ? '#4CAF50' :
+                          (this.selectedChar === char ? '#F44336' : 'rgba(255, 255, 255, 0.1)')
                       )
                       .borderRadius(8)
                       .onClick(() => {
@@ -748,33 +719,37 @@ struct PracticeDetailPage {
           .width('100%')
           .height('100%')
           .alignItems(HorizontalAlign.Center)
-          .padding({ top: 20, bottom: 0, left: 12, right: 12 })
+          .padding({ top: 8, bottom: 0, left: 12, right: 12 })
         } else {
           // 答案显示
-          Text(this.isAnswerCorrect() ? LocalizationHelper.getString('watch_correct') : LocalizationHelper.getString('watch_wrong'))
-            .fontSize(24)
-            .fontColor(this.isAnswerCorrect() ? '#4CAF50' : '#F44336')
-            .fontWeight(FontWeight.Bold)
-            .margin({ top: 16, bottom: 8 })
+          Column() {
+            Text(this.isAnswerCorrect() ? LocalizationHelper.getString('watch_correct') : LocalizationHelper.getString('watch_wrong'))
+              .fontSize(24)
+              .fontColor(this.isAnswerCorrect() ? '#4CAF50' : '#F44336')
+              .fontWeight(FontWeight.Bold)
+              .margin({ top: 16, bottom: 8 })
 
-          if (!this.isAnswerCorrect()) {
-            Text(`${LocalizationHelper.getString('watch_correct_answer')} ${this.mode === 'text_to_code' 
-              ? this.getCorrectMorse()
-              : this.practiceChar}`)
-              .fontSize(14)
-              .fontColor('#FFFFFF')
-              .margin({ bottom: 16 })
+            if (!this.isAnswerCorrect()) {
+              Text(`${LocalizationHelper.getString('watch_correct_answer')} ${this.mode === 'text_to_code'
+                ? this.getCorrectMorse()
+                : this.practiceChar}`)
+                .fontSize(14)
+                .fontColor('#FFFFFF')
+                .margin({ bottom: 16 })
+            }
+
+            Button(LocalizationHelper.getString('watch_next_question'))
+              .width('80%')
+              .height(44)
+              .backgroundColor('#FFD700')
+              .fontColor('#000000')
+              .fontWeight(FontWeight.Bold)
+              .onClick(() => {
+                this.nextQuestion()
+              })
           }
-
-          Button(LocalizationHelper.getString('watch_next_question'))
-            .width('80%')
-            .height(44)
-            .backgroundColor('#FFD700')
-            .fontColor('#000000')
-            .fontWeight(FontWeight.Bold)
-            .onClick(() => {
-              this.nextQuestion()
-            })
+          .width('100%')
+          .alignItems(HorizontalAlign.Center)
         }
       }
       .width('100%')
