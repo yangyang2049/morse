@@ -4,6 +4,8 @@
 
 ### 变更
 
+- **加群找同好入口（仅中文）**：在手表设置页与手机「我」页增加「加群找同好」入口，仅当语言为中文时显示；点击进入详情页展示微信群二维码及说明文案（杨阳的开发宇宙，关注公众号 > 加群 > 摩斯电码通，通过二维码加入。一起玩耍吧！）。详情页支持手表与手机，含返回按钮。
+- **手表端右滑退出修复（审核 3.1）**：参考 zhaocha 项目，改用 ArcSwiper 的 `onGestureRecognizerJudgeBegin`。在首页（学习 tab）且右滑时返回 `GestureJudgeResult.REJECT`，由系统处理退出手势；非首页返回 `CONTINUE`，ArcSwiper 正常切换 tab。移除原 PanGesture + terminateSelf 方式，解决「右滑无法退出应用」问题。
 - **发布前修复**：watch Index 移除未使用的 ArcSwiperAttribute 导入；watch LessonDetailPage 退出时保存进度 key 补全 punctuation_progress，与 saveLessonProgress 一致。
 - **手表课程完成页最后一组只显示返回**：完成最后一组时仅显示「返回」按钮，点击退出；非最后一组显示「下一组」+「返回」。
 - **手表课程完成页两按钮间距缩小**：「下一组」与「返回」之间仅 6px，返回贴底。

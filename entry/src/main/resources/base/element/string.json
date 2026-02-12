@@ -1099,6 +1099,14 @@
     {
       "name": "watch_guide_click_to_input_code",
       "value": "点击输入电码，不确定时点击眼睛图标查看"
+    },
+    {
+      "name": "join_group_title",
+      "value": "加群找同好"
+    },
+    {
+      "name": "join_group_detail",
+      "value": "杨阳的开发宇宙\n打开公众号 > 加群 > 摩斯电码通，通过二维码加入。一起玩耍吧！"
     }
   ]
 }

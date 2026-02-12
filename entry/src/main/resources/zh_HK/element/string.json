@@ -1099,6 +1099,14 @@
     {
       "name": "watch_guide_click_to_input_code",
       "value": "點擊輸入電碼，不確定時點擊眼睛圖標查看"
+    },
+    {
+      "name": "join_group_title",
+      "value": "加群找同好"
+    },
+    {
+      "name": "join_group_detail",
+      "value": "楊陽的開發宇宙\n打開公眾號 > 加群 > 摩斯電碼通，通過二維碼加入。一起玩耍吧！"
     }
   ]
 }

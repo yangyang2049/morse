@@ -1,3 +1,4 @@
+import router from '@ohos.router'
 import { promptAction } from '@kit.ArkUI'
 import { common, Want } from '@kit.AbilityKit'
 import pasteboard from '@ohos.pasteboard'
@@ -863,6 +864,36 @@ export struct MePage {
       .focusable(true)
   }
 
+  @Builder WechatGroupSettingsItem() {
+    Row() {
+      Column() {
+        Text($r('app.string.join_group_title'))
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#FFFFFF')
+          .textAlign(TextAlign.Start)
+          .width('100%')
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
+
+      Image($rawfile('ic_arrow_right.svg'))
+        .width(16)
+        .height(16)
+        .fillColor('#666666')
+    }
+    .width('100%')
+      .height(56)
+      .padding({ left: 16, right: 16 })
+      .onClick(() => {
+        router.pushUrl({ url: 'pages/WechatGroupDetailPage' })
+      })
+      .hoverEffect(HoverEffect.Scale)
+      .focusable(true)
+  }
+
   @Builder KeySettingsSettingsItem() {
     Row() {
       Column() {
@@ -1389,6 +1420,10 @@ export struct MePage {
                 Divider().strokeWidth(1).color('#222222')
 
                 this.ShareSettingsItem()
+                if (this.currentLanguage.startsWith('zh')) {
+                  Divider().strokeWidth(1).color('#222222')
+                  this.WechatGroupSettingsItem()
+                }
               }
               .width('100%')
                 .backgroundColor('#111111')
