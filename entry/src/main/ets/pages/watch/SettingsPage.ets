@@ -1,4 +1,3 @@
-import router from '@ohos.router'
 import preferences from '@ohos.data.preferences'
 import { Context } from '@kit.AbilityKit'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
@@ -180,25 +179,6 @@ export struct SettingsPage {
           .backgroundColor('rgba(255, 255, 255, 0.1)')
           .borderRadius(8)
           .margin({ top: 6, bottom: 6 })
-
-          // 加群找同好（仅中文显示）
-          if (LocalizationHelper.isChinese()) {
-            Row() {
-              Text(LocalizationHelper.getString('join_group_title'))
-                .fontSize(16)
-                .fontColor('#FFFFFF')
-              Row() {}.layoutWeight(1)
-            }
-            .width('100%')
-            .height(48)
-            .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-            .backgroundColor('rgba(255, 255, 255, 0.1)')
-            .borderRadius(8)
-            .margin({ top: 6, bottom: 6 })
-            .onClick(() => {
-              router.pushUrl({ url: 'pages/watch/WechatGroupDetailPage' })
-            })
-          }
 
           // 底部文本
           Column() {

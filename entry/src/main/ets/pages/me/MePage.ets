@@ -1,4 +1,3 @@
-import router from '@ohos.router'
 import { promptAction } from '@kit.ArkUI'
 import { common, Want } from '@kit.AbilityKit'
 import pasteboard from '@ohos.pasteboard'
@@ -8,10 +7,9 @@ import preferences from '@ohos.data.preferences'
 import { systemShare } from '@kit.ShareKit'
 import { uniformTypeDescriptor } from '@kit.ArkData'
 import { vibratorService } from '../../services/VibratorService'
-import { MorseCodeData } from '../../models/MorseCode'
-import { PinyinService } from '../../services/PinyinService'
-// 手电筒功能已移至翻译页面
-// import { flashlightService } from '../../services/FlashlightService'
+import {
+  showCommentDialogManual
+} from '../../utils/AppGalleryCommentHelper'
 
 // 语言选项接口
 interface LanguageOption {
@@ -26,20 +24,20 @@ const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: 'en-US', nativeName: 'English' }
 ]
 
+const MORSE_APP_ID = 'com.douhua.morsecode'
+const MORSE_APP_DETAIL_URL = `https://appgallery.huawei.com/app/detail?id=${MORSE_APP_ID}`
+const MORSE_APP_REVIEW_STORE_URI = `store://appgallery.huawei.com/app/detail?id=${MORSE_APP_ID}&action=write-review`
+const MORSE_APP_REVIEW_LINK = `${MORSE_APP_DETAIL_URL}&action=write-review`
+
 @Component
 export struct MePage {
-  @State appVersion: string = '2.1.0'
+  @State appVersion: string = '3.0.0'
   @StorageLink('currentLanguage') currentLanguage: string = this.getInitialLanguage()
   @State useSingleButton: boolean = false // 是否使用单按钮模式
   @State showKeySettingsDialog: boolean = false // 按键设置（单双键 + 长按阈值）对话框
   @State keySettingsSingleButton: boolean = false // 对话框内选择的单键与否，默认双键
   @State keySettingsSliderValue: number = 300
   @State vibrationEnabled: boolean = true // 振动反馈开关
-  @State isMorseCodeExpanded: boolean = false // 摩斯码是否展开
-  // 手电筒相关状态已移除（功能已移至翻译页面）
-  // @State isFlashlightOn: boolean = false
-  // @State flashlightInitialized: boolean = false
-  // @State isPlayingSOS: boolean = false
   // 资源管理器
   private resourceMgr: resourceManager.ResourceManager | null = null
   private preferencesStore: preferences.Preferences | null = null
@@ -49,9 +47,6 @@ export struct MePage {
     // 初始化资源管理器
     try {
       this.resourceMgr = getContext(this).resourceManager
-      const context = getContext(this) as common.UIAbilityContext
-      // 加载拼音服务
-      await PinyinService.load(context)
     } catch (error) {
       console.error('[MePage] Failed to get resource manager:', error)
     }
@@ -64,8 +59,6 @@ export struct MePage {
     await this.loadLongPressThresholdPreference()
     // 加载振动偏好设置
     await this.loadVibrationPreference()
-
-    // 手电筒服务初始化已移除（功能已移至翻译页面）
 
     this.loadAppInfo()
   }
@@ -90,10 +83,6 @@ export struct MePage {
       console.error('[MePage] Failed to get initial language:', error)
       return 'zh-CN' // 默认简体中文
     }
-  }
-
-  aboutToDisappear() {
-    // 手电筒相关清理已移除（功能已移至翻译页面）
   }
 
   // 获取系统资源字符串
@@ -172,7 +161,7 @@ export struct MePage {
   }
 
   private loadAppInfo() {
-    this.appVersion = '2.1.0'
+    this.appVersion = '3.0.0'
   }
 
   // 初始化偏好设置存储
@@ -278,13 +267,6 @@ export struct MePage {
     return language ? language.nativeName : SUPPORTED_LANGUAGES[0].nativeName
   }
 
-  // 手电筒相关方法已移除（功能已移至翻译页面）
-  // private async initFlashlightService(): Promise<void> { ... }
-  // private async toggleFlashlight(): Promise<void> { ... }
-  // private async playSOS(): Promise<void> { ... }
-
-  // 刷新语言状态 - 从AppStorage获取最新状态
-
   // 分享应用 - 使用 HarmonyOS 标准分享框架
   private async shareApp(): Promise<void> {
     try {
@@ -339,279 +321,60 @@ export struct MePage {
     }
   }
 
-  // 打开应用市场进行评分和反馈
+  // 打开应用市场进行评分和反馈：优先应用内评论弹窗，失败时跳转写评论页
   private async openAppGallery(): Promise<void> {
     try {
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext
-      const want: Want = {
-        bundleName: 'com.huawei.appmarket',
-        abilityName: 'com.huawei.appmarket.MainAbility',
-        parameters: {
-          appId: 'com.douhua.morsecode'
-        }
+      const shownInApp = await showCommentDialogManual(context)
+      if (shownInApp) {
+        return
       }
-
-      context.startAbility(want).then(() => {
-        // 打开应用市场成功，无需toast提示
-      }).catch((error: Error) => {
-        console.error('打开应用市场失败:', error)
-        this.openAppGalleryByBrowser()
-      })
+      await this.openAppGalleryWriteReview(context)
     } catch (error) {
-      console.error('打开应用市场异常:', error)
+      console.error('[MePage] 打开评分入口异常:', error)
       this.openAppGalleryByBrowser()
     }
   }
 
-  // 通过浏览器打开应用市场页面作为备选方案
+  private async openAppGalleryWriteReview(context: common.UIAbilityContext): Promise<void> {
+    try {
+      const want: Want = {
+        action: 'ohos.want.action.appdetail',
+        uri: MORSE_APP_REVIEW_STORE_URI
+      }
+      await context.startAbility(want)
+    } catch (error) {
+      console.error('[MePage] Deep Linking 打开应用市场写评论页失败:', error)
+      await this.openAppGalleryWriteReviewByLink(context)
+    }
+  }
+
+  private async openAppGalleryWriteReviewByLink(context: common.UIAbilityContext): Promise<void> {
+    try {
+      await context.openLink(MORSE_APP_REVIEW_LINK, { appLinkingOnly: false })
+    } catch (error) {
+      console.error('[MePage] App Linking 打开应用市场写评论页失败:', error)
+      this.openAppGalleryByBrowser()
+    }
+  }
+
+  // 通过浏览器打开应用市场写评论页作为备选方案
   private openAppGalleryByBrowser(): void {
     try {
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext
       const want: Want = {
         action: 'ohos.want.action.viewData',
         entities: ['entity.system.browsable'],
-        uri: 'https://appgallery.huawei.com/app/detail?id=com.douhua.morsecode'
+        uri: MORSE_APP_REVIEW_LINK
       }
 
       context.startAbility(want).then(() => {
         // 通过浏览器打开成功，无需toast提示
       }).catch((error: Error) => {
         console.error('浏览器打开应用市场失败:', error)
-        // 打开失败，无需toast提示
       })
     } catch (error) {
       console.error('备选方案异常:', error)
-      // 异常情况，无需toast提示
-    }
-  }
-
-  // 打开元素周期表应用
-  private openPeriodicTableApp(): void {
-    try {
-      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
-      const want: Want = {
-        bundleName: 'com.huawei.appmarket',
-        abilityName: 'com.huawei.appmarket.MainAbility',
-        parameters: {
-          appId: 'com.douhua.yuansu'
-        }
-      }
-
-      context.startAbility(want).then(() => {
-        // 打开应用市场成功，无需toast提示
-      }).catch((error: Error) => {
-        console.error('打开应用市场失败:', error)
-        this.openPeriodicTableAppByBrowser()
-      })
-    } catch (error) {
-      console.error('打开应用市场异常:', error)
-      this.openPeriodicTableAppByBrowser()
-    }
-  }
-
-  // 通过浏览器打开元素周期表应用页面作为备选方案
-  private openPeriodicTableAppByBrowser(): void {
-    try {
-      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
-      const want: Want = {
-        action: 'ohos.want.action.viewData',
-        entities: ['entity.system.browsable'],
-        uri: 'https://appgallery.huawei.com/app/detail?id=com.douhua.yuansu'
-      }
-
-      context.startAbility(want).then(() => {
-        // 通过浏览器打开成功，无需toast提示
-      }).catch((error: Error) => {
-        console.error('通过浏览器打开应用市场失败:', error)
-        // 打开失败，无需toast提示
-      })
-    } catch (error) {
-      console.error('通过浏览器打开应用市场异常:', error)
-      // 异常情况，无需toast提示
-    }
-  }
-
-  // 打开全能计分器应用
-  private openIScoreApp(): void {
-    try {
-      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
-      const want: Want = {
-        bundleName: 'com.huawei.appmarket',
-        abilityName: 'com.huawei.appmarket.MainAbility',
-        parameters: {
-          appId: 'com.douhua.jifen'
-        }
-      }
-
-      context.startAbility(want).then(() => {
-        // 打开应用市场成功，无需toast提示
-      }).catch((error: Error) => {
-        console.error('打开应用市场失败:', error)
-        this.openIScoreAppByBrowser()
-      })
-    } catch (error) {
-      console.error('打开应用市场异常:', error)
-      this.openIScoreAppByBrowser()
-    }
-  }
-
-  // 通过浏览器打开全能计分器应用页面作为备选方案
-  private openIScoreAppByBrowser(): void {
-    try {
-      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
-      const want: Want = {
-        action: 'ohos.want.action.viewData',
-        entities: ['entity.system.browsable'],
-        uri: 'https://appgallery.huawei.com/app/detail?id=com.douhua.jifen'
-      }
-
-      context.startAbility(want).then(() => {
-        // 通过浏览器打开成功，无需toast提示
-      }).catch((error: Error) => {
-        console.error('通过浏览器打开应用市场失败:', error)
-        // 打开失败，无需toast提示
-      })
-    } catch (error) {
-      console.error('通过浏览器打开应用市场异常:', error)
-      // 异常情况，无需toast提示
-    }
-  }
-
-  // 打开开发助手应用
-  private openDevAssistantApp(): void {
-    try {
-      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
-      const want: Want = {
-        bundleName: 'com.huawei.appmarket',
-        abilityName: 'com.huawei.appmarket.MainAbility',
-        parameters: {
-          appId: 'com.douhua.kaifazhushou'
-        }
-      }
-
-      context.startAbility(want).then(() => {
-        // 打开应用市场成功，无需toast提示
-      }).catch((error: Error) => {
-        console.error('打开应用市场失败:', error)
-        this.openDevAssistantAppByBrowser()
-      })
-    } catch (error) {
-      console.error('打开应用市场异常:', error)
-      this.openDevAssistantAppByBrowser()
-    }
-  }
-
-  // 通过浏览器打开开发助手应用页面作为备选方案
-  private openDevAssistantAppByBrowser(): void {
-    try {
-      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
-      const want: Want = {
-        action: 'ohos.want.action.viewData',
-        entities: ['entity.system.browsable'],
-        uri: 'https://appgallery.huawei.com/app/detail?id=com.douhua.kaifazhushou'
-      }
-
-      context.startAbility(want).then(() => {
-        // 通过浏览器打开成功，无需toast提示
-      }).catch((error: Error) => {
-        console.error('通过浏览器打开应用市场失败:', error)
-        // 打开失败，无需toast提示
-      })
-    } catch (error) {
-      console.error('通过浏览器打开应用市场异常:', error)
-      // 异常情况，无需toast提示
-    }
-  }
-
-  // 打开国旗小百科应用
-  private openFlagApp(): void {
-    try {
-      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
-      const want: Want = {
-        bundleName: 'com.huawei.appmarket',
-        abilityName: 'com.huawei.appmarket.MainAbility',
-        parameters: {
-          appId: 'com.douhua.flag'
-        }
-      }
-
-      context.startAbility(want).then(() => {
-        // 打开应用市场成功，无需toast提示
-      }).catch((error: Error) => {
-        console.error('打开应用市场失败:', error)
-        this.openFlagAppByBrowser()
-      })
-    } catch (error) {
-      console.error('打开应用市场异常:', error)
-      this.openFlagAppByBrowser()
-    }
-  }
-
-  // 通过浏览器打开国旗小百科应用页面作为备选方案
-  private openFlagAppByBrowser(): void {
-    try {
-      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
-      const want: Want = {
-        action: 'ohos.want.action.viewData',
-        entities: ['entity.system.browsable'],
-        uri: 'https://appgallery.huawei.com/app/detail?id=com.douhua.flag'
-      }
-
-      context.startAbility(want).then(() => {
-        // 通过浏览器打开成功，无需toast提示
-      }).catch((error: Error) => {
-        console.error('通过浏览器打开应用市场失败:', error)
-        // 打开失败，无需toast提示
-      })
-    } catch (error) {
-      console.error('通过浏览器打开应用市场异常:', error)
-      // 异常情况，无需toast提示
-    }
-  }
-
-  // 打开财会工具箱应用
-  private openCaikuaiApp(): void {
-    try {
-      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
-      const want: Want = {
-        bundleName: 'com.huawei.appmarket',
-        abilityName: 'com.huawei.appmarket.MainAbility',
-        parameters: {
-          appId: 'com.douhua.caikuai'
-        }
-      }
-
-      context.startAbility(want).then(() => {
-        // 打开应用市场成功，无需toast提示
-      }).catch((error: Error) => {
-        console.error('打开应用市场失败:', error)
-        this.openCaikuaiAppByBrowser()
-      })
-    } catch (error) {
-      console.error('打开应用市场异常:', error)
-      this.openCaikuaiAppByBrowser()
-    }
-  }
-
-  // 通过浏览器打开财会工具箱应用页面作为备选方案
-  private openCaikuaiAppByBrowser(): void {
-    try {
-      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
-      const want: Want = {
-        action: 'ohos.want.action.viewData',
-        entities: ['entity.system.browsable'],
-        uri: 'https://appgallery.huawei.com/app/detail?id=com.douhua.caikuai'
-      }
-
-      context.startAbility(want).then(() => {
-        // 通过浏览器打开成功，无需toast提示
-      }).catch((error: Error) => {
-        console.error('通过浏览器打开应用市场失败:', error)
-        // 打开失败，无需toast提示
-      })
-    } catch (error) {
-      console.error('通过浏览器打开应用市场异常:', error)
-      // 异常情况，无需toast提示
     }
   }
 
@@ -632,52 +395,6 @@ export struct MePage {
       })
     } catch (error) {
       console.error('打开隐私政策异常:', error)
-    }
-  }
-
-  // 打开Rust从入门到放弃应用
-  private openRustApp(): void {
-    try {
-      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
-      const want: Want = {
-        bundleName: 'com.huawei.appmarket',
-        abilityName: 'com.huawei.appmarket.MainAbility',
-        parameters: {
-          appId: 'com.douhua.rustmaster'
-        }
-      }
-
-      context.startAbility(want).then(() => {
-        // 打开应用市场成功，无需toast提示
-      }).catch((error: Error) => {
-        console.error('打开应用市场失败:', error)
-        this.openRustAppByBrowser()
-      })
-    } catch (error) {
-      console.error('打开应用市场异常:', error)
-      this.openRustAppByBrowser()
-    }
-  }
-
-  // 通过浏览器打开Rust从入门到放弃应用页面作为备选方案
-  private openRustAppByBrowser(): void {
-    try {
-      const context = this.getUIContext().getHostContext() as common.UIAbilityContext
-      const want: Want = {
-        action: 'ohos.want.action.viewData',
-        entities: ['entity.system.browsable'],
-        uri: 'https://appgallery.huawei.com/app/detail?id=com.douhua.rustmaster'
-      }
-
-      context.startAbility(want).then(() => {
-        // 通过浏览器打开成功，无需toast提示
-      }).catch((error: Error) => {
-        console.error('通过浏览器打开应用市场失败:', error)
-        // 打开失败，无需toast提示
-      })
-    } catch (error) {
-      console.error('通过浏览器打开应用市场异常:', error)
-      // 异常情况，无需toast提示
     }
   }
 
@@ -859,36 +576,6 @@ export struct MePage {
       .padding({ left: 16, right: 16 })
       .onClick(() => {
         this.shareApp()
-      })
-      .hoverEffect(HoverEffect.Scale)
-      .focusable(true)
-  }
-
-  @Builder WechatGroupSettingsItem() {
-    Row() {
-      Column() {
-        Text($r('app.string.join_group_title'))
-          .fontSize(16)
-          .fontWeight(FontWeight.Medium)
-          .fontColor('#FFFFFF')
-          .textAlign(TextAlign.Start)
-          .width('100%')
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-      }
-      .layoutWeight(1)
-        .alignItems(HorizontalAlign.Start)
-
-      Image($rawfile('ic_arrow_right.svg'))
-        .width(16)
-        .height(16)
-        .fillColor('#666666')
-    }
-    .width('100%')
-      .height(56)
-      .padding({ left: 16, right: 16 })
-      .onClick(() => {
-        router.pushUrl({ url: 'pages/WechatGroupDetailPage' })
       })
       .hoverEffect(HoverEffect.Scale)
       .focusable(true)
@@ -1121,236 +808,6 @@ export struct MePage {
   }
 
   // 手电筒测试UI已移除（功能已移至翻译页面）
-  /*
-  @Builder FlashlightTestItem() { ... }
-  @Builder SOSTestItem() { ... }
-  */
-
-  // 获取拼音摩斯码
-  private getPinyinMorseCode(): string {
-    // 写死的摩斯码
-    return '-·-- ··/··· ···· ·- -· --·/-·-- ·· -· --·/-·-- --- -· --·/-·-· ·- -·/-·-- ··-/···· --- -· --·/-- · -· --·/-·- ·- ··/··-· ·-/--·· ···· ·/·--- ··/·-·· ··/·--- ··/···· ··- ·-/-· ··/-·· ·/-··- ·· ·-/--·· ·- ··/- ··/-·-- ·- -·/·--- ·· ·- -· --·/--·· ···· ··-/·-·· ··/·-- ---/-- · -·/·--- ·· ·/··· ··- ---/--· ··- ·- -·/··-· ·- -· --·/·--- ··/·-·· ··/·--- ·· -·'
-  }
-
-  // 复制摩斯码到剪贴板
-  private async copyMorseCode(content: string): Promise<void> {
-    try {
-      const pasteData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, content)
-      const systemPasteboard = pasteboard.getSystemPasteboard()
-      await systemPasteboard.setData(pasteData)
-
-      if (this.resourceMgr) {
-        const message = await this.resourceMgr.getStringByName('copied')
-        const uiContext = this.getUIContext()
-        if (uiContext) {
-          uiContext.getPromptAction().showToast({
-            message: message,
-            duration: 2000
-          })
-        }
-      }
-    } catch (error) {
-      console.error('[MePage] Failed to copy morse code:', error)
-    }
-  }
-
-  @Builder
-  MorseCodeFootnote() {
-    // 只在中文语言时显示
-    if (this.currentLanguage.startsWith('zh')) {
-      Column() {
-        if (this.isMorseCodeExpanded) {
-          Text(this.getPinyinMorseCode())
-            .fontSize(11)
-            .fontColor('#666666')
-            .fontFamily('monospace')
-            .lineHeight(16)
-            .width('100%')
-            .padding({ top: 16, bottom: 8, left: 16, right: 16 })
-        } else {
-          Text(this.getPinyinMorseCode())
-            .fontSize(11)
-            .fontColor('#666666')
-            .fontFamily('monospace')
-            .maxLines(3)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .lineHeight(16)
-            .width('100%')
-            .padding({ top: 16, bottom: 8, left: 16, right: 16 })
-        }
-
-        // 展开/收起按钮和复制按钮
-        Row() {
-          Row() {
-            Text(this.isMorseCodeExpanded ? $r('app.string.collapse') : $r('app.string.expand'))
-              .fontSize(12)
-              .fontColor('#999999')
-            
-            Image($rawfile('ic_arrow_right.svg'))
-              .width(12)
-              .height(12)
-              .fillColor('#999999')
-              .rotate({ angle: this.isMorseCodeExpanded ? 90 : 0 })
-          }
-          .onClick(() => {
-            this.isMorseCodeExpanded = !this.isMorseCodeExpanded
-          })
-          
-          Blank()
-          
-          if (this.isMorseCodeExpanded) {
-            Button() {
-              Image($rawfile('ic_copy.svg'))
-                .width(14)
-                .height(14)
-            }
-            .type(ButtonType.Normal)
-            .backgroundColor(Color.Transparent)
-            .width(32)
-            .height(32)
-            .onClick(() => {
-              this.copyMorseCode(this.getPinyinMorseCode())
-            })
-          }
-        }
-        .width('100%')
-          .padding({ left: 16, right: 16, bottom: 8 })
-          .justifyContent(FlexAlign.SpaceBetween)
-      }
-      .width('100%')
-        .alignItems(HorizontalAlign.Start)
-    }
-  }
-
-  @Builder OtherAppsSection() {
-    // 其他应用部分
-    Column() {
-      Text($r('app.string.other_apps'))
-        .fontSize(14)
-        .fontWeight(FontWeight.Normal)
-        .fontColor('#999999')
-        .margin({ top: 30, bottom: 12, left: 16 })
-        .alignSelf(ItemAlign.Start)
-
-      // 财会工具箱应用卡片（首位）
-      Row() {
-        Image($rawfile('appicon_caikuai.png'))
-          .width(48)
-          .height(48)
-          .borderRadius(8)
-          .margin({ right: 16 })
-
-        Column() {
-          Text($r('app.string.app_name_caikuai'))
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#FFFFFF')
-            .textAlign(TextAlign.Start)
-            .width('100%')
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-        }
-        .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
-
-        Image($rawfile('ic_arrow_right.svg'))
-          .width(16)
-          .height(16)
-          .fillColor('#666666')
-      }
-      .width('100%')
-        .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-        .backgroundColor('#111111')
-        .borderRadius(12)
-        .margin({ bottom: 8 })
-        .onClick(() => {
-          this.openCaikuaiApp()
-        })
-        .hoverEffect(HoverEffect.Scale)
-        .focusable(true)
-
-      // 独立开发助手应用卡片
-      Row() {
-        Image($rawfile('appicon_devassistant.png'))
-          .width(48)
-          .height(48)
-          .borderRadius(8)
-          .margin({ right: 16 })
-
-        Column() {
-          Text($r('app.string.app_name_dev_assistant'))
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#FFFFFF')
-            .textAlign(TextAlign.Start)
-            .width('100%')
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-        }
-        .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
-
-        Image($rawfile('ic_arrow_right.svg'))
-          .width(16)
-          .height(16)
-          .fillColor('#666666')
-      }
-      .width('100%')
-        .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-        .backgroundColor('#111111')
-        .borderRadius(12)
-        .margin({ bottom: 8 })
-        .onClick(() => {
-          this.openDevAssistantApp()
-        })
-        .hoverEffect(HoverEffect.Scale)
-        .focusable(true)
-
-      // 码上学（Rust Master）应用卡片，图标与名称来自 rustmaster 项目
-      Row() {
-        Image($rawfile('appicon_rustmaster.png'))
-          .width(48)
-          .height(48)
-          .borderRadius(8)
-          .margin({ right: 16 })
-
-        Column() {
-          Text($r('app.string.app_name_rustmaster'))
-            .fontSize(16)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#FFFFFF')
-            .textAlign(TextAlign.Start)
-            .width('100%')
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-        }
-        .layoutWeight(1)
-          .alignItems(HorizontalAlign.Start)
-
-        Image($rawfile('ic_arrow_right.svg'))
-          .width(16)
-          .height(16)
-          .fillColor('#666666')
-      }
-      .width('100%')
-        .padding({ left: 16, right: 16, top: 12, bottom: 12 })
-        .backgroundColor('#111111')
-        .borderRadius(12)
-        .margin({ bottom: 8 })
-        .onClick(() => {
-          this.openRustApp()
-        })
-        .hoverEffect(HoverEffect.Scale)
-        .focusable(true)
-
-      // 脚注 - 拼音摩斯码
-      this.MorseCodeFootnote()
-    }
-    .width('100%')
-      .alignItems(HorizontalAlign.Start)
-      .constraintSize({ maxWidth: 400 })
-  }
-
 
   build() {
     Column() {
@@ -1404,14 +861,6 @@ export struct MePage {
                 this.KeySettingsSettingsItem()
                 Divider().strokeWidth(1).color('#222222')
 
-                // 手电筒测试功能已移至翻译页面
-                // this.FlashlightTestItem()
-                // Divider().strokeWidth(1).color('#222222')
-
-                // SOS测试功能已移至翻译页面
-                // this.SOSTestItem()
-                // Divider().strokeWidth(1).color('#222222')
-
                 // 语言切换条目
                 this.LanguageSettingsItem()
                 Divider().strokeWidth(1).color('#222222')
@@ -1420,10 +869,6 @@ export struct MePage {
                 Divider().strokeWidth(1).color('#222222')
 
                 this.ShareSettingsItem()
-                if (this.currentLanguage.startsWith('zh')) {
-                  Divider().strokeWidth(1).color('#222222')
-                  this.WechatGroupSettingsItem()
-                }
               }
               .width('100%')
                 .backgroundColor('#111111')
@@ -1431,8 +876,6 @@ export struct MePage {
                 .border({ width: 1, color: '#222222' })
                 .padding({ top: 4, bottom: 4 })
                 .constraintSize({ maxWidth: 400 })
-
-              this.OtherAppsSection()
             }
             .width('100%')
               .padding({ left: 20, right: 20 })

@@ -1,5 +1,3 @@
-import { DeviceHelper } from '../utils/DeviceHelper'
-
 export class LessonData {
   // 摩斯电码基础课程数据
   static readonly introSections: Map<string, string[]> = new Map([

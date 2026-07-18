@@ -29,13 +29,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "/Users/yangyangshi/.ohos/config/default_morse_Sy15OF2MAvf3gS8046RSidVqmz-wG5nu5zL2br881ls=.cer",
+          "certpath": "/Users/yangyang/.ohos/config/default_morse_ZJyIRZQNeLbnWDDORrYdzlem9c8NN02JpjUlVHX45yQ=.cer",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001AD947C80932227E3AB67F06E1BE53DA14DC11911B47417451661A82CF509758105114E9427071",
-          "profile": "/Users/yangyangshi/.ohos/config/default_morse_Sy15OF2MAvf3gS8046RSidVqmz-wG5nu5zL2br881ls=.p7b",
+          "keyPassword": "0000001B7A4668D2B8F9C2E3665CCFA252EEA3B1CA1C80305996C52AE90C403BEE93383628AC05B68F03F6",
+          "profile": "/Users/yangyang/.ohos/config/default_morse_ZJyIRZQNeLbnWDDORrYdzlem9c8NN02JpjUlVHX45yQ=.p7b",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "/Users/yangyangshi/.ohos/config/default_morse_Sy15OF2MAvf3gS8046RSidVqmz-wG5nu5zL2br881ls=.p12",
-          "storePassword": "0000001A6825B2EA796BBA35E7819F3298330B1C3C1A3081E57D4F84F8CE8B19ABFEEADCA7A536D854B2"
+          "storeFile": "/Users/yangyang/.ohos/config/default_morse_ZJyIRZQNeLbnWDDORrYdzlem9c8NN02JpjUlVHX45yQ=.p12",
+          "storePassword": "0000001B19799664A75A9DCBEB18B8F88323CF26CEC97B952E77D316D31037E499BCCCBCC64F30C0A414D9"
         }
       },
       {

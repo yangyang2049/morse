@@ -11,7 +11,6 @@ interface ModeItem {
 }
 
 
-@Entry
 @Component
 export struct PracticeDifficultyPage {
   @State favoritesStore: FavoritesStore = FavoritesStore.getInstance()

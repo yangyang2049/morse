@@ -533,7 +533,7 @@ export const Constants = {
 ### 🟡 中优先级（近期修复）
 
 1. ✅ **CustomDialog 轮询机制优化** - 已优化：将轮询间隔从100ms优化到200ms，减少50%检查频率，并添加了状态同步方法
-2. **Preferences 批量保存优化** - 待修复：性能提升
+2. ✅ **Preferences 批量保存优化** - 已修复：`FavoritesStore` / `PracticeProgressStore` 对高频写入使用 500ms 防抖，多次修改合并为一次 put + flush
 3. ✅ **搜索防抖机制** - 已修复：在 `ChineseTelegraphCodePage` 中添加了真正的防抖机制，添加定时器管理
 
 ### 🟢 低优先级（长期优化）

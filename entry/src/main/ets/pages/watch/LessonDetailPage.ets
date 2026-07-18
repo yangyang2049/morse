@@ -10,7 +10,6 @@ import { LessonGroups } from '../../data/LessonGroups'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
 import { FavoritesStore } from '../../store/FavoritesStore'
 import { progressStore } from '../../store/ProgressStoreSingleton'
-import { LessonConfig } from '../../data/LessonConfig'
 
 @Entry
 @Component
@@ -25,7 +24,7 @@ struct LessonDetailPage {
   @State showGuideDialog: boolean = false
   @State vibrationEnabled: boolean = true
   
-  private preferencesStore: preferences.Preferences | null = null
+  private practiceSettingsStore: preferences.Preferences | null = null
   private pressStartTime: number = 0
   private longPressTimer: number | null = null
   private autoCheckTimer: number | null = null
@@ -36,14 +35,13 @@ struct LessonDetailPage {
   private pendingSave: boolean = false
 
   async aboutToAppear() {
-    // 初始化偏好设置存储
     try {
       const context = this.getUIContext()?.getHostContext() as Context
       if (context) {
-        this.preferencesStore = await preferences.getPreferences(context, 'lesson_progress')
-        const practiceStore = await preferences.getPreferences(context, 'practice_settings')
-        await this.loadLongPressThresholdPreference(practiceStore)
-        await this.loadVibrationPreference(practiceStore)
+        await progressStore.load(context)
+        this.practiceSettingsStore = await preferences.getPreferences(context, 'practice_settings')
+        await this.loadLongPressThresholdPreference(this.practiceSettingsStore)
+        await this.loadVibrationPreference(this.practiceSettingsStore)
         await this.checkAndShowGuide()
       }
     } catch (error) {
@@ -55,14 +53,12 @@ struct LessonDetailPage {
       const lessonType = (params['lessonType'] as 'alphabet' | 'numbers' | 'punctuation') || 'alphabet'
       const lessonIndex = (params['lessonIndex'] as number) || 0
 
-      // 验证 lessonType
       if (lessonType !== 'alphabet' && lessonType !== 'numbers' && lessonType !== 'punctuation') {
         console.error('[LessonDetailPage] Invalid lessonType:', lessonType)
         router.back()
         return
       }
 
-      // 验证 lessonIndex
       const groups = lessonType === 'alphabet'
         ? LessonGroups.getAlphabetGroups()
         : lessonType === 'numbers'
@@ -99,16 +95,12 @@ struct LessonDetailPage {
       this.clearInputTimer = null
     }
     
-    // 确保保存待处理的进度
-    if (this.pendingSave && this.preferencesStore) {
-      const nextIndex = this.currentLessonIndex + 1
-      const key = this.lessonType === 'alphabet' ? 'alphabet_progress' :
-        this.lessonType === 'numbers' ? 'numbers_progress' : 'punctuation_progress'
-      this.preferencesStore.put(key, nextIndex).then(() => {
-        return this.preferencesStore?.flush()
-      }).catch((error: Error) => {
-        console.error('[LessonDetailPage] Failed to save progress on exit:', error)
-      })
+    if (this.pendingSave) {
+      const context = this.getUIContext()?.getHostContext() as Context
+      if (context) {
+        void progressStore.saveWatchGroupCompleted(this.lessonType, this.currentLessonIndex, context)
+      }
+      this.pendingSave = false
     }
     
     if (this.saveTimer) {
@@ -386,10 +378,8 @@ struct LessonDetailPage {
     }
   }
 
-  // 保存课程进度 (防抖)
+  // 保存课程进度 (防抖) — 仅写入 progressStore
   private async saveLessonProgress(): Promise<void> {
-    if (!this.preferencesStore) return
-    
     this.pendingSave = true
     
     if (this.saveTimer) {
@@ -397,30 +387,14 @@ struct LessonDetailPage {
     }
     
     this.saveTimer = setTimeout(async () => {
-      if (this.pendingSave && this.preferencesStore) {
+      if (this.pendingSave) {
         try {
-          const nextIndex = this.currentLessonIndex + 1
-          const key = this.lessonType === 'alphabet' ? 'alphabet_progress' :
-            this.lessonType === 'numbers' ? 'numbers_progress' : 'punctuation_progress'
-          await this.preferencesStore.put(key, nextIndex)
-          await this.preferencesStore.flush()
-          this.pendingSave = false
-          console.log(`[LessonDetailPage] Saved progress: ${key}=${nextIndex}`)
-          
-          // 同时保存到 ProgressStoreSingleton 并发送事件
-          // 根据 lessonType 和 currentLessonIndex 计算课程编号
-          const lessonId = this.lessonType === 'alphabet' 
-            ? `alphabet_lesson_${this.currentLessonIndex}`
-            : `number_lesson_${this.currentLessonIndex}`
-          const lessonNumber = LessonConfig.getLessonNumber(lessonId)
-          
-          if (lessonNumber > 0) {
-            const context = this.getUIContext()?.getHostContext() as Context
-            if (context) {
-              await progressStore.saveLessonCompleted(lessonNumber, context)
-              console.log(`[LessonDetailPage] Lesson ${lessonNumber} also saved to ProgressStoreSingleton`)
-            }
+          const context = this.getUIContext()?.getHostContext() as Context
+          if (context) {
+            await progressStore.saveWatchGroupCompleted(this.lessonType, this.currentLessonIndex, context)
+            console.log(`[LessonDetailPage] Saved group ${this.lessonType}[${this.currentLessonIndex}] to progressStore`)
           }
+          this.pendingSave = false
         } catch (error) {
           console.error('[LessonDetailPage] Failed to save lesson progress:', error)
         }
@@ -461,10 +435,9 @@ struct LessonDetailPage {
   // 检查并显示引导对话框
   private async checkAndShowGuide(): Promise<void> {
     try {
-      if (this.preferencesStore) {
-        const hasShownGuide = await this.preferencesStore.get('has_shown_watch_letter_lesson_guide', false) as boolean
+      if (this.practiceSettingsStore) {
+        const hasShownGuide = await this.practiceSettingsStore.get('has_shown_watch_letter_lesson_guide', false) as boolean
         if (!hasShownGuide) {
-          // 延迟显示，确保页面已加载
           setTimeout(() => {
             this.showGuideDialog = true
           }, 500)
@@ -478,9 +451,9 @@ struct LessonDetailPage {
   // 保存已显示引导的状态
   private async saveGuideShown(): Promise<void> {
     try {
-      if (this.preferencesStore) {
-        await this.preferencesStore.put('has_shown_watch_letter_lesson_guide', true)
-        await this.preferencesStore.flush()
+      if (this.practiceSettingsStore) {
+        await this.practiceSettingsStore.put('has_shown_watch_letter_lesson_guide', true)
+        await this.practiceSettingsStore.flush()
         console.log('[LessonDetailPage] Saved guide shown status')
       }
     } catch (error) {

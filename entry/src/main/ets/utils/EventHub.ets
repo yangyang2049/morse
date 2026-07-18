@@ -56,12 +56,6 @@ export class EventHub {
       console.error(`[EventHub] emit: no listeners for ${eventName}`)
     }
   }
-
-  // 清除所有监听器
-  clear(): void {
-    this.listeners.clear()
-    console.error(`[EventHub] clear: all listeners cleared`)
-  }
 }
 
 // 导出单例实例

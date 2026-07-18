@@ -16,6 +16,8 @@ export class PracticeProgressStore {
     private static instance: PracticeProgressStore
     private progressMap: Map<string, CharacterProgress> = new Map()
     private preferencesStore: preferences.Preferences | null = null
+    private saveTimer: number | null = null
+    private static readonly SAVE_DEBOUNCE_MS: number = 500
 
     private constructor() {
     }
@@ -56,7 +58,18 @@ export class PracticeProgressStore {
         }
     }
 
-    private async save(): Promise<void> {
+    /** 练习过程中频繁答题：500ms 内合并为一次 flush */
+    private scheduleSave(): void {
+        if (this.saveTimer !== null) {
+            clearTimeout(this.saveTimer)
+        }
+        this.saveTimer = setTimeout(() => {
+            this.saveTimer = null
+            void this.persistNow()
+        }, PracticeProgressStore.SAVE_DEBOUNCE_MS)
+    }
+
+    private async persistNow(): Promise<void> {
         if (!this.preferencesStore) return
 
         try {
@@ -67,8 +80,7 @@ export class PracticeProgressStore {
                 progressObj[entry[0]] = entry[1]
             }
 
-            const progressJson = JSON.stringify(progressObj)
-            await this.preferencesStore.put(KEY_PROGRESS, progressJson)
+            await this.preferencesStore.put(KEY_PROGRESS, JSON.stringify(progressObj))
             await this.preferencesStore.flush()
         } catch (error) {
             console.error('[PracticeProgressStore] Failed to save progress:', error)
@@ -90,7 +102,7 @@ export class PracticeProgressStore {
         progress.lastPracticed = Date.now()
 
         this.progressMap.set(character, progress)
-        await this.save()
+        this.scheduleSave()
     }
 
     // 记录错误答案
@@ -108,12 +120,7 @@ export class PracticeProgressStore {
         progress.lastPracticed = Date.now()
 
         this.progressMap.set(character, progress)
-        await this.save()
-    }
-
-    // 获取字符进度
-    getProgress(character: string): CharacterProgress | null {
-        return this.progressMap.get(character) || null
+        this.scheduleSave()
     }
 
     // 计算字符的权重（权重越高，越应该被练习）
@@ -155,17 +162,6 @@ export class PracticeProgressStore {
         }
 
         return weight
-    }
-
-    // 获取所有字符进度统计
-    getAllProgress(): Map<string, CharacterProgress> {
-        return new Map(this.progressMap)
-    }
-
-    // 清除所有进度（用于重置）
-    async clearAllProgress(): Promise<void> {
-        this.progressMap.clear()
-        await this.save()
     }
 }
 

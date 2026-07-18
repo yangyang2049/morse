@@ -360,12 +360,6 @@ export class PracticeViewModel {
     this.generateNewCharacter()
   }
 
-  // Play morse code audio
-  playMorseCode(): void {
-    // TODO: Implement audio playback
-    console.log(`Playing morse code: ${this.currentMorse}`)
-  }
-
   // Show hint for 1 second
   flashHint(): void {
     if (this.hintTimer !== null) {

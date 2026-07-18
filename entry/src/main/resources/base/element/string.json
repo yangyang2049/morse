@@ -13,8 +13,8 @@
       "value": "摩斯电码通"
     },
     {
-      "name": "app_name",
-      "value": "摩斯电码通"
+      "name": "vibrate_permission_reason",
+      "value": "用于摩斯电码振动反馈"
     },
     {
       "name": "learn",
@@ -43,14 +43,6 @@
     {
       "name": "share_app",
       "value": "分享应用"
-    },
-    {
-      "name": "other_apps",
-      "value": "其他应用"
-    },
-    {
-      "name": "periodic_table_app",
-      "value": "掌上元素周期表"
     },
     {
       "name": "language",
@@ -83,14 +75,6 @@
     {
       "name": "copy_success",
       "value": "已复制到剪贴板"
-    },
-    {
-      "name": "opened_via_browser",
-      "value": "已通过浏览器打开应用市场"
-    },
-    {
-      "name": "cannot_open_app_gallery",
-      "value": "无法打开应用市场，请稍后重试"
     },
     {
       "name": "version",
@@ -249,14 +233,6 @@
       "value": "进入复习模式"
     },
     {
-      "name": "agent_morse_fun_facts",
-      "value": "摩斯电码冷知识"
-    },
-    {
-      "name": "agent_morse_fun_facts_prompt",
-      "value": "讲个摩斯电码冷知识"
-    },
-    {
       "name": "close",
       "value": "确定"
     },
@@ -337,10 +313,6 @@
       "value": "收藏"
     },
     {
-      "name": "practice_favorites",
-      "value": "练习收藏的字母"
-    },
-    {
       "name": "favorites_empty",
       "value": "收藏夹为空，先去练习一些字母吧！"
     },
@@ -353,24 +325,12 @@
       "value": "简单"
     },
     {
-      "name": "easy_desc",
-      "value": "仅字母"
-    },
-    {
       "name": "medium",
       "value": "中等"
     },
     {
-      "name": "medium_desc",
-      "value": "字母 + 数字"
-    },
-    {
       "name": "hard",
       "value": "困难"
-    },
-    {
-      "name": "hard_desc",
-      "value": "所有字符"
     },
     {
       "name": "mistakes_empty",
@@ -419,10 +379,6 @@
     {
       "name": "removed_from_mistakes",
       "value": "已从错题本移除！"
-    },
-    {
-      "name": "practice_records",
-      "value": "练习记录"
     },
     {
       "name": "practiced",
@@ -785,40 +741,8 @@
       "value": "• 从基础汉字开始学习最科学\n• 基础汉字使用频率高，容易记忆\n• 循序渐进，避免信息过载\n• 建立学习信心，提高学习效率"
     },
     {
-      "name": "morsecode_app",
-      "value": "摩斯电码"
-    },
-    {
-      "name": "theme",
-      "value": "主题"
-    },
-    {
-      "name": "theme_selection_title",
-      "value": "选择主题"
-    },
-    {
-      "name": "theme_default",
-      "value": "默认"
-    },
-    {
-      "name": "theme_retro",
-      "value": "复古"
-    },
-    {
       "name": "font",
       "value": "字体"
-    },
-    {
-      "name": "font_selection_title",
-      "value": "选择字体"
-    },
-    {
-      "name": "font_default",
-      "value": "默认"
-    },
-    {
-      "name": "font_digital",
-      "value": "数字"
     },
     {
       "name": "practice_input_mode",
@@ -839,26 +763,6 @@
     {
       "name": "share_description",
       "value": "推荐摩尔斯电码学习应用"
-    },
-    {
-      "name": "expand",
-      "value": "展开"
-    },
-    {
-      "name": "collapse",
-      "value": "收起"
-    },
-    {
-      "name": "app_name_caikuai",
-      "value": "财会工具箱"
-    },
-    {
-      "name": "app_name_dev_assistant",
-      "value": "独立开发助手"
-    },
-    {
-      "name": "app_name_rustmaster",
-      "value": "码上学"
     },
     {
       "name": "select_practice_input_mode",
@@ -889,10 +793,6 @@
       "value": "长按：— (划)"
     },
     {
-      "name": "qq_group_number_copied",
-      "value": "QQ群号已复制"
-    },
-    {
       "name": "long_press_duration",
       "value": "长按时间"
     },
@@ -907,10 +807,6 @@
     {
       "name": "mistakes_mixed_mode_desc",
       "value": "混合3种模式练习"
-    },
-    {
-      "name": "camera_permission_reason",
-      "value": "需要相机权限来控制手电筒闪烁显示摩斯码"
     },
     {
       "name": "category_letters",
@@ -1045,14 +941,6 @@
       "value": "返回"
     },
     {
-      "name": "watch_delete",
-      "value": "删除"
-    },
-    {
-      "name": "watch_clear",
-      "value": "清除"
-    },
-    {
       "name": "watch_completed",
       "value": "完成！"
     },
@@ -1099,14 +987,6 @@
     {
       "name": "watch_guide_click_to_input_code",
       "value": "点击输入电码，不确定时点击眼睛图标查看"
-    },
-    {
-      "name": "join_group_title",
-      "value": "加群找同好"
-    },
-    {
-      "name": "join_group_detail",
-      "value": "杨阳的开发宇宙\n打开公众号 > 加群 > 摩斯电码通，通过二维码加入。一起玩耍吧！"
     }
   ]
 }

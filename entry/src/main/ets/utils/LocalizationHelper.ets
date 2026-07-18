@@ -26,23 +26,4 @@ export class LocalizationHelper {
       return 'zh-CN'
     }
   }
-
-  /**
-   * 判断是否为中文
-   * @returns 是否为中文
-   */
-  static isChinese(): boolean {
-    const lang = LocalizationHelper.getCurrentLanguage()
-    return lang.startsWith('zh')
-  }
-
-  /**
-   * 判断是否为英文
-   * @returns 是否为英文
-   */
-  static isEnglish(): boolean {
-    const lang = LocalizationHelper.getCurrentLanguage()
-    return lang.startsWith('en')
-  }
 }
-

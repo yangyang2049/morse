@@ -13,8 +13,8 @@
       "value": "Morse Code"
     },
     {
-      "name": "app_name",
-      "value": "Morse Code"
+      "name": "vibrate_permission_reason",
+      "value": "Used for Morse code vibration feedback"
     },
     {
       "name": "tagline",
@@ -95,14 +95,6 @@
     {
       "name": "entering_review_mode",
       "value": "Entering review mode"
-    },
-    {
-      "name": "agent_morse_fun_facts",
-      "value": "Fun Facts"
-    },
-    {
-      "name": "agent_morse_fun_facts_prompt",
-      "value": "Tell me a Morse code fun fact"
     },
     {
       "name": "language",
@@ -205,18 +197,6 @@
       "value": "Hard"
     },
     {
-      "name": "easy_desc",
-      "value": "Letters Only"
-    },
-    {
-      "name": "medium_desc",
-      "value": "Letters + Numbers"
-    },
-    {
-      "name": "hard_desc",
-      "value": "All Characters"
-    },
-    {
       "name": "favorites",
       "value": "Favorites"
     },
@@ -243,10 +223,6 @@
     {
       "name": "favorite_removed",
       "value": "Removed from favorites"
-    },
-    {
-      "name": "practice_records",
-      "value": "Practice Records"
     },
     {
       "name": "practiced",
@@ -521,10 +497,6 @@
       "value": "Share App"
     },
     {
-      "name": "other_apps",
-      "value": "Other Apps"
-    },
-    {
       "name": "version",
       "value": "Version"
     },
@@ -547,14 +519,6 @@
     {
       "name": "copy_success",
       "value": "Copied to clipboard"
-    },
-    {
-      "name": "opened_via_browser",
-      "value": "Opened App Gallery via browser"
-    },
-    {
-      "name": "cannot_open_app_gallery",
-      "value": "Cannot open App Gallery, please try again later"
     },
     {
       "name": "lesson_1",
@@ -733,10 +697,6 @@
       "value": "Punctuation"
     },
     {
-      "name": "practice_favorites",
-      "value": "Practice favorite letters"
-    },
-    {
       "name": "mistakes_desc",
       "value": "Review wrong letters"
     },
@@ -747,14 +707,6 @@
     {
       "name": "mistakes_empty",
       "value": "No mistakes yet!"
-    },
-    {
-      "name": "periodic_table_app",
-      "value": "Periodic Table"
-    },
-    {
-      "name": "morsecode_app",
-      "value": "Morse Code"
     },
     {
       "name": "please_complete_previous_lessons",
@@ -789,36 +741,8 @@
       "value": "Load More"
     },
     {
-      "name": "theme",
-      "value": "Theme"
-    },
-    {
-      "name": "theme_selection_title",
-      "value": "Select Theme"
-    },
-    {
-      "name": "theme_default",
-      "value": "Default"
-    },
-    {
-      "name": "theme_retro",
-      "value": "Retro"
-    },
-    {
       "name": "font",
       "value": "Font"
-    },
-    {
-      "name": "font_selection_title",
-      "value": "Select Font"
-    },
-    {
-      "name": "font_default",
-      "value": "Default"
-    },
-    {
-      "name": "font_digital",
-      "value": "Digital"
     },
     {
       "name": "practice_input_mode",
@@ -839,26 +763,6 @@
     {
       "name": "share_description",
       "value": "Recommend Morse Code Learning App"
-    },
-    {
-      "name": "expand",
-      "value": "Expand"
-    },
-    {
-      "name": "collapse",
-      "value": "Collapse"
-    },
-    {
-      "name": "app_name_caikuai",
-      "value": "Accounting Tools"
-    },
-    {
-      "name": "app_name_dev_assistant",
-      "value": "Dev Assistant"
-    },
-    {
-      "name": "app_name_rustmaster",
-      "value": "Code Now"
     },
     {
       "name": "select_practice_input_mode",
@@ -889,10 +793,6 @@
       "value": "Long press: — (dash)"
     },
     {
-      "name": "qq_group_number_copied",
-      "value": "QQ group number copied"
-    },
-    {
       "name": "long_press_duration",
       "value": "Long Press Duration"
     },
@@ -907,10 +807,6 @@
     {
       "name": "mistakes_mixed_mode_desc",
       "value": "Mixed 3 modes practice"
-    },
-    {
-      "name": "camera_permission_reason",
-      "value": "Camera permission needed to control flashlight for Morse code display"
     },
     {
       "name": "category_letters",
@@ -1043,14 +939,6 @@
     {
       "name": "watch_back",
       "value": "Back"
-    },
-    {
-      "name": "watch_delete",
-      "value": "Delete"
-    },
-    {
-      "name": "watch_clear",
-      "value": "Clear"
     },
     {
       "name": "watch_completed",

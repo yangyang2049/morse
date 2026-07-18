@@ -15,6 +15,8 @@ export class FavoritesStore {
   
   private static instance: FavoritesStore | null = null
   private preferencesStore: preferences.Preferences | null = null
+  private saveTimer: number | null = null
+  private static readonly SAVE_DEBOUNCE_MS: number = 500
   
   private constructor() {}
   
@@ -39,12 +41,12 @@ export class FavoritesStore {
   // 收藏相关方法
   async addToFavorites(character: string): Promise<void> {
     this.favoriteCharacters.add(character)
-    await this.save()
+    this.scheduleSave()
   }
   
   async removeFromFavorites(character: string): Promise<void> {
     this.favoriteCharacters.delete(character)
-    await this.save()
+    this.scheduleSave()
   }
   
   isFavorite(character: string): boolean {
@@ -66,12 +68,12 @@ export class FavoritesStore {
   // 错题相关方法
   async addToMistakes(character: string): Promise<void> {
     this.mistakeCharacters.add(character)
-    await this.save()
+    this.scheduleSave()
   }
   
   async removeFromMistakes(character: string): Promise<void> {
     this.mistakeCharacters.delete(character)
-    await this.save()
+    this.scheduleSave()
   }
   
   isMistake(character: string): boolean {
@@ -87,13 +89,13 @@ export class FavoritesStore {
     const currentCount = this.consecutiveCorrectCount.get(character) || 0
     const newCount = currentCount + 1
     this.consecutiveCorrectCount.set(character, newCount)
-    await this.save()
+    this.scheduleSave()
     return newCount
   }
   
   async resetConsecutiveCorrect(character: string): Promise<void> {
     this.consecutiveCorrectCount.set(character, 0)
-    await this.save()
+    this.scheduleSave()
   }
   
   getConsecutiveCorrectCount(character: string): number {
@@ -108,17 +110,12 @@ export class FavoritesStore {
   // 从错题本移除字符（如果连续正确3次）
   async tryRemoveFromMistakes(character: string): Promise<boolean> {
     if (this.shouldRemoveFromMistakes(character) && this.isMistake(character)) {
-      await this.removeFromMistakes(character)
-      await this.resetConsecutiveCorrect(character) // 重置计数
+      this.mistakeCharacters.delete(character)
+      this.consecutiveCorrectCount.set(character, 0)
+      this.scheduleSave()
       return true
     }
     return false
-  }
-  
-  // 获取收藏的摩斯码对象
-  getFavoriteMorseCodes(): MorseCode[] {
-    const allCodes = [...MorseCodeData.englishAlphabet, ...MorseCodeData.numbers, ...MorseCodeData.punctuation]
-    return allCodes.filter(code => this.favoriteCharacters.has(code.character))
   }
   
   // 获取错题的摩斯码对象
@@ -153,38 +150,34 @@ export class FavoritesStore {
     }
   }
 
-  // 保存数据到本地存储
-  private async save(): Promise<void> {
+  /** 500ms 内多次修改合并为一次 put + flush */
+  private scheduleSave(): void {
+    if (this.saveTimer !== null) {
+      clearTimeout(this.saveTimer)
+    }
+    this.saveTimer = setTimeout(() => {
+      this.saveTimer = null
+      void this.persistNow()
+    }, FavoritesStore.SAVE_DEBOUNCE_MS)
+  }
+
+  private async persistNow(): Promise<void> {
     if (!this.preferencesStore) return
 
     try {
-      // 保存收藏字符
       const favoritesArray = Array.from(this.favoriteCharacters)
-      const favoritesJson = JSON.stringify(favoritesArray)
-      await this.preferencesStore.put(KEY_FAVORITES, favoritesJson)
+      await this.preferencesStore.put(KEY_FAVORITES, JSON.stringify(favoritesArray))
 
-      // 保存错题字符
       const mistakesArray = Array.from(this.mistakeCharacters)
-      const mistakesJson = JSON.stringify(mistakesArray)
-      await this.preferencesStore.put(KEY_MISTAKES, mistakesJson)
+      await this.preferencesStore.put(KEY_MISTAKES, JSON.stringify(mistakesArray))
 
-      // 保存连续正确次数
       const consecutiveArray = Array.from(this.consecutiveCorrectCount.entries())
-      const consecutiveJson = JSON.stringify(consecutiveArray)
-      await this.preferencesStore.put(KEY_CONSECUTIVE_CORRECT, consecutiveJson)
+      await this.preferencesStore.put(KEY_CONSECUTIVE_CORRECT, JSON.stringify(consecutiveArray))
 
       await this.preferencesStore.flush()
       console.log('[FavoritesStore] Data saved successfully')
     } catch (error) {
       console.error('[FavoritesStore] Failed to save to storage:', error)
     }
-  }
-  
-  // 清空所有数据
-  async clearAll(): Promise<void> {
-    this.favoriteCharacters.clear()
-    this.mistakeCharacters.clear()
-    this.consecutiveCorrectCount.clear()
-    await this.save()
   }
 }

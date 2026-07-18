@@ -1,1 +1,10 @@
-{"src":["pages/Index","pages/LessonDetailPage","pages/KnowledgeLessonPage","pages/PracticeDetailPage","pages/WechatGroupDetailPage","pages/watch/WechatGroupDetailPage"]}
+{
+  "src": [
+    "pages/watch/Index",
+    "pages/watch/PrivacyPage",
+    "pages/watch/KnowledgeLessonPage",
+    "pages/watch/LessonDetailPage",
+    "pages/watch/PracticeDetailPage",
+    "pages/watch/PracticeMistakesPage"
+  ]
+}
