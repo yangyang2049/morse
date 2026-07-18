@@ -4,6 +4,7 @@ import { DialogManager } from '../../widgets/CustomDialog'
 import { CustomDialog } from '../../widgets/CustomDialog'
 import { router } from '@kit.ArkUI'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
+import { SystemBarHelper } from '../../utils/SystemBarHelper'
 
 interface ChineseTelegraphCode {
   character: string
@@ -37,6 +38,7 @@ export struct ChineseTelegraphCodePage {
   private static isDataLoaded: boolean = false
 
   aboutToAppear() {
+    SystemBarHelper.applyDarkFromUIContext(this.getUIContext())
     console.log('ChineseTelegraphCodePage aboutToAppear called')
 
     // 检查语言设置

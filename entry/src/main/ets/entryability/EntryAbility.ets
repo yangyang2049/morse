@@ -3,10 +3,12 @@ import { window } from '@kit.ArkUI';
 import { deviceInfo } from '@kit.BasicServicesKit';
 import preferences from '@ohos.data.preferences';
 import { LocalizationHelper } from '../utils/LocalizationHelper';
+import { SystemBarHelper } from '../utils/SystemBarHelper';
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
-    this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
+    // 全应用深色主题；避免跟随系统浅色时导航栏默认变白
+    this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_DARK);
 
     // 默认英文；按系统/应用偏好语言映射到 zh-CN / zh-HK / en-US
     LocalizationHelper.initializeAppLanguage();
@@ -17,10 +19,8 @@ export default class EntryAbility extends UIAbility {
 
   onWindowStageCreate(windowStage: window.WindowStage): void {
     let mainPage = 'pages/Index';
-    
-    // Set status bar and navigation bar style
+
     windowStage.getMainWindow().then((windowClass) => {
-      // Set status bar and navigation bar properties
       windowClass.setWindowSystemBarProperties({
         statusBarColor: '#000000',
         statusBarContentColor: '#FFFFFF',
@@ -31,7 +31,6 @@ export default class EntryAbility extends UIAbility {
 
     try {
       if (deviceInfo.deviceType === 'wearable') {
-        // Check privacy agreement for wearable
         preferences.getPreferences(this.context, 'app_settings').then((prefs) => {
           return prefs.get('privacy_agreed', false);
         }).then((isAgreed) => {
@@ -43,12 +42,10 @@ export default class EntryAbility extends UIAbility {
           this.loadContent(windowStage, mainPage);
         }).catch((err: Error) => {
           console.error('[EntryAbility] Failed to get preferences:', err);
-          // Fallback to Privacy Page if check fails for safety
           mainPage = 'pages/watch/PrivacyPage';
           this.loadContent(windowStage, mainPage);
         });
       } else {
-        // Phone/Tablet logic (default)
         this.loadContent(windowStage, mainPage);
       }
     } catch (err) {
@@ -64,18 +61,18 @@ export default class EntryAbility extends UIAbility {
         return;
       }
       console.info('Succeeded in loading the content.');
+      // 页面加载后再设一次，避免启动过渡闪白
+      SystemBarHelper.applyDark(this.context);
     });
   }
 
   onWindowStageDestroy(): void {
-    // Main window is destroyed, release UI related resources
   }
 
   onForeground(): void {
-    // Ability has brought to foreground
+    SystemBarHelper.applyDark(this.context);
   }
 
   onBackground(): void {
-    // Ability has back to background
   }
 }

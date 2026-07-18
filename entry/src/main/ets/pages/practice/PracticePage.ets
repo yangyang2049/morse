@@ -5,6 +5,7 @@ import { FavoritesStore } from '../../store/FavoritesStore'
 import { PracticeViewModel } from '../../viewmodel/PracticeViewModel'
 import { PracticeProgressStore } from '../../store/PracticeProgressStore'
 import preferences from '@ohos.data.preferences'
+import { SystemBarHelper } from '../../utils/SystemBarHelper'
 
 // 练习模式类型
 type PracticeMode = 'text_to_code' | 'code_to_text' | 'sound_to_text'
@@ -56,6 +57,7 @@ export struct PracticePage {
   private playProgressTimer: number | null = null
 
   async aboutToAppear(): Promise<void> {
+    SystemBarHelper.applyDarkFromUIContext(this.getUIContext())
     // 获取路由参数
     try {
       const params: Record<string, Object> = (router.getParams?.() as Record<string, Object>) ?? {}
@@ -130,6 +132,7 @@ export struct PracticePage {
   }
 
   onPageShow(): void {
+    SystemBarHelper.applyDarkFromUIContext(this.getUIContext())
     if (this.preferencesStore) {
       this.reloadButtonModeFromStore()
     }

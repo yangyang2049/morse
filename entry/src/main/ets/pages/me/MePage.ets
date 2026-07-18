@@ -798,31 +798,29 @@ export struct MePage {
               .padding({ top: 20, bottom: 40 })
               .alignItems(HorizontalAlign.Center)
 
-            // 设置项（黑色背景卡片 + 分割线，无图标）
-            Column() {
-              // 盒子容器
+            // 设置项：前三项一组，后两项一组（无主标题）
+            Column({ space: 16 }) {
               Column() {
-                // 振动反馈设置（首位）
                 this.VibrationSettingsItem()
                 Divider().strokeWidth(1).color('#222222')
-
-                // 按键设置（单双键 + 长按阈值）
                 this.KeySettingsSettingsItem()
                 Divider().strokeWidth(1).color('#222222')
-
-                // 语言切换条目
                 this.LanguageSettingsItem()
-                Divider().strokeWidth(1).color('#222222')
+              }
+              .width('100%')
+                .backgroundColor('#111111')
+                .borderRadius(12)
+                .padding({ top: 4, bottom: 4 })
+                .constraintSize({ maxWidth: 400 })
 
+              Column() {
                 this.RatingSettingsItem()
                 Divider().strokeWidth(1).color('#222222')
-
                 this.ShareSettingsItem()
               }
               .width('100%')
                 .backgroundColor('#111111')
                 .borderRadius(12)
-                .border({ width: 1, color: '#222222' })
                 .padding({ top: 4, bottom: 4 })
                 .constraintSize({ maxWidth: 400 })
             }

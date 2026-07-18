@@ -5,6 +5,7 @@ import { LessonData } from '../../data/LessonData'
 import { audioService } from '../../services/AudioService'
 import preferences from '@ohos.data.preferences'
 import { Context } from '@kit.AbilityKit'
+import { SystemBarHelper } from '../../utils/SystemBarHelper'
 
 @Entry
 @Component
@@ -17,6 +18,7 @@ export struct LetterLessonPage {
   private longPressTimer: number | null = null
 
   async aboutToAppear() {
+    SystemBarHelper.applyDarkFromUIContext(this.getUIContext())
     const uiContext = this.getUIContext()
     const hostContext = uiContext.getHostContext()
 

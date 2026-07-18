@@ -2,6 +2,7 @@ import { MorseCode, MorseCodeData } from '../../models/MorseCode'
 import { router } from '@kit.ArkUI'
 import { audioService } from '../../services/AudioService'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
+import { SystemBarHelper } from '../../utils/SystemBarHelper'
 
 interface Category {
   key: string
@@ -92,6 +93,7 @@ export struct CodeTablePage {
           .height(40)
           .backgroundColor(Color.Transparent)
           .onClick(() => {
+            SystemBarHelper.applyDarkFromUIContext(this.getUIContext())
             router.push({
               url: 'pages/codetable/ChineseTelegraphCodePage'
             })

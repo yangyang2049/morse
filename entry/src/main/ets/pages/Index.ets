@@ -8,6 +8,7 @@ import { common, Context } from '@kit.AbilityKit'
 import preferences from '@ohos.data.preferences'
 import { DeviceHelper } from '../utils/DeviceHelper'
 import { showCommentDialogIfNeeded } from '../utils/AppGalleryCommentHelper'
+import { SystemBarHelper } from '../utils/SystemBarHelper'
 
 @Entry
 @Component
@@ -24,6 +25,7 @@ struct Index {
   private preferencesStore: preferences.Preferences | null = null
 
   async aboutToAppear() {
+    SystemBarHelper.applyDarkFromUIContext(this.getUIContext())
     this.checkDeviceType()
     await this.initPreferences()
     await this.loadLastTabIndex()
@@ -32,6 +34,8 @@ struct Index {
   }
 
   onPageShow(): void {
+    // 从二级页返回时系统栏可能被重置，先恢复深色栏
+    SystemBarHelper.applyDarkFromUIContext(this.getUIContext())
     // 从课程页返回首页时尝试拉起应用内评分（条件不满足则静默）
     this.tryShowAppGalleryComment()
   }

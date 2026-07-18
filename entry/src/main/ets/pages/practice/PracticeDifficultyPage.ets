@@ -1,9 +1,9 @@
 import { router } from '@kit.ArkUI'
-// System bar colors are set globally in EntryAbility
 import { FavoritesStore } from '../../store/FavoritesStore'
 import { promptAction } from '@kit.ArkUI'
 import { resourceManager } from '@kit.LocalizationKit'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
+import { SystemBarHelper } from '../../utils/SystemBarHelper'
 
 interface ModeItem {
   key: string
@@ -74,6 +74,7 @@ export struct PracticeDifficultyPage {
   }
 
   private openPractice(mode: string): void {
+    SystemBarHelper.applyDarkFromUIContext(this.getUIContext())
     // 直接导航到练习页面
     router.push({
       url: 'pages/practice/PracticePage',
@@ -98,6 +99,7 @@ export struct PracticeDifficultyPage {
       return
     }
 
+    SystemBarHelper.applyDarkFromUIContext(this.getUIContext())
     // 导航到混合模式练习页面
     router.push({
       url: 'pages/practice/PracticePage',
@@ -124,6 +126,7 @@ export struct PracticeDifficultyPage {
       return
     }
 
+    SystemBarHelper.applyDarkFromUIContext(this.getUIContext())
     // 导航到混合模式练习页面
     router.push({
       url: 'pages/practice/PracticePage',

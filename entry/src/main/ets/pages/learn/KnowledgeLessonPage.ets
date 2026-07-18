@@ -1,9 +1,9 @@
 import { router } from '@kit.ArkUI'
-// System bar colors are set globally in EntryAbility
 import { KnowledgeLessonViewModel } from '../../viewmodel/KnowledgeLessonViewModel'
 import { LessonNavParams } from '../../types/Types'
 import { resourceManager } from '@kit.LocalizationKit'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
+import { SystemBarHelper } from '../../utils/SystemBarHelper'
 
 @Entry
 @Component
@@ -25,6 +25,7 @@ import { LocalizationHelper } from '../../utils/LocalizationHelper'
   private resourceMgr: resourceManager.ResourceManager | null = null
 
   async aboutToAppear(): Promise<void> {
+    SystemBarHelper.applyDarkFromUIContext(this.getUIContext())
     // 初始化资源管理器
     try {
       this.resourceMgr = getContext(this).resourceManager
@@ -267,6 +268,7 @@ import { LocalizationHelper } from '../../utils/LocalizationHelper'
             .backgroundColor('#FF8C00')
             .borderRadius(8)
             .onClick(() => {
+              SystemBarHelper.applyDarkFromUIContext(this.getUIContext())
               // Navigate to quiz page
               console.error(`[KNOWLEDGE_LESSON] Start quiz: pageTitle=${this.viewModel.testTitle}`)
               router.push({

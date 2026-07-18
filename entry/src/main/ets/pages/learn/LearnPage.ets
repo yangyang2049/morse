@@ -4,6 +4,7 @@ import { LessonItem } from '../../types/Types'
 import { router } from '@kit.ArkUI'
 import { eventHub, Events } from '../../utils/EventHub'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
+import { SystemBarHelper } from '../../utils/SystemBarHelper'
 
 @Component
 export struct LearnPage {
@@ -81,6 +82,9 @@ export struct LearnPage {
   private async handleLessonClick(item: LessonItem): Promise<void> {
     // Block navigation for placeholder lessons
     if (this.isPlaceholderLesson(this.getLessonTitle(item))) { return }
+
+    // 跳转前先刷深色系统栏，减轻二级页过渡时底部闪白
+    SystemBarHelper.applyDarkFromUIContext(this.getUIContext())
 
     if (item.key === 'intro_1') {
       // Navigate to lesson page for the 2nd intro lesson (Chinese)

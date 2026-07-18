@@ -4,6 +4,7 @@ import { LearnViewModel } from '../../viewmodel/LearnViewModel'
 import { QuizViewModel } from '../../viewmodel/QuizViewModel'
 import { QuizNavParams } from '../../types/Types'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
+import { SystemBarHelper } from '../../utils/SystemBarHelper'
 
 @Entry
 @Component
@@ -22,6 +23,7 @@ import { LocalizationHelper } from '../../utils/LocalizationHelper'
 
 
   aboutToAppear() {
+    SystemBarHelper.applyDarkFromUIContext(this.getUIContext())
     // Load route params, if any
     try {
       const params = (router.getParams() as QuizNavParams) ?? {}
