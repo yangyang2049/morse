@@ -3,14 +3,14 @@ import { ExplanationTipsCard } from '../../widgets/ExplanationTipsCard'
 import { LearnViewModel } from '../../viewmodel/LearnViewModel'
 import { QuizViewModel } from '../../viewmodel/QuizViewModel'
 import { QuizNavParams } from '../../types/Types'
-import { i18n } from '@kit.LocalizationKit'
+import { LocalizationHelper } from '../../utils/LocalizationHelper'
 
 @Entry
 @Component
   struct LessonQuizPage {
   @State quizViewModel: QuizViewModel = new QuizViewModel()
   @State learnViewModel: LearnViewModel = new LearnViewModel()
-  @StorageLink('currentLanguage') @Watch('onLanguageChange') currentLanguage: string = 'zh-CN'
+  @StorageLink('currentLanguage') @Watch('onLanguageChange') currentLanguage: string = LocalizationHelper.DEFAULT_LANGUAGE
 
   onLanguageChange(): void {
     // 重新初始化测试数据以加载新语言

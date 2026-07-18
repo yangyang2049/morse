@@ -1,7 +1,7 @@
 import { MorseCode, MorseCodeData } from '../../models/MorseCode'
 import { router } from '@kit.ArkUI'
 import { audioService } from '../../services/AudioService'
-import { i18n } from '@kit.LocalizationKit'
+import { LocalizationHelper } from '../../utils/LocalizationHelper'
 
 interface Category {
   key: string
@@ -12,30 +12,12 @@ interface Category {
 export struct CodeTablePage {
   @State selected: string = 'all'
   @State playingCode: string = '' // 跟踪当前播放的摩尔斯码
-  @StorageLink('currentLanguage') @Watch('onLanguageChange') currentLanguage: string = this.getInitialLanguage()
+  @StorageLink('currentLanguage') @Watch('onLanguageChange') currentLanguage: string = LocalizationHelper.detectPreferredLanguage()
   @State isEnglish: boolean = false
   private categories: Category[] = []
 
   onLanguageChange(): void {
     this.checkLanguage()
-  }
-
-  // 获取初始语言
-  private getInitialLanguage(): string {
-    try {
-      const currentLocale = i18n.System.getSystemLocale()
-      console.log(`[CodeTablePage] System locale: ${currentLocale}`)
-      // 将系统locale转换为我们的语言代码格式
-      if (currentLocale.startsWith('zh')) {
-        return 'zh-CN'
-      } else if (currentLocale.startsWith('en')) {
-        return 'en-US'
-      }
-      return 'zh-CN' // 默认中文
-    } catch (error) {
-      console.error('[CodeTablePage] Failed to get initial language:', error)
-      return 'zh-CN' // 默认中文
-    }
   }
 
   aboutToAppear(): void {

@@ -1,12 +1,13 @@
 import { MorseCodeData } from '../../models/MorseCode'
 import { PinyinService } from '../../services/PinyinService'
 import { promptAction } from '@kit.ArkUI'
-import { resourceManager, i18n } from '@kit.LocalizationKit'
+import { resourceManager } from '@kit.LocalizationKit'
 import { pasteboard } from '@kit.BasicServicesKit'
 import { AudioService } from '../../services/AudioService'
 import { flashlightService } from '../../services/FlashlightService'
 import { common, Context } from '@kit.AbilityKit'
 import preferences from '@ohos.data.preferences'
+import { LocalizationHelper } from '../../utils/LocalizationHelper'
 
 @Component
 export struct TranslatePage {
@@ -15,7 +16,7 @@ export struct TranslatePage {
   @State morseInput: string = ''
   private readonly boxFontSize: number = 16
   private readonly pillRadius: number = 20
-  @State currentLanguage: string = 'zh-CN'
+  @State currentLanguage: string = LocalizationHelper.DEFAULT_LANGUAGE
   // 资源管理器
   private resourceMgr: resourceManager.ResourceManager | null = null
   // 音频服务
@@ -124,21 +125,9 @@ export struct TranslatePage {
     }
   }
 
-  // 获取当前系统语言
+  // 获取当前应用语言（与冷启动 /「我」页一致）
   private getCurrentLanguage(): string {
-    try {
-      const currentLocale = i18n.System.getSystemLocale()
-      // 将系统locale转换为我们的语言代码格式
-      if (currentLocale.startsWith('zh')) {
-        return 'zh-CN'
-      } else if (currentLocale.startsWith('en')) {
-        return 'en-US'
-      }
-      return 'zh-CN' // 默认中文
-    } catch (error) {
-      console.error('[TranslatePage] Failed to get current language:', error)
-      return 'zh-CN' // 默认中文
-    }
+    return LocalizationHelper.getCurrentLanguage()
   }
 
   // 获取系统资源字符串

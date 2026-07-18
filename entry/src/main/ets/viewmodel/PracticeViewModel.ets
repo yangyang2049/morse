@@ -2,8 +2,8 @@ import { MorseCode, MorseCodeData } from '../models/MorseCode'
 import { promptAction } from '@kit.ArkUI'
 import { FavoritesStore } from '../store/FavoritesStore'
 import { PracticeProgressStore } from '../store/PracticeProgressStore'
-import { i18n } from '@kit.LocalizationKit'
 import { vibratorService } from '../services/VibratorService'
+import { LocalizationHelper } from '../utils/LocalizationHelper'
 // 使用$r()函数替代I18n
 
 @Observed
@@ -251,8 +251,8 @@ export class PracticeViewModel {
             console.log(`Character ${this.currentCharacter} removed from mistakes after 3 consecutive correct answers`)
             // 显示移除提示
             try {
-              const currentLocale = i18n.System.getSystemLocale()
-              const message = currentLocale.startsWith('zh')
+              const isChinese = LocalizationHelper.getCurrentLanguage().startsWith('zh')
+              const message = isChinese
                 ? `🎉 ${this.currentCharacter} 已从错题本移除！`
                 : `🎉 ${this.currentCharacter} Removed from mistakes!`
               promptAction.showToast({
@@ -304,8 +304,8 @@ export class PracticeViewModel {
 
       // Wrong answer, show system toast at top of screen
       try {
-        const currentLocale = i18n.System.getSystemLocale()
-        const message = currentLocale.startsWith('zh') ? '再试一次' : 'Try again'
+        const isChinese = LocalizationHelper.getCurrentLanguage().startsWith('zh')
+        const message = isChinese ? '再试一次' : 'Try again'
         promptAction.showToast({
           message: message,
           duration: 1500,

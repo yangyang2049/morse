@@ -1,7 +1,7 @@
 import { promptAction } from '@kit.ArkUI'
 import { common, Want } from '@kit.AbilityKit'
 import pasteboard from '@ohos.pasteboard'
-import { resourceManager, i18n } from '@kit.LocalizationKit'
+import { resourceManager } from '@kit.LocalizationKit'
 import { BusinessError } from '@kit.BasicServicesKit'
 import preferences from '@ohos.data.preferences'
 import { systemShare } from '@kit.ShareKit'
@@ -10,6 +10,7 @@ import { vibratorService } from '../../services/VibratorService'
 import {
   showCommentDialogManual
 } from '../../utils/AppGalleryCommentHelper'
+import { LocalizationHelper } from '../../utils/LocalizationHelper'
 
 // 语言选项接口
 interface LanguageOption {
@@ -63,26 +64,9 @@ export struct MePage {
     this.loadAppInfo()
   }
 
-  // 获取初始语言
+  // 获取初始语言（与冷启动一致：默认英文，按系统语言映射）
   private getInitialLanguage(): string {
-    try {
-      const currentLocale = i18n.System.getSystemLocale()
-      console.log(`[MePage] System locale: ${currentLocale}`)
-      // 将系统locale转换为我们的语言代码格式
-      if (currentLocale.startsWith('zh')) {
-        // 判断是繁体还是简体
-        if (currentLocale.includes('Hant') || currentLocale.includes('HK') || currentLocale.includes('TW') || currentLocale.includes('MO')) {
-          return 'zh-HK' // 繁体中文
-        }
-        return 'zh-CN' // 简体中文
-      } else if (currentLocale.startsWith('en')) {
-        return 'en-US'
-      }
-      return 'zh-CN' // 默认简体中文
-    } catch (error) {
-      console.error('[MePage] Failed to get initial language:', error)
-      return 'zh-CN' // 默认简体中文
-    }
+    return LocalizationHelper.detectPreferredLanguage()
   }
 
   // 获取系统资源字符串
@@ -105,21 +89,7 @@ export struct MePage {
   private async setSystemLanguage(languageCode: string): Promise<void> {
     try {
       console.log(`[MePage] Attempting to set app preferred language to: ${languageCode}`)
-
-      // 使用HarmonyOS官方API设置应用偏好语言
-      // 将语言代码转换为正确的格式
-      let preferredLanguage = languageCode
-      if (languageCode === 'zh-CN') {
-        preferredLanguage = 'zh-Hans-CN' // 简体中文
-      } else if (languageCode === 'zh-HK') {
-        preferredLanguage = 'zh-Hant-HK' // 繁体中文（香港）
-      } else if (languageCode === 'en-US') {
-        preferredLanguage = 'en-Latn-US' // 美式英语
-      }
-
-      // 设置应用偏好语言
-      i18n.System.setAppPreferredLanguage(preferredLanguage)
-      console.log(`[MePage] App preferred language set to: ${preferredLanguage}`)
+      LocalizationHelper.applyAppPreferredLanguage(languageCode)
 
       // 更新当前语言状态
       this.currentLanguage = languageCode
@@ -136,27 +106,6 @@ export struct MePage {
       const err = error as BusinessError
       console.error(`[MePage] Failed to set app preferred language, error code: ${err.code}, message: ${err.message}`)
       // 即使系统语言设置失败，也不抛出错误，让应用继续使用自定义i18n
-    }
-  }
-
-  // 获取当前语言
-  private getCurrentLanguage(): string {
-    try {
-      const currentLocale = i18n.System.getSystemLocale()
-      // 将系统locale转换为我们的语言代码格式
-      if (currentLocale.startsWith('zh')) {
-        // 判断是繁体还是简体
-        if (currentLocale.includes('Hant') || currentLocale.includes('HK') || currentLocale.includes('TW') || currentLocale.includes('MO')) {
-          return 'zh-HK' // 繁体中文
-        }
-        return 'zh-CN' // 简体中文
-      } else if (currentLocale.startsWith('en')) {
-        return 'en-US'
-      }
-      return 'zh-CN' // 默认简体中文
-    } catch (error) {
-      console.error('[MePage] Failed to get current language:', error)
-      return 'zh-CN' // 默认简体中文
     }
   }
 

@@ -2,7 +2,8 @@ import { router } from '@kit.ArkUI'
 // System bar colors are set globally in EntryAbility
 import { KnowledgeLessonViewModel } from '../../viewmodel/KnowledgeLessonViewModel'
 import { LessonNavParams } from '../../types/Types'
-import { resourceManager, i18n } from '@kit.LocalizationKit'
+import { resourceManager } from '@kit.LocalizationKit'
+import { LocalizationHelper } from '../../utils/LocalizationHelper'
 
 @Entry
 @Component
@@ -11,7 +12,7 @@ import { resourceManager, i18n } from '@kit.LocalizationKit'
   @State title: Resource | string = $r('app.string.morse_code_basics')
   @State content: Resource | string = $r('app.string.morse_code_intro')
   @State customSections: string[] = []
-  @StorageLink('currentLanguage') currentLanguage: string = 'zh-CN'
+  @StorageLink('currentLanguage') currentLanguage: string = LocalizationHelper.DEFAULT_LANGUAGE
 
   // Quiz card localized strings
   @State testYourMasteryText: string = ''
@@ -78,23 +79,6 @@ import { resourceManager, i18n } from '@kit.LocalizationKit'
       this.multipleChoiceQuestionsText = '• 3 Multiple choice questions (20 points each)'
       this.need100ToPassText = '• Need 100 points to pass'
       this.startTestText = 'Start Test'
-    }
-  }
-
-  // 获取当前系统语言
-  private getCurrentLanguage(): string {
-    try {
-      const currentLocale = i18n.System.getSystemLocale()
-      // 将系统locale转换为我们的语言代码格式
-      if (currentLocale.startsWith('zh')) {
-        return 'zh-CN'
-      } else if (currentLocale.startsWith('en')) {
-        return 'en-US'
-      }
-      return 'zh-CN' // 默认中文
-    } catch (error) {
-      console.error('[KnowledgeLessonPage] Failed to get current language:', error)
-      return 'zh-CN' // 默认中文
     }
   }
 

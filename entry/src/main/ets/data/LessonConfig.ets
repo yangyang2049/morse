@@ -1,3 +1,4 @@
+import { LocalizationHelper } from '../utils/LocalizationHelper'
 
 // 课程配置和编号系统
 export class LessonConfig {
@@ -71,7 +72,7 @@ export class LessonConfig {
 
   // 检查当前语言是否为英文
   private static isEnglish(): boolean {
-    const currentLang: string = AppStorage.get<string>('currentLanguage') || 'zh-CN'
+    const currentLang: string = AppStorage.get<string>('currentLanguage') || LocalizationHelper.DEFAULT_LANGUAGE
     return currentLang.startsWith('en')
   }
 

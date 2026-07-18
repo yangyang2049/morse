@@ -29,7 +29,7 @@ export class QuizViewModel {
   explanations: ExplanationItem[] = []
 
   // 当前语言
-  private currentLanguage: string = 'zh-CN'
+  private currentLanguage: string = 'en-US'
 
   // 获取本地化字符串
   private getLocalizedString(key: string): string {

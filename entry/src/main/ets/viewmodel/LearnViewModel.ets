@@ -1,6 +1,7 @@
 import { LessonConfig } from '../data/LessonConfig'
 import { progressStore } from '../store/ProgressStoreSingleton'
 import { LessonItem } from '../types/Types'
+import { LocalizationHelper } from '../utils/LocalizationHelper'
 
 @Observed
 export class LearnViewModel {
@@ -26,7 +27,7 @@ export class LearnViewModel {
     }
 
     // 其他课程使用 "Lesson X" 或 "第X课" 格式，每个单元从1开始
-    const currentLanguage = AppStorage.get<string>('currentLanguage') || 'zh-CN'
+    const currentLanguage = AppStorage.get<string>('currentLanguage') || LocalizationHelper.DEFAULT_LANGUAGE
     const isChinese = currentLanguage.startsWith('zh')
 
     if (isChinese) {
@@ -38,7 +39,7 @@ export class LearnViewModel {
 
   // 获取本地化字符串的辅助函数
   private getLocalizedString(key: string): string {
-    const currentLanguage = AppStorage.get<string>('currentLanguage') || 'zh-CN'
+    const currentLanguage = AppStorage.get<string>('currentLanguage') || LocalizationHelper.DEFAULT_LANGUAGE
     const isChinese = currentLanguage.startsWith('zh')
     console.log(`[LearnViewModel] getLocalizedString(${key}): currentLanguage=${currentLanguage}, isChinese=${isChinese}`)
 
@@ -144,7 +145,7 @@ export class LearnViewModel {
   private rebuildLessons(): void {
     console.log('[LearnViewModel] Rebuilding lessons')
     // 从 AppStorage 判断是否为中文
-    const currentLanguage = AppStorage.get<string>('currentLanguage') || 'zh-CN'
+    const currentLanguage = AppStorage.get<string>('currentLanguage') || LocalizationHelper.DEFAULT_LANGUAGE
     const isChinese = currentLanguage.startsWith('zh')
     console.log(`[LearnViewModel] rebuildLessons: currentLanguage=${currentLanguage}, isChinese=${isChinese}`)
     console.log(`[LearnViewModel] AppStorage currentLanguage: ${AppStorage.get<string>('currentLanguage')}`)

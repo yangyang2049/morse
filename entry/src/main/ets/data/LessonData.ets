@@ -1,3 +1,5 @@
+import { LocalizationHelper } from '../utils/LocalizationHelper'
+
 export class LessonData {
   // 摩斯电码基础课程数据
   static readonly introSections: Map<string, string[]> = new Map([
@@ -381,7 +383,7 @@ export class LessonData {
   // 根据语言获取介绍课程数据
   static getIntroSections(): Map<string, string[]> {
     // 使用 AppStorage 获取当前语言
-    const currentLang: string = AppStorage.get<string>('currentLanguage') || 'zh-CN'
+    const currentLang: string = AppStorage.get<string>('currentLanguage') || LocalizationHelper.DEFAULT_LANGUAGE
     if (currentLang.startsWith('en')) {
       return LessonData.introSectionsEn
     } else if (currentLang === 'zh-HK' || currentLang === 'zh-TW') {
@@ -394,7 +396,7 @@ export class LessonData {
   // 根据语言获取中文摩尔斯电码课程数据（英文环境下不显示）
   static getChineseSections(): Map<string, string[]> | null {
     // 使用 AppStorage 获取当前语言
-    const currentLang: string = AppStorage.get<string>('currentLanguage') || 'zh-CN'
+    const currentLang: string = AppStorage.get<string>('currentLanguage') || LocalizationHelper.DEFAULT_LANGUAGE
     if (currentLang.startsWith('en')) {
       return null
     } else if (currentLang === 'zh-HK' || currentLang === 'zh-TW') {

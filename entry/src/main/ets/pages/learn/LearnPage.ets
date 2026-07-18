@@ -3,6 +3,7 @@ import { LessonConfig } from '../../data/LessonConfig'
 import { LessonItem } from '../../types/Types'
 import { router } from '@kit.ArkUI'
 import { eventHub, Events } from '../../utils/EventHub'
+import { LocalizationHelper } from '../../utils/LocalizationHelper'
 
 @Component
 export struct LearnPage {
@@ -50,7 +51,7 @@ export struct LearnPage {
         const lang = AppStorage.get<string>('currentLanguage')
         console.log(`[LearnPage] Language after 200ms delay: ${lang}`)
         // Update currentLanguage to match AppStorage
-        this.currentLanguage = lang || 'zh-CN'
+        this.currentLanguage = lang || LocalizationHelper.DEFAULT_LANGUAGE
         this.isLanguageReady = true
         resolve()
       }, 200)
@@ -84,7 +85,7 @@ export struct LearnPage {
     if (item.key === 'intro_1') {
       // Navigate to lesson page for the 2nd intro lesson (Chinese)
       // Use hardcoded strings for title
-      const currentLanguage = AppStorage.get<string>('currentLanguage') || 'zh-CN'
+      const currentLanguage = AppStorage.get<string>('currentLanguage') || LocalizationHelper.DEFAULT_LANGUAGE
       let title = '中文摩斯电码'
       let testTitle = '中文摩斯电码测试'
 
@@ -108,7 +109,7 @@ export struct LearnPage {
     } else if (item.key.startsWith('intro_')) {
       // Navigate to lesson page for the 1st intro lesson (Basics)
       // Use hardcoded strings for title
-      const currentLanguage = AppStorage.get<string>('currentLanguage') || 'zh-CN'
+      const currentLanguage = AppStorage.get<string>('currentLanguage') || LocalizationHelper.DEFAULT_LANGUAGE
       let title = '摩斯电码基础'
       let testTitle = '基础测试'
 
@@ -211,7 +212,7 @@ export struct LearnPage {
 
   // 获取本地化标题
   private getLocalizedTitle(titleKey: string): string {
-    const currentLanguage = AppStorage.get<string>('currentLanguage') || 'zh-CN'
+    const currentLanguage = AppStorage.get<string>('currentLanguage') || LocalizationHelper.DEFAULT_LANGUAGE
 
     // 硬编码本地化字符串
     const localizedStrings: Record<string, Record<string, string>> = {
@@ -246,13 +247,13 @@ export struct LearnPage {
     }
 
     // 根据语言选择对应的字符串集
-    let langKey = 'zh-CN'
+    let langKey = 'en-US'
     if (currentLanguage.startsWith('en')) {
       langKey = 'en-US'
-    } else if (currentLanguage === 'zh-HK') {
+    } else if (currentLanguage === 'zh-HK' || currentLanguage === 'zh-TW') {
       langKey = 'zh-HK'
-    } else if (currentLanguage === 'zh-TW') {
-      langKey = 'zh-TW'
+    } else if (currentLanguage.startsWith('zh')) {
+      langKey = 'zh-CN'
     }
 
     return localizedStrings[langKey]?.[titleKey] || titleKey
