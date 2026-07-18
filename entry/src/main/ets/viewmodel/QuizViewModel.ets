@@ -309,6 +309,27 @@ export class QuizViewModel {
     }, 900)
   }
 
+  /** 解析标题按「用户是否答对」显示，避免答错仍显示「正确！」 */
+  getExplanationTitle(): string {
+    if (this.selectedAnswer === null || this.currentQuestionIndex >= this.questions.length) {
+      return ''
+    }
+    const correctAnswer = this.questions[this.currentQuestionIndex].answer as number
+    const isCorrect = this.selectedAnswer === correctAnswer
+    const isChinese = this.currentLanguage.startsWith('zh')
+    if (isCorrect) {
+      return isChinese ? '正确！' : 'Correct!'
+    }
+    return isChinese ? '错误' : 'Incorrect'
+  }
+
+  getExplanationContent(): string {
+    if (this.currentQuestionIndex >= this.explanations.length) {
+      return ''
+    }
+    return this.explanations[this.currentQuestionIndex].content
+  }
+
   // 显示测试结果
   showTestResult(): void {
     this.showResult = true

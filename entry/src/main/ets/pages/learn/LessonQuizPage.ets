@@ -274,9 +274,8 @@ import { SystemBarHelper } from '../../utils/SystemBarHelper'
         // Explanation card - 立即显示，使用透明度动画
         if (this.quizViewModel.isAnswered && this.quizViewModel.showExplanation) {
           ExplanationTipsCard({
-            title: this.quizViewModel.explanations[this.quizViewModel.currentQuestionIndex].title,
-            content: this.quizViewModel.explanations[this.quizViewModel.currentQuestionIndex].content,
-            color: '#FF8C00'
+            title: this.quizViewModel.getExplanationTitle(),
+            content: this.quizViewModel.getExplanationContent()
           })
             .margin({ top: 24 })
             .opacity(this.quizViewModel.showDelayedContent ? 1 : 0)

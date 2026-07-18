@@ -470,26 +470,32 @@ export struct TranslatePage {
   @Builder
   private InputArea() {
     RelativeContainer() {
-      // 输入框
+      // 输入框（外层卡片已有底色，TextArea 透明无边框，仅用 placeholder）
       if (this.isTextToMorse) {
         TextArea({ text: this.textInput, placeholder: $r('app.string.input_text_placeholder') })
-          .layoutWeight(1)
+          .width('100%')
+          .height('100%')
           .fontSize(this.boxFontSize)
           .fontColor(Color.White)
-          .placeholderColor(Color.White)
+          .placeholderColor('#888888')
           .caretColor(Color.White)
-          .margin(12)
+          .padding(12)
+          .backgroundColor(Color.Transparent)
+          .border({ width: 0 })
           .maxLines(6)
           .onChange((v: string) => { this.textInput = v })
           .id('text_input_area')
       } else {
         TextArea({ text: this.morseInput, placeholder: $r('app.string.input_morse_placeholder') })
-          .layoutWeight(1)
+          .width('100%')
+          .height('100%')
           .fontSize(this.boxFontSize)
           .fontColor(Color.White)
-          .placeholderColor(Color.White)
+          .placeholderColor('#888888')
           .caretColor(Color.White)
-          .margin(12)
+          .padding(12)
+          .backgroundColor(Color.Transparent)
+          .border({ width: 0 })
           .maxLines(6)
           .onChange((v: string) => { this.morseInput = v })
           .id('morse_input_area')
@@ -510,7 +516,7 @@ export struct TranslatePage {
             bottom: { anchor: this.isTextToMorse ? 'text_input_area' : 'morse_input_area', align: VerticalAlign.Bottom },
             right: { anchor: this.isTextToMorse ? 'text_input_area' : 'morse_input_area', align: HorizontalAlign.End }
           })
-          .margin({ right: -12, bottom: 8 })
+          .margin({ right: 4, bottom: 4 })
           .onClick(() => {
             if (this.isTextToMorse) {
               this.textInput = ''
@@ -533,16 +539,21 @@ export struct TranslatePage {
   @Builder
   private OutputArea() {
     RelativeContainer() {
-      // 输出框
+      // 输出框：空内容用 placeholder，不要把提示文案塞进 text
       TextArea({
-        text: this.getOutput().length > 0 ? this.getOutput() :
-          (this.isTextToMorse ? $r('app.string.output_text_placeholder') : $r('app.string.output_morse_placeholder'))
+        text: this.getOutput(),
+        placeholder: this.isTextToMorse
+          ? $r('app.string.output_text_placeholder')
+          : $r('app.string.output_morse_placeholder')
       })
-        .layoutWeight(1)
+        .width('100%')
+        .height('100%')
         .fontSize(this.boxFontSize)
-        .margin(12)
+        .padding(12)
         .backgroundColor(Color.Transparent)
+        .border({ width: 0 })
         .fontColor('#FFFFFF')
+        .placeholderColor('#888888')
         .enabled(false)
         .maxLines(6)
         .id('output_area')
@@ -615,7 +626,7 @@ export struct TranslatePage {
           top: { anchor: 'output_area', align: VerticalAlign.Top },
           right: { anchor: 'output_area', align: HorizontalAlign.End }
         })
-          .margin({ right: -12, top: 8 })
+          .margin({ right: 4, top: 4 })
           .zIndex(1)
       }
     }

@@ -213,7 +213,6 @@ import { SystemBarHelper } from '../../utils/SystemBarHelper'
       .height(480)
       .padding(16)
       .backgroundColor('#1A1A1A')
-      .border({ width: 1, color: '#333333' })
       .borderRadius(12)
       .margin({ right: 16 })
   }
@@ -295,7 +294,6 @@ import { SystemBarHelper } from '../../utils/SystemBarHelper'
       .height(480)
       .padding(16)
       .backgroundColor('#FFF8DC')
-      .border({ width: 1, color: '#FF8C00' })
       .borderRadius(12)
   }
 
@@ -312,7 +310,6 @@ import { SystemBarHelper } from '../../utils/SystemBarHelper'
     .width('100%')
       .padding(20)
       .backgroundColor('#2A2A2A')
-      .border({ width: 1, color: '#333333' })
       .borderRadius(12)
   }
 
@@ -332,7 +329,6 @@ import { SystemBarHelper } from '../../utils/SystemBarHelper'
           .width('100%')
             .padding(20)
             .backgroundColor('#2A2A2A')
-            .border({ width: 1, color: '#333333' })
             .borderRadius(12)
             .margin({ top: index > 0 ? 20 : 0 })
         })
