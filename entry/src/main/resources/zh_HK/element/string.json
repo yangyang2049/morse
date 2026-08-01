@@ -177,6 +177,10 @@
       "value": "搜索中..."
     },
     {
+      "name": "search_placeholder",
+      "value": "搜索漢字或電碼..."
+    },
+    {
       "name": "chinese_characters",
       "value": "漢字"
     },
@@ -987,6 +991,54 @@
     {
       "name": "watch_guide_click_to_input_code",
       "value": "點擊輸入電碼，不確定時點擊眼睛圖標查看"
-    }
+    },
+    { "name": "learning_repetition_count", "value": "學習次數" },
+    { "name": "learning_repetition_count_desc", "value": "每項需要答對的次數（1–5）" },
+    { "name": "distributed_sync_permission_reason", "value": "用於在手機和手錶之間同步學習進度" },
+    { "name": "course_intro_morse", "value": "摩斯電碼基礎" },
+    { "name": "course_intro_morse_desc", "value": "歷史、時序與基本原理" },
+    { "name": "course_intro_chinese", "value": "中文摩斯電碼" },
+    { "name": "course_intro_chinese_desc", "value": "中文編碼方法與電報碼" },
+    { "name": "course_alphabet_abc", "value": "第1課" },
+    { "name": "course_alphabet_def", "value": "第2課" },
+    { "name": "course_alphabet_ghi", "value": "第3課" },
+    { "name": "course_alphabet_jkl", "value": "第4課" },
+    { "name": "course_alphabet_review_a_l", "value": "複習 A–L" },
+    { "name": "course_alphabet_mno", "value": "第5課" },
+    { "name": "course_alphabet_pqr", "value": "第6課" },
+    { "name": "course_alphabet_stu", "value": "第7課" },
+    { "name": "course_alphabet_vwx", "value": "第8課" },
+    { "name": "course_alphabet_yz", "value": "第9課" },
+    { "name": "course_alphabet_review_m_z", "value": "複習 M–Z" },
+    { "name": "course_alphabet_abc_desc", "value": "ABC" },
+    { "name": "course_alphabet_def_desc", "value": "DEF" },
+    { "name": "course_alphabet_ghi_desc", "value": "GHI" },
+    { "name": "course_alphabet_jkl_desc", "value": "JKL" },
+    { "name": "course_alphabet_mno_desc", "value": "MNO" },
+    { "name": "course_alphabet_pqr_desc", "value": "PQR" },
+    { "name": "course_alphabet_stu_desc", "value": "STU" },
+    { "name": "course_alphabet_vwx_desc", "value": "VWX" },
+    { "name": "course_alphabet_yz_desc", "value": "YZ" },
+    { "name": "course_review_desc", "value": "每項答對一次" },
+    { "name": "course_numbers_012", "value": "第1課" },
+    { "name": "course_numbers_345", "value": "第2課" },
+    { "name": "course_numbers_6789", "value": "第3課" },
+    { "name": "course_numbers_review", "value": "數字複習" },
+    { "name": "course_numbers_012_desc", "value": "012" },
+    { "name": "course_numbers_345_desc", "value": "345" },
+    { "name": "course_numbers_6789_desc", "value": "6789" },
+    { "name": "course_punctuation_1", "value": "第1課" },
+    { "name": "course_punctuation_2", "value": "第2課" },
+    { "name": "course_punctuation_3", "value": "第3課" },
+    { "name": "course_punctuation_review", "value": "標點複習" },
+    { "name": "course_punctuation_1_desc", "value": ". , ? !" },
+    { "name": "course_punctuation_2_desc", "value": ": ; - /" },
+    { "name": "course_punctuation_3_desc", "value": "( )" },
+    { "name": "course_words_3", "value": "3字母單詞" },
+    { "name": "course_words_4", "value": "4字母單詞" },
+    { "name": "course_words_5", "value": "5字母單詞" },
+    { "name": "course_words_3_desc", "value": "常用3字母單詞" },
+    { "name": "course_words_4_desc", "value": "常用4字母單詞" },
+    { "name": "course_words_5_desc", "value": "常用5字母單詞" }
   ]
 }

@@ -1,8 +1,8 @@
 import router from '@ohos.router'
 import { LessonData } from '../../data/LessonData'
-import { Context } from '@kit.AbilityKit'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
-import { progressStore } from '../../store/ProgressStoreSingleton'
+import { CourseId } from '../../data/CourseCatalogV2'
+import { learningRepositoryV2 } from '../../repository/LearningRepositoryV2'
 
 @Entry
 @Component
@@ -11,11 +11,15 @@ struct KnowledgeLessonPage {
   @State title: ResourceStr = ''
   @State isCompleted: boolean = false
   @State isCompleting: boolean = false
+  private courseId: string = CourseId.INTRO_MORSE
 
   private completeTimers: number[] = []
 
   async aboutToAppear() {
     const params = router.getParams() as Record<string, Object>
+    if (params && typeof params['courseId'] === 'string') {
+      this.courseId = params['courseId'] as string
+    }
     if (params && params['title']) {
       const titleParam = params['title']
       if (typeof titleParam === 'string') {
@@ -27,14 +31,12 @@ struct KnowledgeLessonPage {
       this.title = LocalizationHelper.getString('watch_morse_code_basics_title')
     }
 
-    this.sections = LessonData.getIntroSections()
+    this.sections = this.courseId === CourseId.INTRO_CHINESE
+      ? (LessonData.getChineseSections() || new Map())
+      : LessonData.getIntroSections()
 
     try {
-      const context = this.getUIContext()?.getHostContext() as Context
-      if (context) {
-        await progressStore.load(context)
-        this.isCompleted = progressStore.isBasicsCompleted()
-      }
+      this.isCompleted = await learningRepositoryV2.isCourseCompleted(this.courseId)
     } catch (error) {
       console.error('[KnowledgeLessonPage] Failed to load progress:', error)
     }
@@ -73,7 +75,7 @@ struct KnowledgeLessonPage {
               .margin({ bottom: 8 })
               .lineHeight(20)
           }
-        })
+        }, (line: string, lineIndex: number) => `${lineIndex}-${line}`)
       }
       .width('100%')
       .padding(16)
@@ -97,7 +99,7 @@ struct KnowledgeLessonPage {
 
         ForEach(Array.from(this.sections.entries()), (item: [string, string[]], index: number) => {
           this.SectionItem(item[0], item[1], index)
-        })
+        }, (item: [string, string[]]) => item[0])
 
         Blank().height(16)
 
@@ -155,13 +157,9 @@ struct KnowledgeLessonPage {
 
   private async markLessonCompleted(): Promise<void> {
     try {
-      const context = this.getUIContext()?.getHostContext() as Context
-      if (!context) {
-        throw new Error('host context is null')
-      }
-      await progressStore.saveLessonCompleted(1, context)
+      await learningRepositoryV2.completeCourse(this.courseId)
       this.isCompleted = true
-      console.log('[KnowledgeLessonPage] Lesson 1 saved to progressStore')
+      console.log(`[KnowledgeLessonPage] Completed courseId=${this.courseId}`)
     } catch (error) {
       console.error('[KnowledgeLessonPage] Failed to mark lesson as completed:', error)
       if (error instanceof Error) {

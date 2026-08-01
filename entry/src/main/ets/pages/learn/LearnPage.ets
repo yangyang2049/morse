@@ -1,10 +1,12 @@
 import { LearnViewModel } from '../../viewmodel/LearnViewModel'
-import { LessonConfig } from '../../data/LessonConfig'
+import { CourseCatalogV2 } from '../../data/CourseCatalogV2'
 import { LessonItem } from '../../types/Types'
 import { router } from '@kit.ArkUI'
+import { common } from '@kit.AbilityKit'
 import { eventHub, Events } from '../../utils/EventHub'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
 import { SystemBarHelper } from '../../utils/SystemBarHelper'
+import { DistributedSyncPermissionHelper } from '../../utils/DistributedSyncPermissionHelper'
 
 @Component
 export struct LearnPage {
@@ -35,7 +37,9 @@ export struct LearnPage {
       // Wait for language to be ready, then load data
       await this.waitForLanguageReady()
 
-      await this.vm.init(hostContext)
+      const abilityContext = hostContext as common.UIAbilityContext
+      const syncGranted = await DistributedSyncPermissionHelper.requestOnLearnEntry(abilityContext)
+      await this.vm.init(abilityContext, syncGranted)
 
       // Add 200ms delay for smooth rendering
       setTimeout(() => {
@@ -80,111 +84,44 @@ export struct LearnPage {
 
   // 处理课程点击事件
   private async handleLessonClick(item: LessonItem): Promise<void> {
-    // Block navigation for placeholder lessons
-    if (this.isPlaceholderLesson(this.getLessonTitle(item))) { return }
+    const course = CourseCatalogV2.get(item.key)
+    if (!course) { return }
 
     // 跳转前先刷深色系统栏，减轻二级页过渡时底部闪白
     SystemBarHelper.applyDarkFromUIContext(this.getUIContext())
 
-    if (item.key === 'intro_1') {
-      // Navigate to lesson page for the 2nd intro lesson (Chinese)
-      // Use hardcoded strings for title
-      const currentLanguage = AppStorage.get<string>('currentLanguage') || LocalizationHelper.DEFAULT_LANGUAGE
-      let title = '中文摩斯电码'
-      let testTitle = '中文摩斯电码测试'
-
-      if (currentLanguage.startsWith('en')) {
-        title = 'Chinese Morse Code'
-        testTitle = 'Chinese Code Test'
-      } else if (currentLanguage === 'zh-HK' || currentLanguage === 'zh-TW') {
-        title = '中文摩斯電碼'
-        testTitle = '中文摩斯電碼測試'
-      }
-
+    const title = await this.resolveString(course.titleKey)
+    if (course.kind === 'knowledge') {
       router.push({
         url: 'pages/learn/KnowledgeLessonPage',
         params: {
           title: title,
-          testTitle: testTitle,
-          lessonCompletedKey: 'intro_lesson_1',
-          currentLanguage: currentLanguage
-        }
-      })
-    } else if (item.key.startsWith('intro_')) {
-      // Navigate to lesson page for the 1st intro lesson (Basics)
-      // Use hardcoded strings for title
-      const currentLanguage = AppStorage.get<string>('currentLanguage') || LocalizationHelper.DEFAULT_LANGUAGE
-      let title = '摩斯电码基础'
-      let testTitle = '基础测试'
-
-      if (currentLanguage.startsWith('en')) {
-        title = 'Morse Code Basics'
-        testTitle = 'Basics Test'
-      } else if (currentLanguage === 'zh-HK' || currentLanguage === 'zh-TW') {
-        title = '摩斯電碼基礎'
-        testTitle = '基礎測試'
-      }
-
-      router.push({
-        url: 'pages/learn/KnowledgeLessonPage',
-        params: {
-          title: title,
-          testTitle: testTitle,
-          lessonCompletedKey: 'intro_lesson_0',
-          currentLanguage: currentLanguage
-        }
-      })
-    } else if (item.key.startsWith('alpha_')) {
-      // 字母课程 - 路由到LetterLessonPage
-      const lessonIndex = parseInt(item.key.replace('alpha_', ''))
-      const lessonNumber = LessonConfig.getLessonNumber(`alphabet_lesson_${lessonIndex}`)
-      console.error(`[LEARN] Navigating to alphabet lesson: ${lessonNumber}`)
-      router.push({
-        url: 'pages/learn/LetterLessonPage',
-        params: {
-          lessonId: lessonNumber.toString(),
-          title: item.title
-        }
-      })
-    } else if (item.key.startsWith('number_')) {
-      // 数字课程 - 路由到LetterLessonPage
-      const lessonIndex = parseInt(item.key.replace('number_', ''))
-      const lessonNumber = LessonConfig.getLessonNumber(`number_lesson_${lessonIndex}`)
-      console.error(`[LEARN] Navigating to number lesson: ${lessonNumber}`)
-      router.push({
-        url: 'pages/learn/LetterLessonPage',
-        params: {
-          lessonId: lessonNumber.toString(),
-          title: item.title
-        }
-      })
-    } else if (item.key.startsWith('punctuation_')) {
-      // 符号课程 - 路由到LetterLessonPage
-      const lessonIndex = parseInt(item.key.replace('punctuation_', ''))
-      const lessonNumber = LessonConfig.getLessonNumber(`punctuation_lesson_${lessonIndex}`)
-      console.error(`[LEARN] Navigating to punctuation lesson: ${lessonNumber}`)
-      router.push({
-        url: 'pages/learn/LetterLessonPage',
-        params: {
-          lessonId: lessonNumber.toString(),
-          title: item.title
-        }
-      })
-    } else if (item.key.startsWith('word_')) {
-      // 单词课程 - 路由到LetterLessonPage
-      const lessonIndex = parseInt(item.key.replace('word_', ''))
-      const lessonNumber = LessonConfig.getLessonNumber(`word_lesson_${lessonIndex}`)
-      console.error(`[LEARN] Navigating to word lesson: ${lessonNumber}`)
-      router.push({
-        url: 'pages/learn/LetterLessonPage',
-        params: {
-          lessonId: lessonNumber.toString(),
-          title: item.title
+          testTitle: title,
+          lessonCompletedKey: course.id,
+          currentLanguage: LocalizationHelper.getCurrentLanguage()
         }
       })
     } else {
-      console.warn(`[LEARN] Unknown lesson type: ${item.key}`)
+      router.push({
+        url: 'pages/learn/LetterLessonPage',
+        params: {
+          lessonId: course.id,
+          title: title
+        }
+      })
     }
+  }
+
+  private async resolveString(key: string): Promise<string> {
+    try {
+      const context = this.getUIContext().getHostContext()
+      if (context) {
+        return await context.resourceManager.getStringByName(key)
+      }
+    } catch (error) {
+      console.warn(`[LearnPage] Failed to resolve ${key}:`, error)
+    }
+    return key
   }
 
 
@@ -195,23 +132,24 @@ export struct LearnPage {
       eventHub.off(Events.LESSON_COMPLETED, this.lessonCompletedCallback)
       this.lessonCompletedCallback = null
     }
+    this.vm.destroy()
   }
 
 
 
   // 获取课程标题
-  private getLessonTitle(item: LessonItem): string {
-    return typeof item.title === 'string' ? item.title : ''
+  private getLessonTitle(item: LessonItem): Resource | string {
+    return item.title
   }
 
   // 获取课程副标题
-  private getLessonSubtitle(item: LessonItem): string {
-    return (typeof item.subtitle === 'string' ? item.subtitle : '') || ''
+  private getLessonSubtitle(item: LessonItem): Resource | string {
+    return item.subtitle || ''
   }
 
   // 检查是否为占位课程（支持简体和繁体）
-  private isPlaceholderLesson(title: string): boolean {
-    return title === '占位' || title === '佔位'
+  private isPlaceholderLesson(_title: Resource | string): boolean {
+    return false
   }
 
   // 获取本地化标题

@@ -1,11 +1,12 @@
 import { MorseCode, MorseCodeData } from '../../models/MorseCode'
 import { router } from '@kit.ArkUI'
 import { LetterLessonViewModel } from '../../viewmodel/LetterLessonViewModel'
-import { LessonData } from '../../data/LessonData'
 import { audioService } from '../../services/AudioService'
 import preferences from '@ohos.data.preferences'
 import { Context } from '@kit.AbilityKit'
 import { SystemBarHelper } from '../../utils/SystemBarHelper'
+import { CourseCatalogV2 } from '../../data/CourseCatalogV2'
+import { LocalLearningSettings } from '../../store/LocalLearningSettings'
 
 @Entry
 @Component
@@ -25,17 +26,12 @@ export struct LetterLessonPage {
     // 从路由参数获取课程数据
     const params = router.getParams() as Record<string, Object>
     const lessonId = (params['lessonId'] as string) || ''
-    const title = (params['title'] as string) || '练习'
+    const title = (params['title'] as string) || 'Practice'
 
     console.log(`[LetterLessonPage] Received lessonId: ${lessonId}, title: ${title}`)
 
     // 根据lessonId设置课程数据
     const codes = this.setupLessonData(lessonId)
-
-    // 初始化ViewModel
-    if (hostContext) {
-      this.viewModel.init(hostContext, lessonId, title, codes)
-    }
 
     // 加载输入模式（单/双按钮）与长按阈值
     try {
@@ -44,6 +40,8 @@ export struct LetterLessonPage {
         const practiceStore = await preferences.getPreferences(context, 'practice_settings')
         await this.loadButtonModePreference(practiceStore)
         await this.loadLongPressThresholdPreference(practiceStore)
+        const repetitionCount = await LocalLearningSettings.getRepetitionCount(context)
+        await this.viewModel.init(context, lessonId, title, codes, repetitionCount)
       }
     } catch (error) {
       console.error('[LetterLessonPage] Failed to load practice_settings:', error)
@@ -113,84 +111,33 @@ export struct LetterLessonPage {
 
   // 判断是否为单词课程
   private isWordLesson(): boolean {
-    const lessonId = this.viewModel.lessonId
-    // lessonId 可能是字符串ID（如 'word_lesson_0'）或数字字符串（如 '19'）
-    if (lessonId.startsWith('word_lesson_')) {
-      return true
-    }
-    // 检查数字编号：单词课程编号为 19-21
-    const lessonNumber = parseInt(lessonId) || 0
-    return lessonNumber >= 19 && lessonNumber <= 21
+    return CourseCatalogV2.get(this.viewModel.lessonId)?.unitId === 'words'
   }
 
   private setupLessonData(lessonId: string): MorseCode[] {
     console.log(`[LetterLessonPage] setupLessonData: lessonId=${lessonId}`)
 
-    const lessonNumber = parseInt(lessonId) || 0
-
-    // 根据课程编号确定课程类型和内容
-    if (lessonNumber >= 3 && lessonNumber <= 11) {
-      // 字母课程 (3-11)
-      const lessonIndex = lessonNumber - 3
-      const alphabetGroups = LessonData.getAlphabetGroups()
-      if (lessonIndex < alphabetGroups.length) {
-        const targetLetters = alphabetGroups[lessonIndex]
-        return MorseCodeData.englishAlphabet.filter(code =>
-          targetLetters.includes(code.character)
-        )
-      } else {
-        return MorseCodeData.englishAlphabet.slice(0, 3)
-      }
-    } else if (lessonNumber >= 12 && lessonNumber <= 15) {
-      // 数字课程 (12-15)
-      const lessonIndex = lessonNumber - 12
-      const numberGroups = LessonData.getNumberGroups()
-      if (lessonIndex < numberGroups.length) {
-        const targetNumbers = numberGroups[lessonIndex]
-        return MorseCodeData.numbers.filter(code =>
-          targetNumbers.includes(code.character)
-        )
-      } else {
-        return MorseCodeData.numbers.slice(0, 3)
-      }
-    } else if (lessonNumber >= 16 && lessonNumber <= 18) {
-      // 符号课程 (16-18)
-      const lessonIndex = lessonNumber - 16
-      const punctuationGroups = LessonData.getPunctuationGroups()
-      if (lessonIndex < punctuationGroups.length) {
-        const targetPunctuation = punctuationGroups[lessonIndex]
-        return MorseCodeData.punctuation.filter(code =>
-          targetPunctuation.includes(code.character)
-        )
-      } else {
-        return MorseCodeData.punctuation.slice(0, 3)
-      }
-    } else if (lessonNumber >= 19 && lessonNumber <= 21) {
-      // 单词课程 (19-21)
-      const lessonIndex = lessonNumber - 19
-      const wordGroups = LessonData.getWordGroups()
-      if (lessonIndex < wordGroups.length) {
-        const targetWords = wordGroups[lessonIndex]
-        // 为每个单词预计算摩斯电码（使用标准点/划表示）
-        return targetWords.map(word => new MorseCode(
-          word,
-          // textToMorse 输出包含“·”，转换为标准“.”以与其他课程保持一致
-          MorseCodeData.textToMorse(word).replace(/·/g, '.'),
-          ''
-        ))
-      } else {
-        // 默认单词集
-        const fallback = ['THE', 'AND', 'FOR']
-        return fallback.map(word => new MorseCode(
-          word,
-          MorseCodeData.textToMorse(word).replace(/·/g, '.'),
-          ''
-        ))
-      }
-    } else {
-      // 默认返回字母课程
+    const course = CourseCatalogV2.get(lessonId)
+    if (!course) {
       return MorseCodeData.englishAlphabet.slice(0, 3)
     }
+    if (course.unitId === 'alphabet') {
+      return MorseCodeData.englishAlphabet.filter((code: MorseCode) => course.items.includes(code.character))
+    }
+    if (course.unitId === 'numbers') {
+      return MorseCodeData.numbers.filter((code: MorseCode) => course.items.includes(code.character))
+    }
+    if (course.unitId === 'punctuation') {
+      return MorseCodeData.punctuation.filter((code: MorseCode) => course.items.includes(code.character))
+    }
+    if (course.unitId === 'words') {
+      return course.items.map((word: string) => new MorseCode(
+          word,
+          MorseCodeData.textToMorse(word).replace(/·/g, '.'),
+          ''
+        ))
+    }
+    return []
   }
 
 
@@ -233,7 +180,7 @@ export struct LetterLessonPage {
                 .fontWeight(FontWeight.Bold)
                 .fontColor(this.viewModel.getLetterStatusColor(index))
                 .margin({ right: 8 })
-            })
+            }, (code: MorseCode, index: number) => `${index}-${code.character}`)
           }
           .justifyContent(FlexAlign.Center)
         }
@@ -313,7 +260,7 @@ export struct LetterLessonPage {
                 Blank().width(3.2).height(1)
               }
             }
-          })
+          }, (char: string, index: number) => `${index}-${char}`)
         }
         .justifyContent(FlexAlign.Center)
       } else {
@@ -367,7 +314,7 @@ export struct LetterLessonPage {
                 Blank().width(3.2).height(1)
               }
             }
-          })
+          }, (char: string, index: number) => `${index}-${char}`)
         }
         .justifyContent(FlexAlign.Center)
       }
@@ -666,60 +613,6 @@ export struct LetterLessonPage {
         }
         .height(44)
           .padding({ left: 4, right: 4 })
-
-        Blank().height(12)
-
-        // 练习次数 (3-5) - 单行布局，系统步进器不可用时使用 +/-
-        Row() {
-          Text($r('app.string.practice_count'))
-            .fontSize(16)
-            .fontColor('#FFFFFF')
-          Blank().layoutWeight(1)
-
-          Button() {
-            Text('-').fontSize(18).fontColor(Color.White)
-          }
-          .height(36)
-            .width(44)
-            .backgroundColor('#333333')
-            .borderRadius(8)
-            .onClick(() => {
-              const next = Math.max(3, Math.min(5, this.viewModel.REQUIRED_PRACTICE_COUNT - 1))
-              this.viewModel.REQUIRED_PRACTICE_COUNT = next
-              // 修正当前进度显示
-              const count = this.viewModel.practiceCount.get(this.viewModel.currentIndex) || 0
-              this.viewModel.progressVisual = Math.min(count / this.viewModel.REQUIRED_PRACTICE_COUNT, 1)
-            })
-            .hoverEffect(HoverEffect.Scale)
-            .focusable(true)
-
-          Blank().width(12)
-
-          Text(`${this.viewModel.REQUIRED_PRACTICE_COUNT}`)
-            .fontSize(18)
-            .fontWeight(FontWeight.Bold)
-            .fontColor('#FFD700')
-
-          Blank().width(12)
-
-          Button() {
-            Text('+').fontSize(18).fontColor(Color.White)
-          }
-          .height(36)
-            .width(44)
-            .backgroundColor('#333333')
-            .borderRadius(8)
-            .onClick(() => {
-              const next = Math.max(3, Math.min(5, this.viewModel.REQUIRED_PRACTICE_COUNT + 1))
-              this.viewModel.REQUIRED_PRACTICE_COUNT = next
-              const count = this.viewModel.practiceCount.get(this.viewModel.currentIndex) || 0
-              this.viewModel.progressVisual = Math.min(count / this.viewModel.REQUIRED_PRACTICE_COUNT, 1)
-            })
-            .hoverEffect(HoverEffect.Scale)
-            .focusable(true)
-        }
-        .height(44)
-          .alignItems(VerticalAlign.Center)
 
         Blank().height(20)
 

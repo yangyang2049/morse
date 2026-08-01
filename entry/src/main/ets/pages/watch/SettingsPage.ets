@@ -3,12 +3,14 @@ import { Context } from '@kit.AbilityKit'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
 import { audioService } from '../../services/AudioService'
 import { vibratorService } from '../../services/VibratorService'
+import { LocalLearningSettings } from '../../store/LocalLearningSettings'
 
 @Component
 export struct SettingsPage {
   @State soundEnabled: boolean = true
   @State vibrationEnabled: boolean = true
   @State longPressThreshold: number = 300
+  @State repetitionCount: number = 3
   
   private practiceSettingsStore: preferences.Preferences | null = null
 
@@ -41,6 +43,10 @@ export struct SettingsPage {
         audioService.setSoundEnabled(this.soundEnabled)
         // 更新震动服务状态
         vibratorService.setEnabled(this.vibrationEnabled)
+      }
+      const context = this.getUIContext()?.getHostContext() as Context
+      if (context) {
+        this.repetitionCount = await LocalLearningSettings.getRepetitionCount(context)
       }
     } catch (error) {
       console.error('[SettingsPage] Failed to load settings:', error)
@@ -83,6 +89,18 @@ export struct SettingsPage {
       }
     } catch (error) {
       console.error('[SettingsPage] Failed to save sound enabled:', error)
+    }
+  }
+
+  private async changeRepetitionCount(delta: number): Promise<void> {
+    try {
+      const context = this.getUIContext()?.getHostContext() as Context
+      if (context) {
+        const next = LocalLearningSettings.clampRepetitionCount(this.repetitionCount + delta)
+        this.repetitionCount = await LocalLearningSettings.setRepetitionCount(context, next)
+      }
+    } catch (error) {
+      console.error('[SettingsPage] Failed to save repetition count:', error)
     }
   }
 
@@ -136,6 +154,39 @@ export struct SettingsPage {
                 this.vibrationEnabled = isOn
                 await this.saveVibrationEnabled(isOn)
               })
+          }
+          .width('100%')
+          .height(48)
+          .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+          .backgroundColor('rgba(255, 255, 255, 0.1)')
+          .borderRadius(8)
+          .margin({ top: 6, bottom: 6 })
+
+          Row() {
+            Text(LocalizationHelper.getString('learning_repetition_count'))
+              .fontSize(15)
+              .fontColor('#FFFFFF')
+              .layoutWeight(1)
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
+            Button('-')
+              .width(32)
+              .height(32)
+              .enabled(this.repetitionCount > 1)
+              .backgroundColor('#333333')
+              .onClick(() => { void this.changeRepetitionCount(-1) })
+            Text(`${this.repetitionCount}`)
+              .width(28)
+              .fontSize(16)
+              .fontWeight(FontWeight.Bold)
+              .fontColor('#FFD700')
+              .textAlign(TextAlign.Center)
+            Button('+')
+              .width(32)
+              .height(32)
+              .enabled(this.repetitionCount < 5)
+              .backgroundColor('#333333')
+              .onClick(() => { void this.changeRepetitionCount(1) })
           }
           .width('100%')
           .height(48)
@@ -210,4 +261,3 @@ export struct SettingsPage {
     .backgroundColor('#000000')
   }
 }
-

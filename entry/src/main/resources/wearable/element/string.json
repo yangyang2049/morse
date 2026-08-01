@@ -2,11 +2,11 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "摩斯电码通 Watch 版"
+      "value": "Morse Code Watch"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "摩斯电码通 Watch 版入口"
+      "value": "Morse Code Watch entry"
     }
   ]
 }

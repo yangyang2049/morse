@@ -1,52 +1,70 @@
 import router from '@ohos.router'
-import { Context } from '@kit.AbilityKit'
+import { common } from '@kit.AbilityKit'
+import { CourseCatalogV2, CourseDefinition } from '../../data/CourseCatalogV2'
+import { learningRepositoryV2, LearningSnapshot } from '../../repository/LearningRepositoryV2'
+import { DistributedSyncPermissionHelper } from '../../utils/DistributedSyncPermissionHelper'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
-import { LessonGroups } from '../../data/LessonGroups'
-import { eventHub, Events } from '../../utils/EventHub'
-import { progressStore } from '../../store/ProgressStoreSingleton'
 
 @Component
 export struct LearnPage {
-  @State alphabetProgress: number = 0
-  @State numbersProgress: number = 0
-  @State punctuationProgress: number = 0
-  @State basicLessonCompleted: boolean = false
+  @State courses: CourseDefinition[] = []
+  @State completedCourseIds: string[] = []
+  private snapshotListener: ((snapshot: LearningSnapshot) => void) | null = null
 
-  private lessonCompletedCallback: ((data?: Object) => void) | null = null
-
-  async aboutToAppear() {
-    await this.loadLessonProgress()
-
-    this.lessonCompletedCallback = (_data?: Object) => {
-      console.log('[LearnPage] Lesson completed event received, reloading progress')
-      void this.loadLessonProgress()
-    }
-    eventHub.on(Events.LESSON_COMPLETED, this.lessonCompletedCallback)
-  }
-
-  onPageShow() {
-    void this.loadLessonProgress()
-  }
-
-  aboutToDisappear() {
-    if (this.lessonCompletedCallback) {
-      eventHub.off(Events.LESSON_COMPLETED, this.lessonCompletedCallback)
-      this.lessonCompletedCallback = null
+  async aboutToAppear(): Promise<void> {
+    const context = this.getUIContext()?.getHostContext() as common.UIAbilityContext
+    this.courses = CourseCatalogV2.getVisible(LocalizationHelper.getCurrentLanguage())
+    if (context) {
+      const syncGranted = await DistributedSyncPermissionHelper.requestOnLearnEntry(context)
+      await learningRepositoryV2.init(context, syncGranted)
+      this.applySnapshot(await learningRepositoryV2.getSnapshot())
+      this.snapshotListener = (snapshot: LearningSnapshot) => this.applySnapshot(snapshot)
+      learningRepositoryV2.subscribe(this.snapshotListener)
     }
   }
 
-  private async loadLessonProgress(): Promise<void> {
+  onPageShow(): void {
+    void this.refreshSnapshot()
+  }
+
+  aboutToDisappear(): void {
+    if (this.snapshotListener) {
+      learningRepositoryV2.unsubscribe(this.snapshotListener)
+      this.snapshotListener = null
+    }
+  }
+
+  private async refreshSnapshot(): Promise<void> {
+    this.applySnapshot(await learningRepositoryV2.getSnapshot())
+  }
+
+  private applySnapshot(snapshot: LearningSnapshot): void {
+    this.completedCourseIds = [...snapshot.completedCourseIds]
+  }
+
+  private isCompleted(courseId: string): boolean {
+    return this.completedCourseIds.includes(courseId)
+  }
+
+  private async openCourse(course: CourseDefinition): Promise<void> {
+    let title: string = course.id
     try {
-      const context = this.getUIContext()?.getHostContext() as Context
+      const context = this.getUIContext()?.getHostContext()
       if (context) {
-        await progressStore.load(context)
+        title = await context.resourceManager.getStringByName(course.titleKey)
       }
-      this.basicLessonCompleted = progressStore.isBasicsCompleted()
-      this.alphabetProgress = progressStore.getWatchGroupProgress('alphabet')
-      this.numbersProgress = progressStore.getWatchGroupProgress('numbers')
-      this.punctuationProgress = progressStore.getWatchGroupProgress('punctuation')
-    } catch (error) {
-      console.error('[LearnPage] Failed to load lesson progress:', error)
+    } catch (_error) {
+    }
+    if (course.kind === 'knowledge') {
+      router.pushUrl({
+        url: 'pages/watch/KnowledgeLessonPage',
+        params: { courseId: course.id, title: title }
+      })
+    } else {
+      router.pushUrl({
+        url: 'pages/watch/LessonDetailPage',
+        params: { courseId: course.id, title: title }
+      })
     }
   }
 
@@ -62,159 +80,46 @@ export struct LearnPage {
 
       Scroll() {
         Column() {
-          Row() {
-            Image($rawfile('ic_article.svg'))
-              .width(24)
-              .height(24)
-              .fillColor('#FFD700')
-              .margin({ right: 12 })
-
-            Text(LocalizationHelper.getString('watch_basics'))
-              .fontSize(16)
-              .fontColor('#FFFFFF')
-
-            Blank()
-
-            Text(this.basicLessonCompleted ? '1/1' : '0/1')
-              .fontSize(14)
-              .fontColor('#FFFFFF')
-              .fontWeight(FontWeight.Medium)
-          }
-          .width('80%')
-          .height(44)
-          .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-          .backgroundColor('rgba(255, 255, 255, 0.1)')
-          .borderRadius(8)
-          .clickEffect({ level: ClickEffectLevel.LIGHT })
-          .onClick(() => {
-            router.pushUrl({
-              url: 'pages/watch/KnowledgeLessonPage'
-            })
-          })
-          .margin({ bottom: 10 })
-
-          Row() {
-            Text('A')
-              .fontSize(24)
-              .fontWeight(FontWeight.Bold)
-              .fontColor('#FFD728')
-              .textAlign(TextAlign.Center)
-              .width(24)
-              .margin({ right: 12 })
-
-            Text(LocalizationHelper.getString('watch_alphabet'))
-              .fontSize(16)
-              .fontColor('#FFFFFF')
-
-            Blank()
-
-            Text(`${this.alphabetProgress}/${LessonGroups.getAlphabetGroups().length}`)
-              .fontSize(14)
-              .fontColor('#FFFFFF')
-              .fontWeight(FontWeight.Medium)
-          }
-          .width('80%')
-          .height(44)
-          .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-          .backgroundColor('rgba(255, 255, 255, 0.1)')
-          .borderRadius(8)
-          .clickEffect({ level: ClickEffectLevel.LIGHT })
-          .onClick(() => {
-            const nextIndex = Math.min(this.alphabetProgress, LessonGroups.getAlphabetGroups().length - 1)
-            router.pushUrl({
-              url: 'pages/watch/LessonDetailPage',
-              params: {
-                lessonType: 'alphabet',
-                lessonIndex: nextIndex
+          ForEach(this.courses, (course: CourseDefinition) => {
+            Row() {
+              Column() {
+                Text(LocalizationHelper.getString(course.titleKey))
+                  .fontSize(15)
+                  .fontColor('#FFFFFF')
+                  .width('100%')
+                  .maxLines(1)
+                  .textOverflow({ overflow: TextOverflow.Ellipsis })
+                Text(LocalizationHelper.getString(course.subtitleKey))
+                  .fontSize(11)
+                  .fontColor('#AAAAAA')
+                  .width('100%')
+                  .maxLines(1)
+                  .textOverflow({ overflow: TextOverflow.Ellipsis })
               }
-            })
-          })
-          .margin({ bottom: 10 })
+              .layoutWeight(1)
+                .alignItems(HorizontalAlign.Start)
 
-          Row() {
-            Text('1')
-              .fontSize(24)
-              .fontWeight(FontWeight.Bold)
-              .fontColor('#FFD728')
-              .textAlign(TextAlign.Center)
-              .width(24)
-              .margin({ right: 12 })
-
-            Text(LocalizationHelper.getString('watch_numbers'))
-              .fontSize(16)
-              .fontColor('#FFFFFF')
-
-            Blank()
-
-            Text(`${this.numbersProgress}/${LessonGroups.getNumberGroups().length}`)
-              .fontSize(14)
-              .fontColor('#FFFFFF')
-              .fontWeight(FontWeight.Medium)
-          }
-          .width('80%')
-          .height(44)
-          .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-          .backgroundColor('rgba(255, 255, 255, 0.1)')
-          .borderRadius(8)
-          .clickEffect({ level: ClickEffectLevel.LIGHT })
-          .onClick(() => {
-            const nextIndex = Math.min(this.numbersProgress, LessonGroups.getNumberGroups().length - 1)
-            router.pushUrl({
-              url: 'pages/watch/LessonDetailPage',
-              params: {
-                lessonType: 'numbers',
-                lessonIndex: nextIndex
-              }
-            })
-          })
-          .margin({ bottom: 10 })
-
-          Row() {
-            Text('.')
-              .fontSize(24)
-              .fontWeight(FontWeight.Bold)
-              .fontColor('#FFD728')
-              .textAlign(TextAlign.Center)
-              .width(24)
-              .margin({ right: 12 })
-
-            Text(LocalizationHelper.getString('punctuation'))
-              .fontSize(16)
-              .fontColor('#FFFFFF')
-
-            Blank()
-
-            Text(`${this.punctuationProgress}/${LessonGroups.getPunctuationGroups().length}`)
-              .fontSize(14)
-              .fontColor('#FFFFFF')
-              .fontWeight(FontWeight.Medium)
-          }
-          .width('80%')
-          .height(44)
-          .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-          .backgroundColor('rgba(255, 255, 255, 0.1)')
-          .borderRadius(8)
-          .clickEffect({ level: ClickEffectLevel.LIGHT })
-          .onClick(() => {
-            const nextIndex = Math.min(this.punctuationProgress, LessonGroups.getPunctuationGroups().length - 1)
-            router.pushUrl({
-              url: 'pages/watch/LessonDetailPage',
-              params: {
-                lessonType: 'punctuation',
-                lessonIndex: nextIndex
-              }
-            })
-          })
-          .margin({ bottom: 40 })
+              Text(this.isCompleted(course.id) ? '✓' : '›')
+                .fontSize(18)
+                .fontColor(this.isCompleted(course.id) ? '#4CAF50' : '#FFD700')
+            }
+            .width('84%')
+            .height(54)
+            .padding({ left: 12, right: 12, top: 6, bottom: 6 })
+            .backgroundColor('rgba(255, 255, 255, 0.1)')
+            .borderRadius(8)
+            .margin({ bottom: 8 })
+            .clickEffect({ level: ClickEffectLevel.LIGHT })
+            .onClick(() => { void this.openCourse(course) })
+          }, (course: CourseDefinition) => course.id)
         }
         .width('100%')
         .alignItems(HorizontalAlign.Center)
-        .padding({ top: 8, bottom: 8 })
+        .padding({ top: 8, bottom: 40 })
       }
       .width('100%')
-      .height('100%')
+      .layoutWeight(1)
       .scrollBar(BarState.Off)
-      .scrollable(ScrollDirection.Vertical)
       .focusable(true)
       .defaultFocus(true)
     }

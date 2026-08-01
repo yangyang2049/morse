@@ -7,7 +7,7 @@ import { audioService } from '../services/AudioService'
 import { common, Context } from '@kit.AbilityKit'
 import preferences from '@ohos.data.preferences'
 import { DeviceHelper } from '../utils/DeviceHelper'
-import { showCommentDialogIfNeeded } from '../utils/AppGalleryCommentHelper'
+import { showCommentDialogOnLaunchIfNeeded } from '../utils/AppGalleryCommentHelper'
 import { SystemBarHelper } from '../utils/SystemBarHelper'
 
 @Entry
@@ -16,13 +16,8 @@ struct Index {
   @State currentIndex: number = 0
   @State isTablet: boolean = false
 
-  @StorageLink('currentLanguage') currentLanguage: string = ''
-
-  @StorageLink('languageRefreshTrigger') languageRefreshTrigger: number = 0
-
-  @State pageRebuildKey: number = 0
-
   private preferencesStore: preferences.Preferences | null = null
+  private hasHandledLaunchComment: boolean = false
 
   async aboutToAppear() {
     SystemBarHelper.applyDarkFromUIContext(this.getUIContext())
@@ -30,24 +25,28 @@ struct Index {
     await this.initPreferences()
     await this.loadLastTabIndex()
     this.initAudioService()
-    this.watchLanguageChanges()
   }
 
   onPageShow(): void {
     // 从二级页返回时系统栏可能被重置，先恢复深色栏
     SystemBarHelper.applyDarkFromUIContext(this.getUIContext())
-    // 从课程页返回首页时尝试拉起应用内评分（条件不满足则静默）
-    this.tryShowAppGalleryComment()
+    // 每次冷启动只计数一次；第 3 次在首页请求应用内评分。
+    this.tryShowLaunchComment()
   }
 
-  private tryShowAppGalleryComment(): void {
+  private tryShowLaunchComment(): void {
+    if (this.hasHandledLaunchComment) {
+      return
+    }
+    this.hasHandledLaunchComment = true
+
     try {
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext
       if (context) {
-        void showCommentDialogIfNeeded(context)
+        void showCommentDialogOnLaunchIfNeeded(context)
       }
     } catch (error) {
-      console.error('[INDEX] tryShowAppGalleryComment failed:', error)
+      console.error('[INDEX] tryShowLaunchComment failed:', error)
     }
   }
 
@@ -95,19 +94,6 @@ struct Index {
     }
   }
 
-  private watchLanguageChanges() {
-    let lastTrigger = this.languageRefreshTrigger
-    const checkLanguageChange = () => {
-      if (this.languageRefreshTrigger !== lastTrigger) {
-        console.log('[INDEX] Language changed, rebuilding all pages')
-        lastTrigger = this.languageRefreshTrigger
-        this.pageRebuildKey++
-      }
-      setTimeout(checkLanguageChange, 100)
-    }
-    checkLanguageChange()
-  }
-
   private async initAudioService() {
     try {
       const context = getContext(this) as Context
@@ -143,37 +129,27 @@ struct Index {
       index: this.currentIndex
     }) {
       TabContent() {
-        if (this.pageRebuildKey >= 0) {
-          LearnPage()
-        }
+        LearnPage()
       }
       .tabBar(this.TabBuilder(0, $rawfile('ic_learn.svg'), $rawfile('ic_learn_light.svg'), 'learn'))
 
       TabContent() {
-        if (this.pageRebuildKey >= 0) {
-          PracticeDifficultyPage()
-        }
+        PracticeDifficultyPage()
       }
       .tabBar(this.TabBuilder(1, $rawfile('ic_train.svg'), $rawfile('ic_train_light.svg'), 'practice'))
 
       TabContent() {
-        if (this.pageRebuildKey >= 0) {
-          TranslatePage()
-        }
+        TranslatePage()
       }
       .tabBar(this.TabBuilder(2, $rawfile('ic_translate.svg'), $rawfile('ic_translate_light.svg'), 'translate'))
 
       TabContent() {
-        if (this.pageRebuildKey >= 0) {
-          CodeTablePage()
-        }
+        CodeTablePage()
       }
       .tabBar(this.TabBuilder(3, $rawfile('ic_table.svg'), $rawfile('ic_table_light.svg'), 'code_table'))
 
       TabContent() {
-        if (this.pageRebuildKey >= 0) {
-          MePage()
-        }
+        MePage()
       }
       .tabBar(this.TabBuilder(4, $rawfile('ic_me.svg'), $rawfile('ic_me_light.svg'), 'me'))
     }

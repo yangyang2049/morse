@@ -1,167 +1,59 @@
-import { preferences } from '@kit.ArkData'
-import { Context } from '@kit.AbilityKit'
-
-interface CharacterProgress {
-    character: string
-    totalAttempts: number // 总练习次数
-    correctAttempts: number // 正确次数
-    incorrectAttempts: number // 错误次数
-    lastPracticed: number // 最后练习时间戳
-}
-
-const PREFS_NAME = 'practice_progress'
-const KEY_PROGRESS = 'character_progress'
+import { common, Context } from '@kit.AbilityKit'
+import { learningRepositoryV2, LearningCounter, LearningSnapshot } from '../repository/LearningRepositoryV2'
 
 export class PracticeProgressStore {
-    private static instance: PracticeProgressStore
-    private progressMap: Map<string, CharacterProgress> = new Map()
-    private preferencesStore: preferences.Preferences | null = null
-    private saveTimer: number | null = null
-    private static readonly SAVE_DEBOUNCE_MS: number = 500
+  private static instance: PracticeProgressStore | null = null
+  private progressMap: Map<string, LearningCounter> = new Map()
+  private snapshotListener: ((snapshot: LearningSnapshot) => void) | null = null
 
-    private constructor() {
+  private constructor() {}
+
+  static getInstance(): PracticeProgressStore {
+    if (!PracticeProgressStore.instance) {
+      PracticeProgressStore.instance = new PracticeProgressStore()
     }
+    return PracticeProgressStore.instance
+  }
 
-    static getInstance(): PracticeProgressStore {
-        if (!PracticeProgressStore.instance) {
-            PracticeProgressStore.instance = new PracticeProgressStore()
-        }
-        return PracticeProgressStore.instance
+  async init(context: Context): Promise<void> {
+    await learningRepositoryV2.init(context as common.UIAbilityContext, learningRepositoryV2.isDistributedSyncEnabled())
+    this.applySnapshot(await learningRepositoryV2.getSnapshot())
+    if (!this.snapshotListener) {
+      this.snapshotListener = (snapshot: LearningSnapshot) => this.applySnapshot(snapshot)
+      learningRepositoryV2.subscribe(this.snapshotListener)
     }
+  }
 
-    async init(context: Context): Promise<void> {
-        try {
-            this.preferencesStore = await preferences.getPreferences(context, PREFS_NAME)
-            await this.load()
-        } catch (error) {
-            console.error('[PracticeProgressStore] Failed to initialize:', error)
-        }
+  async recordCorrect(character: string): Promise<void> {
+    await learningRepositoryV2.recordPracticeAttempt(character, true)
+  }
+
+  async recordIncorrect(character: string): Promise<void> {
+    await learningRepositoryV2.recordPracticeAttempt(character, false)
+  }
+
+  getCharacterWeight(character: string): number {
+    const progress = this.progressMap.get(character)
+    if (!progress || progress.totalAttempts === 0) {
+      return 10.0
     }
-
-    private async load(): Promise<void> {
-        if (!this.preferencesStore) return
-
-        try {
-            const progressJson = await this.preferencesStore.get(KEY_PROGRESS, '{}') as string
-            const progressObj = JSON.parse(progressJson) as Record<string, CharacterProgress>
-
-            this.progressMap.clear()
-            const keys = Object.keys(progressObj)
-            for (let i = 0; i < keys.length; i++) {
-                const char = keys[i]
-                this.progressMap.set(char, progressObj[char])
-            }
-
-            console.log(`[PracticeProgressStore] Loaded progress for ${this.progressMap.size} characters`)
-        } catch (error) {
-            console.error('[PracticeProgressStore] Failed to load progress:', error)
-        }
+    const accuracy = progress.correctAttempts / progress.totalAttempts
+    let weight = accuracy < 0.3 ? 5.0 : accuracy < 0.5 ? 3.0 : accuracy < 0.7 ? 2.0 : accuracy < 0.9 ? 1.5 : 0.5
+    if (progress.totalAttempts < 5) {
+      weight *= 2.0
+    } else if (progress.totalAttempts < 10) {
+      weight *= 1.5
+    } else if (progress.totalAttempts > 30) {
+      weight *= 0.7
     }
+    return weight
+  }
 
-    /** 练习过程中频繁答题：500ms 内合并为一次 flush */
-    private scheduleSave(): void {
-        if (this.saveTimer !== null) {
-            clearTimeout(this.saveTimer)
-        }
-        this.saveTimer = setTimeout(() => {
-            this.saveTimer = null
-            void this.persistNow()
-        }, PracticeProgressStore.SAVE_DEBOUNCE_MS)
+  private applySnapshot(snapshot: LearningSnapshot): void {
+    const next: Map<string, LearningCounter> = new Map()
+    for (const counter of snapshot.counters) {
+      next.set(counter.itemId, counter)
     }
-
-    private async persistNow(): Promise<void> {
-        if (!this.preferencesStore) return
-
-        try {
-            const progressObj: Record<string, CharacterProgress> = {}
-            const entries = Array.from(this.progressMap.entries())
-            for (let i = 0; i < entries.length; i++) {
-                const entry = entries[i]
-                progressObj[entry[0]] = entry[1]
-            }
-
-            await this.preferencesStore.put(KEY_PROGRESS, JSON.stringify(progressObj))
-            await this.preferencesStore.flush()
-        } catch (error) {
-            console.error('[PracticeProgressStore] Failed to save progress:', error)
-        }
-    }
-
-    // 记录正确答案
-    async recordCorrect(character: string): Promise<void> {
-        const progress = this.progressMap.get(character) || {
-            character: character,
-            totalAttempts: 0,
-            correctAttempts: 0,
-            incorrectAttempts: 0,
-            lastPracticed: 0
-        }
-
-        progress.totalAttempts++
-        progress.correctAttempts++
-        progress.lastPracticed = Date.now()
-
-        this.progressMap.set(character, progress)
-        this.scheduleSave()
-    }
-
-    // 记录错误答案
-    async recordIncorrect(character: string): Promise<void> {
-        const progress = this.progressMap.get(character) || {
-            character: character,
-            totalAttempts: 0,
-            correctAttempts: 0,
-            incorrectAttempts: 0,
-            lastPracticed: 0
-        }
-
-        progress.totalAttempts++
-        progress.incorrectAttempts++
-        progress.lastPracticed = Date.now()
-
-        this.progressMap.set(character, progress)
-        this.scheduleSave()
-    }
-
-    // 计算字符的权重（权重越高，越应该被练习）
-    getCharacterWeight(character: string): number {
-        const progress = this.progressMap.get(character)
-
-        if (!progress || progress.totalAttempts === 0) {
-            // 未练习过的字符权重最高
-            return 10.0
-        }
-
-        const accuracy = progress.correctAttempts / progress.totalAttempts
-
-        // 根据正确率和练习次数计算权重
-        // 正确率越低，权重越高
-        // 练习次数越少，权重越高
-        let weight = 1.0
-
-        // 正确率影响 (0-100%正确率)
-        if (accuracy < 0.3) {
-            weight *= 5.0 // 正确率低于30%，权重x5
-        } else if (accuracy < 0.5) {
-            weight *= 3.0 // 正确率30-50%，权重x3
-        } else if (accuracy < 0.7) {
-            weight *= 2.0 // 正确率50-70%，权重x2
-        } else if (accuracy < 0.9) {
-            weight *= 1.5 // 正确率70-90%，权重x1.5
-        } else {
-            weight *= 0.5 // 正确率90%以上，权重x0.5
-        }
-
-        // 练习次数影响
-        if (progress.totalAttempts < 5) {
-            weight *= 2.0 // 练习少于5次，权重x2
-        } else if (progress.totalAttempts < 10) {
-            weight *= 1.5 // 练习5-10次，权重x1.5
-        } else if (progress.totalAttempts > 30) {
-            weight *= 0.7 // 练习超过30次，权重x0.7
-        }
-
-        return weight
-    }
+    this.progressMap = next
+  }
 }
-

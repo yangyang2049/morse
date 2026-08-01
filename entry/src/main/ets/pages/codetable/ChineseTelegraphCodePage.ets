@@ -3,7 +3,6 @@ import util from '@ohos.util'
 import { DialogManager } from '../../widgets/CustomDialog'
 import { CustomDialog } from '../../widgets/CustomDialog'
 import { router } from '@kit.ArkUI'
-import { LocalizationHelper } from '../../utils/LocalizationHelper'
 import { SystemBarHelper } from '../../utils/SystemBarHelper'
 
 interface ChineseTelegraphCode {
@@ -30,9 +29,6 @@ export struct ChineseTelegraphCodePage {
   @State searchResults: ChineseTelegraphCode[] = []
   @State isSearchMode: boolean = false
 
-  // 语言检测
-  @State isEnglish: boolean = false
-
   // 数据缓存
   private static allDataCache: ChineseTelegraphCode[] | null = null
   private static isDataLoaded: boolean = false
@@ -41,20 +37,11 @@ export struct ChineseTelegraphCodePage {
     SystemBarHelper.applyDarkFromUIContext(this.getUIContext())
     console.log('ChineseTelegraphCodePage aboutToAppear called')
 
-    // 检查语言设置
-    this.checkLanguage()
-
     // 延迟加载数据，让页面先显示
     setTimeout(() => {
       console.log('Starting to load Chinese telegraph codes...')
       this.loadFirstPage()
     }, 100)
-  }
-
-  private checkLanguage() {
-    // 使用 AppStorage 获取当前语言
-    const currentLang: string = AppStorage.get<string>('currentLanguage') || LocalizationHelper.DEFAULT_LANGUAGE
-    this.isEnglish = currentLang.startsWith('en')
   }
 
   // 加载第一页数据
@@ -223,6 +210,28 @@ export struct ChineseTelegraphCodePage {
     console.log(`Search for "${text}" found ${results.length} results`)
   }
 
+  private async showTelegraphCodeInfo(): Promise<void> {
+    const context = this.getUIContext().getHostContext()
+    if (!context) {
+      return
+    }
+
+    try {
+      const title = await context.resourceManager.getStringByName('standard_chinese_telegraph_code')
+      const message = await context.resourceManager.getStringByName('telegraph_code_description')
+      const confirmText = await context.resourceManager.getStringByName('got_it')
+      DialogManager.show({
+        title: title,
+        message: message,
+        confirmText: confirmText,
+        showCancel: false,
+        showClose: false
+      })
+    } catch (error) {
+      console.error('[ChineseTelegraphCodePage] Failed to load info dialog resources:', error)
+    }
+  }
+
   @Builder
   TitleBar() {
     Row() {
@@ -239,41 +248,26 @@ export struct ChineseTelegraphCodePage {
           router.back()
         })
 
-      Text('标准中文电码')
+      Text($r('app.string.standard_chinese_telegraph_code'))
         .fontSize(20)
         .fontWeight(FontWeight.Bold)
         .fontColor(Color.White)
         .layoutWeight(1)
         .textAlign(TextAlign.Center)
 
-      // Info entrance at top-right (question mark) - 中文显示按钮，英文显示占位符
-      if (!this.isEnglish) {
-        Button() {
-          Text('?')
-            .fontSize(20)
-            .fontColor(Color.White)
-            .textAlign(TextAlign.Center)
-            .width('100%')
-        }
-        .width(40)
-          .height(40)
-          .backgroundColor(Color.Transparent)
-          .onClick(() => {
-            // Use custom dialog to support proper line breaks
-            DialogManager.show({
-              title: '标准中文电码',
-              message: '中文电码表（又称"汉字电报码"）是为了在电报传输时代能够准确、快速地发送和接收汉字而设计的编码系统。\n\n• 起源与标准化\n最早由清末盛宣怀主持制定，后来经过民国与新中国的多次修订，形成了较为统一的国家标准。常见的版本是《标准电码本》，收录 7000 余个常用汉字。\n\n• 编码方式\n每个汉字对应一个四位数字编码，范围一般是 0001–9999。\n例如：\n• "中" = 0029\n• "国" = 0049\n• "电" = 0168\n• "码" = 0203\n\n• 使用方式\n在电报传输中，发送方只需要发送对应的四位数字，接收方就能根据电码本查回原来的汉字。这样既能保证传输准确，也方便跨语言通信（数字是国际通用的）。\n\n本页面可按"汉字"或"电码"搜索，方便快速定位目标。',
-              confirmText: '知道了',
-              showCancel: false,
-              showClose: false
-            })
-          })
-      } else {
-        // 英文环境下显示占位符，保持布局平衡
-        Column()
-          .width(40)
-          .height(40)
+      Button() {
+        Text('?')
+          .fontSize(20)
+          .fontColor(Color.White)
+          .textAlign(TextAlign.Center)
+          .width('100%')
       }
+      .width(40)
+        .height(40)
+        .backgroundColor(Color.Transparent)
+        .onClick(() => {
+          void this.showTelegraphCodeInfo()
+        })
     }
     .width('100%')
       .height(56)
@@ -287,7 +281,7 @@ export struct ChineseTelegraphCodePage {
     Column() {
       Search({
         value: this.searchText,
-        placeholder: '搜索汉字或电码...'
+        placeholder: $r('app.string.search_placeholder')
       })
         .placeholderColor('#666666')
         .fontColor(Color.White)
@@ -312,7 +306,7 @@ export struct ChineseTelegraphCodePage {
             .height(16)
             .color('#FFD700')
 
-          Text('搜索中...')
+          Text($r('app.string.searching'))
             .fontSize(12)
             .fontColor('#CCCCCC')
             .margin({ left: 8 })
@@ -326,14 +320,14 @@ export struct ChineseTelegraphCodePage {
   @Builder
   TableHeader() {
     Row() {
-      Text('汉字')
+      Text($r('app.string.chinese_characters'))
         .fontSize(16)
         .fontWeight(FontWeight.Bold)
         .fontColor('#FFD700')
         .width('25%')
         .textAlign(TextAlign.Center)
 
-      Text('电码')
+      Text($r('app.string.telegraph_code'))
         .fontSize(16)
         .fontWeight(FontWeight.Bold)
         .fontColor('#FFD700')
@@ -382,7 +376,7 @@ export struct ChineseTelegraphCodePage {
 
       Blank().height(16)
 
-      Text('加载中...')
+      Text($r('app.string.loading'))
         .fontSize(16)
         .fontColor('#CCCCCC')
         .textAlign(TextAlign.Center)
@@ -403,7 +397,7 @@ export struct ChineseTelegraphCodePage {
             .height(16)
             .color('#FFD700')
 
-          Text('加载中...')
+          Text($r('app.string.loading'))
             .fontSize(14)
             .fontColor(Color.White)
             .margin({ left: 8 })
@@ -411,7 +405,7 @@ export struct ChineseTelegraphCodePage {
         .justifyContent(FlexAlign.Center)
           .alignItems(VerticalAlign.Center)
       } else {
-        Text('加载更多')
+        Text($r('app.string.load_more'))
           .fontSize(14)
           .fontColor(Color.White)
       }
@@ -445,7 +439,7 @@ export struct ChineseTelegraphCodePage {
             if (this.filteredCodes.length === 0) {
               // 空数据提示
               Column() {
-                Text('暂无数据')
+                Text($r('app.string.no_data'))
                   .fontSize(14)
                   .fontColor('#888888')
                   .textAlign(TextAlign.Center)

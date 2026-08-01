@@ -1,5 +1,5 @@
 import { promptAction } from '@kit.ArkUI'
-import { common, Want } from '@kit.AbilityKit'
+import { common, Context, Want } from '@kit.AbilityKit'
 import pasteboard from '@ohos.pasteboard'
 import { resourceManager } from '@kit.LocalizationKit'
 import { BusinessError } from '@kit.BasicServicesKit'
@@ -10,20 +10,7 @@ import { vibratorService } from '../../services/VibratorService'
 import {
   showCommentDialogManual
 } from '../../utils/AppGalleryCommentHelper'
-import { LocalizationHelper } from '../../utils/LocalizationHelper'
-
-// 语言选项接口
-interface LanguageOption {
-  code: string
-  nativeName: string
-}
-
-// 支持的语言列表
-const SUPPORTED_LANGUAGES: LanguageOption[] = [
-  { code: 'zh-CN', nativeName: '简体中文' },
-  { code: 'zh-HK', nativeName: '繁體中文' },
-  { code: 'en-US', nativeName: 'English' }
-]
+import { LocalLearningSettings } from '../../store/LocalLearningSettings'
 
 const MORSE_APP_ID = 'com.douhua.morsecode'
 const MORSE_APP_DETAIL_URL = `https://appgallery.huawei.com/app/detail?id=${MORSE_APP_ID}`
@@ -33,12 +20,12 @@ const MORSE_APP_REVIEW_LINK = `${MORSE_APP_DETAIL_URL}&action=write-review`
 @Component
 export struct MePage {
   @State appVersion: string = '3.0.0'
-  @StorageLink('currentLanguage') currentLanguage: string = this.getInitialLanguage()
   @State useSingleButton: boolean = false // 是否使用单按钮模式
   @State showKeySettingsDialog: boolean = false // 按键设置（单双键 + 长按阈值）对话框
   @State keySettingsSingleButton: boolean = false // 对话框内选择的单键与否，默认双键
   @State keySettingsSliderValue: number = 300
   @State vibrationEnabled: boolean = true // 振动反馈开关
+  @State repetitionCount: number = 3
   // 资源管理器
   private resourceMgr: resourceManager.ResourceManager | null = null
   private preferencesStore: preferences.Preferences | null = null
@@ -60,13 +47,9 @@ export struct MePage {
     await this.loadLongPressThresholdPreference()
     // 加载振动偏好设置
     await this.loadVibrationPreference()
+    this.repetitionCount = await LocalLearningSettings.getRepetitionCount(getContext(this) as Context)
 
     this.loadAppInfo()
-  }
-
-  // 获取初始语言（与冷启动一致：默认英文，按系统语言映射）
-  private getInitialLanguage(): string {
-    return LocalizationHelper.detectPreferredLanguage()
   }
 
   // 获取系统资源字符串
@@ -82,30 +65,6 @@ export struct MePage {
       console.error(`[MePage] Failed to get string resource ${key}:`, error)
       // 如果系统资源获取失败，返回key作为fallback
       return key
-    }
-  }
-
-  // 设置系统语言（使用官方API）
-  private async setSystemLanguage(languageCode: string): Promise<void> {
-    try {
-      console.log(`[MePage] Attempting to set app preferred language to: ${languageCode}`)
-      LocalizationHelper.applyAppPreferredLanguage(languageCode)
-
-      // 更新当前语言状态
-      this.currentLanguage = languageCode
-
-      // 同步到AppStorage，供其他页面使用
-      AppStorage.setOrCreate('currentLanguage', languageCode)
-
-      // 触发语言刷新事件
-      const currentTrigger = AppStorage.get<number>('languageRefreshTrigger') || 0
-      AppStorage.setOrCreate('languageRefreshTrigger', currentTrigger + 1)
-      console.log(`[MePage] Language refresh trigger incremented to: ${currentTrigger + 1}`)
-
-    } catch (error) {
-      const err = error as BusinessError
-      console.error(`[MePage] Failed to set app preferred language, error code: ${err.code}, message: ${err.message}`)
-      // 即使系统语言设置失败，也不抛出错误，让应用继续使用自定义i18n
     }
   }
 
@@ -210,10 +169,13 @@ export struct MePage {
     }
   }
 
-  // 获取当前语言的显示名称
-  private getCurrentLanguageDisplayName(): string {
-    const language = SUPPORTED_LANGUAGES.find(lang => lang.code === this.currentLanguage)
-    return language ? language.nativeName : SUPPORTED_LANGUAGES[0].nativeName
+  private async changeRepetitionCount(delta: number): Promise<void> {
+    try {
+      const next = LocalLearningSettings.clampRepetitionCount(this.repetitionCount + delta)
+      this.repetitionCount = await LocalLearningSettings.setRepetitionCount(getContext(this) as Context, next)
+    } catch (error) {
+      console.error('[MePage] Failed to save repetition count:', error)
+    }
   }
 
   // 分享应用 - 使用 HarmonyOS 标准分享框架
@@ -347,84 +309,6 @@ export struct MePage {
     }
   }
 
-  @State private showLanguageDialog: boolean = false
-
-  @Builder LanguageSelectorDialog() {
-    Column() {
-      Row() {
-        Text($r('app.string.language_selection_title'))
-          .fontSize(18)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#FFFFFF')
-        Blank()
-        Button() {
-          Image($rawfile('ic_close.svg'))
-            .width(20)
-            .height(20)
-            .fillColor('#FFFFFF')
-        }
-        .width(32)
-          .height(32)
-          .backgroundColor('rgba(128, 128, 128, 0.2)')
-          .borderRadius(16)
-          .onClick(() => {
-            this.showLanguageDialog = false
-          })
-          .hoverEffect(HoverEffect.Scale)
-          .focusable(true)
-      }
-      .width('100%')
-        .margin({ bottom: 20 })
-
-      Column() {
-        ForEach(SUPPORTED_LANGUAGES, (language: LanguageOption) => {
-          Row() {
-            Text(language.nativeName)
-              .fontSize(16)
-              .fontColor('#FFFFFF')
-              .fontWeight(FontWeight.Medium)
-              .layoutWeight(1)
-              .alignSelf(ItemAlign.Start)
-
-            if (this.currentLanguage === language.code) {
-              Circle()
-                .width(16)
-                .height(16)
-                .fill(Color.Transparent)
-                .stroke('#FFD700')
-                .strokeWidth(2)
-            }
-          }
-          .width('100%')
-            .padding(16)
-            .backgroundColor('#111111')
-            .borderRadius(8)
-            .margin({ bottom: 8 })
-            .border({
-              width: this.currentLanguage === language.code ? 1 : 0.5,
-              color: this.currentLanguage === language.code ? '#FFD700' : '#222222',
-              radius: 8
-            })
-            .onClick(async () => {
-              console.log(`[LANG_SELECT] User selected language: ${language.code}`)
-              console.log(`[LANG_SELECT] Current language before change: ${this.currentLanguage}`)
-              await this.setSystemLanguage(language.code)
-              console.log(`[LANG_SELECT] Current language after change: ${this.currentLanguage}`)
-              this.showLanguageDialog = false
-            })
-            .hoverEffect(HoverEffect.Scale)
-            .focusable(true)
-        })
-      }
-      .width('100%')
-    }
-    .padding(20)
-      .backgroundColor('#2A2A2A')
-      .borderRadius(12)
-      .width('90%')
-      .constraintSize({ maxWidth: 400, maxHeight: '60%' })
-  }
-
   @Builder
   private TitleBar() {
     Row() {
@@ -438,37 +322,6 @@ export struct MePage {
       .justifyContent(FlexAlign.Center)
       .backgroundColor('#000000')
   }
-
-  @Builder LanguageSettingsItem() {
-    Row() {
-      Column() {
-        Text($r('app.string.language'))
-          .fontSize(16)
-          .fontWeight(FontWeight.Medium)
-          .fontColor('#FFFFFF')
-          .textAlign(TextAlign.Start)
-          .width('100%')
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-      }
-      .layoutWeight(1)
-        .alignItems(HorizontalAlign.Start)
-
-      Image($rawfile('ic_arrow_right.svg'))
-        .width(16)
-        .height(16)
-        .fillColor('#666666')
-    }
-    .width('100%')
-      .height(56)
-      .padding({ left: 16, right: 16 })
-      .onClick(() => {
-        this.showLanguageDialog = true
-      })
-      .hoverEffect(HoverEffect.Scale)
-      .focusable(true)
-  }
-
 
   @Builder RatingSettingsItem() {
     Row() {
@@ -756,6 +609,48 @@ export struct MePage {
       .focusable(true)
   }
 
+  @Builder RepetitionSettingsItem() {
+    Row() {
+      Column() {
+        Text($r('app.string.learning_repetition_count'))
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#FFFFFF')
+          .width('100%')
+        Text($r('app.string.learning_repetition_count_desc'))
+          .fontSize(12)
+          .fontColor('#999999')
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .width('100%')
+      }
+      .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
+
+      Button('-')
+        .width(36)
+        .height(36)
+        .enabled(this.repetitionCount > 1)
+        .backgroundColor('#333333')
+        .onClick(() => { void this.changeRepetitionCount(-1) })
+      Text(`${this.repetitionCount}`)
+        .width(36)
+        .fontSize(18)
+        .fontWeight(FontWeight.Bold)
+        .fontColor('#FFD700')
+        .textAlign(TextAlign.Center)
+      Button('+')
+        .width(36)
+        .height(36)
+        .enabled(this.repetitionCount < 5)
+        .backgroundColor('#333333')
+        .onClick(() => { void this.changeRepetitionCount(1) })
+    }
+    .width('100%')
+      .height(68)
+      .padding({ left: 16, right: 16 })
+  }
+
   // 手电筒测试UI已移除（功能已移至翻译页面）
 
   build() {
@@ -803,9 +698,9 @@ export struct MePage {
               Column() {
                 this.VibrationSettingsItem()
                 Divider().strokeWidth(1).color('#222222')
-                this.KeySettingsSettingsItem()
+                this.RepetitionSettingsItem()
                 Divider().strokeWidth(1).color('#222222')
-                this.LanguageSettingsItem()
+                this.KeySettingsSettingsItem()
               }
               .width('100%')
                 .backgroundColor('#111111')
@@ -854,31 +749,6 @@ export struct MePage {
           .scrollBarColor('#000000')
           .scrollBarWidth(0)
           .backgroundColor('#000000')
-
-        // 语言选择对话框
-        if (this.showLanguageDialog) {
-          Stack() {
-            // 半透明背景
-            Column()
-              .width('100%')
-              .height('100%')
-              .backgroundColor('rgba(0, 0, 0, 0.5)')
-              .onClick(() => {
-                this.showLanguageDialog = false
-              })
-
-            // 对话框内容 - 使用Column居中
-            Column() {
-              this.LanguageSelectorDialog()
-            }
-            .width('100%')
-              .height('100%')
-              .justifyContent(FlexAlign.Center)
-              .alignItems(HorizontalAlign.Center)
-          }
-          .width('100%')
-            .height('100%')
-        }
 
         // 按键设置对话框（单双键 + 长按阈值）
         if (this.showKeySettingsDialog) {

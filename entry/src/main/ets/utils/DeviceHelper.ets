@@ -31,6 +31,19 @@ export class DeviceHelper {
   }
 
   /**
+   * 应用内评分仅在手机、平板和 2in1 设备上启用。
+   */
+  static supportsAppGalleryComment(): boolean {
+    try {
+      const deviceType = deviceInfo.deviceType
+      return deviceType === 'phone' || deviceType === 'tablet' || deviceType === '2in1'
+    } catch (error) {
+      console.error('[DeviceHelper] Error checking AppGallery comment support:', error)
+      return false
+    }
+  }
+
+  /**
    * 获取设备类型
    */
   static getDeviceType(): string {

@@ -1,11 +1,9 @@
 import { MorseCode } from '../models/MorseCode'
-import { LearnViewModel } from './LearnViewModel'
-import { progressStore } from '../store/ProgressStoreSingleton'
 import { audioService } from '../services/AudioService'
-import { preferences } from '@kit.ArkData'
 import Context from '@ohos.app.ability.common'
 import { vibratorService } from '../services/VibratorService'
-import { promptAction } from '@kit.ArkUI'
+import { CourseCatalogV2 } from '../data/CourseCatalogV2'
+import { learningRepositoryV2 } from '../repository/LearningRepositoryV2'
 
 @Observed
 export class LetterLessonViewModel {
@@ -45,15 +43,14 @@ export class LetterLessonViewModel {
   // 内部状态
   private autoCheckTimer: number | null = null
   private progressTimer: number | null = null
-  private learnViewModel: LearnViewModel = new LearnViewModel()
   private context: Context | null = null
 
-  async init(context: Context, lessonId: string, title: string, codes: MorseCode[]): Promise<void> {
+  async init(context: Context, lessonId: string, title: string, codes: MorseCode[], repetitionCount: number): Promise<void> {
     this.lessonId = lessonId
     this.title = title
     this.codes = codes
     this.context = context
-    await this.learnViewModel.init(context)
+    this.REQUIRED_PRACTICE_COUNT = this.isReviewLesson() ? 1 : Math.max(1, Math.min(5, repetitionCount))
 
     // 复习课程默认隐藏提示
     if (this.isReviewLesson()) {
@@ -131,7 +128,7 @@ export class LetterLessonViewModel {
     }
 
     // 单词课程使用更长的检查时间
-    const isWordLesson = this.lessonId && parseInt(this.lessonId) >= 19 && parseInt(this.lessonId) <= 21
+    const isWordLesson = CourseCatalogV2.get(this.lessonId)?.unitId === 'words'
     const checkDelay = isWordLesson ? 1800 : 800
 
     this.autoCheckTimer = setTimeout(() => {
@@ -142,10 +139,12 @@ export class LetterLessonViewModel {
 
   private checkAnswer(): void {
     const currentCode = this.codes[this.currentIndex]
-    const isWordLesson = this.lessonId && parseInt(this.lessonId) >= 19 && parseInt(this.lessonId) <= 21
+    const isWordLesson = CourseCatalogV2.get(this.lessonId)?.unitId === 'words'
     const userNormalized = this.normalizeMorseForComparison(this.userInput, !!isWordLesson)
     const answerNormalized = this.normalizeMorseForComparison(currentCode.morse, !!isWordLesson)
     const isCorrect = userNormalized === answerNormalized
+
+    void learningRepositoryV2.recordAttempt(this.lessonId, currentCode.character, isCorrect)
 
     this.isCorrect = isCorrect
     this.showResult = true
@@ -260,20 +259,8 @@ export class LetterLessonViewModel {
         }
         this.clearInput()
       } else {
-        // 所有练习完成，进入复习模式
-        this.isReviewMode = true
-        this.reviewIndex = 0
-        this.currentIndex = 0
-        this.showMorseCode = false // 隐藏提示
-        this.clearInput()
-        console.log('[LetterLessonViewModel] Entering review mode')
-        
-        // 显示复习模式提示
-        promptAction.showToast({
-          message: $r('app.string.entering_review_mode'),
-          duration: 2000,
-          bottom: '45%'
-        })
+        void this.markLessonCompletedImmediately()
+        this.showCompletionDialog = true
       }
     }
   }
@@ -281,13 +268,9 @@ export class LetterLessonViewModel {
   private async markLessonCompletedImmediately(): Promise<void> {
     if (this.lessonId && !this.isLessonCompleted && this.context) {
       try {
-        const lessonNumber = parseInt(this.lessonId) || 0
-        console.error(`[LetterLessonViewModel] markLessonCompletedImmediately: Starting for lessonNumber=${lessonNumber}`)
-
-        // 使用存储的context立即标记课程完成
-        await progressStore.saveLessonCompleted(lessonNumber, this.context)
+        await learningRepositoryV2.completeCourse(this.lessonId)
         this.isLessonCompleted = true
-        console.error(`[LetterLessonViewModel] markLessonCompletedImmediately: Completed for lessonNumber=${lessonNumber}`)
+        console.error(`[LetterLessonViewModel] Completed courseId=${this.lessonId}`)
       } catch (error) {
         console.error(`[LetterLessonViewModel] markLessonCompletedImmediately: Error: ${error}`)
       }
@@ -299,12 +282,9 @@ export class LetterLessonViewModel {
   async markLessonCompleted(context: Context): Promise<void> {
     if (this.lessonId && !this.isLessonCompleted) {
       try {
-        const lessonNumber = parseInt(this.lessonId) || 0
-        // 使用单例 ProgressStore 标记课程完成
-        await progressStore.saveLessonCompleted(lessonNumber, context)
+        await learningRepositoryV2.completeCourse(this.lessonId)
         this.isLessonCompleted = true
-
-        console.error(`[LetterLessonViewModel] markLessonCompleted: Completed for lessonNumber=${lessonNumber}`)
+        console.error(`[LetterLessonViewModel] Completed courseId=${this.lessonId}`)
       } catch (error) {
         console.error(`[LetterLessonViewModel] markLessonCompleted: Error: ${error}`)
       }
@@ -368,11 +348,7 @@ export class LetterLessonViewModel {
 
   // 工具方法
   isReviewLesson(): boolean {
-    // 检查是否为复习课程：课程编号在单元2-4的复习课程范围内
-    const lessonNumber = parseInt(this.lessonId) || 0
-    // 复习课程编号：6(字母A-J), 11(字母K-Z), 15(数字0-9), 18(符号)
-    const reviewLessonNumbers = [6, 11, 15, 18]
-    return reviewLessonNumbers.includes(lessonNumber)
+    return CourseCatalogV2.get(this.lessonId)?.kind === 'review'
   }
 
   shouldShowHint(index: number): boolean {

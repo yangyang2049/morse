@@ -6,23 +6,24 @@ import { Context } from '@kit.AbilityKit'
 import { audioService } from '../../services/AudioService'
 import { vibratorService } from '../../services/VibratorService'
 import { promptAction, ArcButton, ArcButtonOptions, ArcButtonPosition, ArcButtonStyleMode, ColorMetrics } from '@kit.ArkUI'
-import { LessonGroups } from '../../data/LessonGroups'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
-import { FavoritesStore } from '../../store/FavoritesStore'
-import { progressStore } from '../../store/ProgressStoreSingleton'
+import { CourseCatalogV2, CourseDefinition } from '../../data/CourseCatalogV2'
+import { LocalLearningSettings } from '../../store/LocalLearningSettings'
+import { learningRepositoryV2 } from '../../repository/LearningRepositoryV2'
 
 @Entry
 @Component
 struct LessonDetailPage {
-  @State lessonType: 'alphabet' | 'numbers' | 'punctuation' = 'alphabet'
+  @State courseId: string = ''
   @State currentLessonGroup: string[] = []
-  @State currentLessonIndex: number = 0
   @State lessonCharIndex: number = 0
   @State lessonInput: string = ''
   @State longPressThreshold: number = 300
   @State isCurrentCharCorrect: boolean = false
   @State showGuideDialog: boolean = false
   @State vibrationEnabled: boolean = true
+  @State requiredPracticeCount: number = 3
+  @State practiceCounts: Map<string, number> = new Map()
   
   private practiceSettingsStore: preferences.Preferences | null = null
   private pressStartTime: number = 0
@@ -30,54 +31,45 @@ struct LessonDetailPage {
   private autoCheckTimer: number | null = null
   private nextCharTimer: number | null = null
   private clearInputTimer: number | null = null
-  private saveTimer: number | null = null
+  private guideTimer: number | null = null
   private isChecking: boolean = false
-  private pendingSave: boolean = false
+  private isPageActive: boolean = false
+  private course: CourseDefinition | null = null
 
   async aboutToAppear() {
+    this.isPageActive = true
+    const params = router.getParams() as Record<string, Object>
+    const courseId = params && typeof params['courseId'] === 'string' ? params['courseId'] as string : ''
+    const course = CourseCatalogV2.get(courseId)
+    if (!course || course.kind === 'knowledge') {
+      router.back()
+      return
+    }
+    this.courseId = course.id
+    this.course = course
+    this.currentLessonGroup = [...course.items]
+    this.lessonCharIndex = 0
+    this.lessonInput = ''
+
     try {
       const context = this.getUIContext()?.getHostContext() as Context
       if (context) {
-        await progressStore.load(context)
         this.practiceSettingsStore = await preferences.getPreferences(context, 'practice_settings')
         await this.loadLongPressThresholdPreference(this.practiceSettingsStore)
         await this.loadVibrationPreference(this.practiceSettingsStore)
+        this.requiredPracticeCount = course.kind === 'review'
+          ? 1
+          : await LocalLearningSettings.getRepetitionCount(context)
         await this.checkAndShowGuide()
       }
     } catch (error) {
       console.error('[LessonDetailPage] Failed to initialize preferences:', error)
     }
 
-    const params = router.getParams() as Record<string, Object>
-    if (params) {
-      const lessonType = (params['lessonType'] as 'alphabet' | 'numbers' | 'punctuation') || 'alphabet'
-      const lessonIndex = (params['lessonIndex'] as number) || 0
-
-      if (lessonType !== 'alphabet' && lessonType !== 'numbers' && lessonType !== 'punctuation') {
-        console.error('[LessonDetailPage] Invalid lessonType:', lessonType)
-        router.back()
-        return
-      }
-
-      const groups = lessonType === 'alphabet'
-        ? LessonGroups.getAlphabetGroups()
-        : lessonType === 'numbers'
-        ? LessonGroups.getNumberGroups()
-        : LessonGroups.getPunctuationGroups()
-      
-      if (lessonIndex < 0 || lessonIndex >= groups.length) {
-        console.error('[LessonDetailPage] Invalid lessonIndex:', lessonIndex, 'max:', groups.length - 1)
-        this.currentLessonIndex = 0
-      } else {
-        this.currentLessonIndex = lessonIndex
-      }
-
-      this.lessonType = lessonType
-      this.startLesson(this.currentLessonIndex)
-    }
   }
 
   aboutToDisappear() {
+    this.isPageActive = false
     if (this.longPressTimer) {
       clearTimeout(this.longPressTimer)
       this.longPressTimer = null
@@ -94,19 +86,11 @@ struct LessonDetailPage {
       clearTimeout(this.clearInputTimer)
       this.clearInputTimer = null
     }
-    
-    if (this.pendingSave) {
-      const context = this.getUIContext()?.getHostContext() as Context
-      if (context) {
-        void progressStore.saveWatchGroupCompleted(this.lessonType, this.currentLessonIndex, context)
-      }
-      this.pendingSave = false
+    if (this.guideTimer) {
+      clearTimeout(this.guideTimer)
+      this.guideTimer = null
     }
     
-    if (this.saveTimer) {
-      clearTimeout(this.saveTimer)
-      this.saveTimer = null
-    }
   }
 
   // 加载长按时间偏好
@@ -131,23 +115,6 @@ struct LessonDetailPage {
     }
   }
 
-  // 开始课程
-  private startLesson(groupIndex: number): void {
-    const groups = this.lessonType === 'alphabet'
-      ? LessonGroups.getAlphabetGroups()
-      : this.lessonType === 'numbers'
-      ? LessonGroups.getNumberGroups()
-      : LessonGroups.getPunctuationGroups()
-
-    if (groupIndex < groups.length) {
-      this.currentLessonGroup = groups[groupIndex]
-      this.currentLessonIndex = groupIndex
-      this.lessonCharIndex = 0
-      this.lessonInput = ''
-      this.isCurrentCharCorrect = false
-    }
-  }
-
   // 获取当前课程字符
   private getCurrentLessonChar(): string {
     if (this.lessonCharIndex < this.currentLessonGroup.length) {
@@ -156,13 +123,24 @@ struct LessonDetailPage {
     return ''
   }
 
+  private isWordCourse(): boolean {
+    return this.course?.unitId === 'words'
+  }
+
   // 获取当前课程字符的摩斯码
   private getCurrentLessonCharCode(): MorseCode | null {
     const currentChar = this.getCurrentLessonChar()
     if (!currentChar) {
       return null
     }
-    return MorseCodeData.getAllCodes().find(c => c.character === currentChar) || null
+    const existing = MorseCodeData.getAllCodes().find((code: MorseCode) => code.character === currentChar)
+    if (existing) {
+      return existing
+    }
+    if (this.course?.unitId === 'words') {
+      return new MorseCode(currentChar, MorseCodeData.textToMorse(currentChar).replace(/·/g, '.'), '')
+    }
+    return null
   }
 
   // 检查课程答案
@@ -185,11 +163,12 @@ struct LessonDetailPage {
     }
 
     const currentChar = this.currentLessonGroup[this.lessonCharIndex]
-    const charCode = MorseCodeData.getAllCodes().find(c => c.character === currentChar)
+    const charCode = this.getCurrentLessonCharCode()
 
     if (charCode) {
-      const isCorrect = this.lessonInput === charCode.morse ||
-        this.lessonInput === charCode.morse.replace(/\./g, '·')
+      const normalize = (value: string): string => value.replace(/·/g, '.').replace(/\s+/g, '')
+      const isCorrect = normalize(this.lessonInput) === normalize(charCode.morse)
+      void learningRepositoryV2.recordAttempt(this.courseId, currentChar, isCorrect)
 
       if (isCorrect) {
         // 正确：将字母变为绿色，等待200ms后切换到下一个
@@ -197,14 +176,22 @@ struct LessonDetailPage {
           clearTimeout(this.nextCharTimer)
         }
         
-        // 尝试从错题本移除
-        FavoritesStore.getInstance().tryRemoveFromMistakes(currentChar)
-        
-        // 设置正确状态，字母变为绿色
-        this.isCurrentCharCorrect = true
-        // 等待500ms后切换到下一个字母
+        const currentCount = this.practiceCounts.get(currentChar) || 0
+        const nextCounts = new Map(this.practiceCounts)
+        nextCounts.set(currentChar, currentCount + 1)
+        this.practiceCounts = nextCounts
+        const itemCompleted = currentCount + 1 >= this.requiredPracticeCount
+        this.isCurrentCharCorrect = itemCompleted
         this.nextCharTimer = setTimeout(() => {
-          this.nextLessonChar()
+          if (!this.isPageActive) {
+            return
+          }
+          if (itemCompleted) {
+            this.nextLessonChar()
+          } else {
+            this.lessonInput = ''
+            this.isCurrentCharCorrect = false
+          }
           this.isChecking = false
           this.nextCharTimer = null
         }, 500)
@@ -213,9 +200,6 @@ struct LessonDetailPage {
         if (this.clearInputTimer) {
           clearTimeout(this.clearInputTimer)
         }
-        
-        // 加入错题本
-        FavoritesStore.getInstance().addToMistakes(currentChar)
         
         try {
           promptAction.showToast({
@@ -228,6 +212,9 @@ struct LessonDetailPage {
         }
         // 清除输入，让用户重新输入
         this.clearInputTimer = setTimeout(() => {
+          if (!this.isPageActive) {
+            return
+          }
           this.lessonInput = ''
           this.isChecking = false
           this.clearInputTimer = null
@@ -291,9 +278,8 @@ struct LessonDetailPage {
     }
 
     // 获取当前字符的正确答案长度，用于判断输入是否可能已完成
-    const currentChar = this.currentLessonGroup[this.lessonCharIndex]
-    const charCode = MorseCodeData.getAllCodes().find(c => c.character === currentChar)
-    const correctAnswerLength = charCode ? charCode.morse.length : 0
+    const charCode = this.getCurrentLessonCharCode()
+    const correctAnswerLength = charCode ? charCode.morse.replace(/\s+/g, '').length : 0
     const currentInputLength = this.lessonInput.length
 
     // 根据输入长度和正确答案长度动态调整延迟
@@ -314,6 +300,9 @@ struct LessonDetailPage {
     // 延迟后自动检查，但需要确保输入不为空
     this.autoCheckTimer = setTimeout(() => {
       this.autoCheckTimer = null
+      if (!this.isPageActive) {
+        return
+      }
       // 再次检查输入是否为空，防止在定时器执行期间输入被清空
       if (this.lessonInput && this.lessonInput.trim().length > 0) {
         this.checkLessonAnswer()
@@ -358,10 +347,8 @@ struct LessonDetailPage {
       this.lessonCharIndex++
       this.lessonInput = ''
     } else {
-      // 当前组完成，可以继续下一组
       this.lessonCharIndex = this.currentLessonGroup.length
-      // 立即保存进度
-      this.saveLessonProgress()
+      void this.saveLessonProgress()
     }
   }
 
@@ -378,57 +365,18 @@ struct LessonDetailPage {
     }
   }
 
-  // 保存课程进度 (防抖) — 仅写入 progressStore
+  // 仅当固定 CourseId 的全部练习项达标后写完成状态。
   private async saveLessonProgress(): Promise<void> {
-    this.pendingSave = true
-    
-    if (this.saveTimer) {
-      clearTimeout(this.saveTimer)
-    }
-    
-    this.saveTimer = setTimeout(async () => {
-      if (this.pendingSave) {
-        try {
-          const context = this.getUIContext()?.getHostContext() as Context
-          if (context) {
-            await progressStore.saveWatchGroupCompleted(this.lessonType, this.currentLessonIndex, context)
-            console.log(`[LessonDetailPage] Saved group ${this.lessonType}[${this.currentLessonIndex}] to progressStore`)
-          }
-          this.pendingSave = false
-        } catch (error) {
-          console.error('[LessonDetailPage] Failed to save lesson progress:', error)
-        }
+    try {
+      const allItemsCompleted = this.currentLessonGroup.every((item: string) =>
+        (this.practiceCounts.get(item) || 0) >= this.requiredPracticeCount)
+      if (this.isPageActive && this.courseId.length > 0 &&
+        this.lessonCharIndex >= this.currentLessonGroup.length && allItemsCompleted) {
+        await learningRepositoryV2.completeCourse(this.courseId)
+        console.log(`[LessonDetailPage] Completed courseId=${this.courseId}`)
       }
-      this.saveTimer = null
-    }, 500)
-  }
-
-  // 是否为当前类型的最后一组课程
-  private isLastLessonGroup(): boolean {
-    const groups = this.lessonType === 'alphabet'
-      ? LessonGroups.getAlphabetGroups()
-      : this.lessonType === 'numbers'
-      ? LessonGroups.getNumberGroups()
-      : LessonGroups.getPunctuationGroups()
-    return this.currentLessonIndex >= groups.length - 1
-  }
-
-  // 下一组课程
-  private async nextLessonGroup(): Promise<void> {
-    const groups = this.lessonType === 'alphabet'
-      ? LessonGroups.getAlphabetGroups()
-      : this.lessonType === 'numbers'
-      ? LessonGroups.getNumberGroups()
-      : LessonGroups.getPunctuationGroups()
-
-    if (this.currentLessonIndex < groups.length - 1) {
-      // 保存当前进度
-      await this.saveLessonProgress()
-      this.startLesson(this.currentLessonIndex + 1)
-    } else {
-      // 所有课程完成，保存进度并返回
-      await this.saveLessonProgress()
-      router.back()
+    } catch (error) {
+      console.error('[LessonDetailPage] Failed to save lesson progress:', error)
     }
   }
 
@@ -437,9 +385,12 @@ struct LessonDetailPage {
     try {
       if (this.practiceSettingsStore) {
         const hasShownGuide = await this.practiceSettingsStore.get('has_shown_watch_letter_lesson_guide', false) as boolean
-        if (!hasShownGuide) {
-          setTimeout(() => {
-            this.showGuideDialog = true
+        if (!hasShownGuide && this.isPageActive) {
+          this.guideTimer = setTimeout(() => {
+            if (this.isPageActive) {
+              this.showGuideDialog = true
+            }
+            this.guideTimer = null
           }, 500)
         }
       }
@@ -519,7 +470,7 @@ struct LessonDetailPage {
                         index === this.lessonCharIndex ? '#FFD700' : '#FFFFFF'  // Current in gold, future in white
                       )
                       .margin({ right: 6 })
-                  })
+                  }, (char: string, index: number) => `${index}-${char}`)
                 }
                 .justifyContent(FlexAlign.Center)
               }
@@ -529,14 +480,14 @@ struct LessonDetailPage {
               .margin({ bottom: 4 })
 
               Text(this.getCurrentLessonChar())
-                .fontSize(56)
+                .fontSize(this.isWordCourse() ? 20 : 56)
                 .fontColor(this.isCurrentCharCorrect ? '#4CAF50' : '#FFD700')
                 .fontWeight(FontWeight.Bold)
                 .margin({ bottom: 0 })
 
               if (this.getCurrentLessonCharCode()) {
                 Text(this.getCurrentLessonCharCode()!.morse.replace(/\./g, '·'))
-                  .fontSize(20)
+                  .fontSize(this.isWordCourse() ? 12 : 20)
                   .fontColor('#FFFFFF')
                   .margin({ bottom: 6 })
               }
@@ -571,9 +522,6 @@ struct LessonDetailPage {
                 fontColor: ColorMetrics.resourceColor('#000000')
               })
             })
-            .onClick(() => {
-              this.handleSingleButtonRelease()
-            })
             .onTouch((event: TouchEvent) => {
               if (event.type === TouchType.Down) {
                 this.handleSingleButtonPress()
@@ -603,19 +551,6 @@ struct LessonDetailPage {
             .width('100%')
             .layoutWeight(1)
             .justifyContent(FlexAlign.Center)
-
-            if (!this.isLastLessonGroup()) {
-              Button(LocalizationHelper.getString('watch_next_group'))
-                .width('80%')
-                .height(44)
-                .backgroundColor('#FFD700')
-                .fontColor('#000000')
-                .fontWeight(FontWeight.Medium)
-                .margin({ bottom: 6 })
-                .onClick(() => {
-                  this.nextLessonGroup()
-                })
-            }
 
             Button(LocalizationHelper.getString('watch_back'))
               .width('80%')

@@ -15,12 +15,12 @@ import { SystemBarHelper } from '../../utils/SystemBarHelper'
   @StorageLink('currentLanguage') currentLanguage: string = LocalizationHelper.DEFAULT_LANGUAGE
 
   // Quiz card localized strings
-  @State testYourMasteryText: string = ''
-  @State testContentText: string = ''
-  @State trueFalseQuestionsText: string = ''
-  @State multipleChoiceQuestionsText: string = ''
-  @State need100ToPassText: string = ''
-  @State startTestText: string = ''
+  @State testYourMasteryText: Resource | string = $r('app.string.test_your_mastery')
+  @State testContentText: Resource | string = $r('app.string.test_content')
+  @State trueFalseQuestionsText: Resource | string = $r('app.string.true_false_questions')
+  @State multipleChoiceQuestionsText: Resource | string = $r('app.string.multiple_choice_questions')
+  @State need100ToPassText: Resource | string = $r('app.string.need_100_to_pass')
+  @State startTestText: Resource | string = $r('app.string.start_test')
   // 资源管理器
   private resourceMgr: resourceManager.ResourceManager | null = null
 
@@ -47,9 +47,6 @@ import { SystemBarHelper } from '../../utils/SystemBarHelper'
         AppStorage.setOrCreate('currentLanguage', this.currentLanguage)
       }
 
-      // Load localized strings after language is set
-      this.loadLocalizedStrings()
-
       this.viewModel.init(params, hostContext)
 
       // Update local state if params are provided
@@ -61,27 +58,6 @@ import { SystemBarHelper } from '../../utils/SystemBarHelper'
     }
   }
 
-
-  // 加载本地化字符串
-  private loadLocalizedStrings(): void {
-    const isChinese = this.currentLanguage.startsWith('zh')
-
-    if (isChinese) {
-      this.testYourMasteryText = '测试你对本课程的掌握程度'
-      this.testContentText = '测试内容'
-      this.trueFalseQuestionsText = '• 2道判断题（每题20分）'
-      this.multipleChoiceQuestionsText = '• 3道选择题（每题20分）'
-      this.need100ToPassText = '• 需要100分才能通过'
-      this.startTestText = '开始测试'
-    } else {
-      this.testYourMasteryText = 'Test your mastery of this lesson'
-      this.testContentText = 'Test Content'
-      this.trueFalseQuestionsText = '• 2 True/False questions (20 points each)'
-      this.multipleChoiceQuestionsText = '• 3 Multiple choice questions (20 points each)'
-      this.need100ToPassText = '• Need 100 points to pass'
-      this.startTestText = 'Start Test'
-    }
-  }
 
   // 获取系统资源字符串
   private async getStringResource(key: string): Promise<string> {
@@ -163,7 +139,7 @@ import { SystemBarHelper } from '../../utils/SystemBarHelper'
             Blank().height(8)
           }
         }
-      })
+      }, (content: string, index: number) => `${index}-${content}`)
     }
     .alignItems(HorizontalAlign.Start)
       .justifyContent(FlexAlign.Start)
@@ -331,7 +307,7 @@ import { SystemBarHelper } from '../../utils/SystemBarHelper'
             .backgroundColor('#2A2A2A')
             .borderRadius(12)
             .margin({ top: index > 0 ? 20 : 0 })
-        })
+        }, (section: string, index: number) => `${index}-${section}`)
       }
     }
   }
@@ -392,7 +368,7 @@ import { SystemBarHelper } from '../../utils/SystemBarHelper'
         // Section cards
         ForEach(this.viewModel.getSectionTitles(), (title: string, index: number) => {
           this.buildSectionCard(title, this.viewModel.getSectionContent(title), index)
-        })
+        }, (title: string) => title)
 
         // Test card
         this.buildTestCard()

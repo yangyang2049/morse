@@ -3,8 +3,6 @@ import Context from '@ohos.app.ability.common'
 import { LessonConfig } from '../data/LessonConfig'
 import { LessonGroups } from '../data/LessonGroups'
 import { eventHub, Events, LessonCompletedEventData } from '../utils/EventHub'
-import { DeviceHelper } from '../utils/DeviceHelper'
-import { recordLessonCompleted } from '../utils/AppGalleryCommentHelper'
 
 type UnitId = 'intro' | 'alphabet' | 'numbers' | 'punctuation' | 'words'
 export type WatchLessonType = 'alphabet' | 'numbers' | 'punctuation'
@@ -59,8 +57,6 @@ class ProgressStore {
       return
     }
 
-    const wasNewlyCompleted = !this.completedLessons.has(lessonNumber)
-
     this.markLessonCompleted(lessonNumber)
     await this.persist(context)
     console.log(`[STORE] Lesson ${lessonNumber} completed and saved. Total completed: ${Array.from(this.completedLessons).join(',')}`)
@@ -73,9 +69,6 @@ class ProgressStore {
     console.error(`[STORE] saveLessonCompleted: sending event with completedLessons=${Array.from(this.completedLessons).join(',')}`)
     eventHub.emit(Events.LESSON_COMPLETED, eventData)
 
-    if (wasNewlyCompleted && !DeviceHelper.isWearable()) {
-      void recordLessonCompleted(context)
-    }
   }
 
   isLessonUnlocked(n: number): boolean {
@@ -140,7 +133,7 @@ class ProgressStore {
   /** 手表：保存某一组完成 */
   async saveWatchGroupCompleted(lessonType: WatchLessonType, groupIndex: number, context: Context): Promise<void> {
     const lessonNumber = this.getWatchGroupLessonNumber(lessonType, groupIndex)
-    if (lessonNumber > 0) {
+    if (lessonNumber > 0 && !this.isLessonCompleted(lessonNumber)) {
       await this.saveLessonCompleted(lessonNumber, context)
     }
   }

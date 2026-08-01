@@ -1,13 +1,13 @@
 import { QuestionItem, ExplanationItem, ButtonStyle } from '../types/Types'
-import { progressStore } from '../store/ProgressStoreSingleton'
-import { LessonConfig } from '../data/LessonConfig'
+import { CourseId } from '../data/CourseCatalogV2'
+import { learningRepositoryV2 } from '../repository/LearningRepositoryV2'
 import Context from '@ohos.app.ability.common'
 
 @Observed
 export class QuizViewModel {
   // 测试基本信息
-  pageTitle: string = '基础测试'
-  lessonCompletedKey: string = 'intro_lesson_0'
+  pageTitle: string = 'Basics Test'
+  lessonCompletedKey: string = CourseId.INTRO_MORSE
 
   // 测试状态
   currentQuestionIndex: number = 0
@@ -337,23 +337,14 @@ export class QuizViewModel {
     console.error(`[QuizViewModel] showTestResult: score=${this.score} willPersist=${willSave}`)
   }
 
-  // 立即标记课程完成 - 使用LessonConfig获取正确的课程编号
+  // 使用固定 CourseId 立即标记课程完成
   private async markLessonCompletedImmediately(): Promise<void> {
     if (this.lessonCompletedKey && !this.isLessonCompleted && this.context) {
       try {
-        // 使用LessonConfig获取正确的课程编号
-        const lessonNumber = LessonConfig.getLessonNumber(this.lessonCompletedKey)
-        console.error(`[QuizViewModel] markLessonCompletedImmediately: Starting for lessonId=${this.lessonCompletedKey}, lessonNumber=${lessonNumber}`)
-
-        if (lessonNumber > 0) {
-          // 使用存储的context立即标记课程完成 - 这会自动发送事件
-          await progressStore.saveLessonCompleted(lessonNumber, this.context)
-          this.isLessonCompleted = true
-          this.progressSaved = true
-          console.error(`[QuizViewModel] markLessonCompletedImmediately: Completed for lessonNumber=${lessonNumber}`)
-        } else {
-          console.error(`[QuizViewModel] markLessonCompletedImmediately: Invalid lessonId=${this.lessonCompletedKey}`)
-        }
+        await learningRepositoryV2.completeCourse(this.lessonCompletedKey)
+        this.isLessonCompleted = true
+        this.progressSaved = true
+        console.error(`[QuizViewModel] Completed courseId=${this.lessonCompletedKey}`)
 
       } catch (error) {
         console.error(`[QuizViewModel] markLessonCompletedImmediately: Error: ${error}`)
@@ -426,4 +417,3 @@ export class QuizViewModel {
     }
   }
 }
-

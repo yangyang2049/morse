@@ -1,15 +1,15 @@
 import { LessonData } from '../data/LessonData'
 import { LessonNavParams } from '../types/Types'
-import { progressStore } from '../store/ProgressStoreSingleton'
-import { LessonConfig } from '../data/LessonConfig'
+import { CourseId } from '../data/CourseCatalogV2'
+import { learningRepositoryV2 } from '../repository/LearningRepositoryV2'
 import Context from '@ohos.app.ability.common'
 
 @Observed
 export class KnowledgeLessonViewModel {
   // 课程基本信息
-  title: string = '摩斯电码基础'
-  testTitle: string = '基础知识测试'
-  lessonCompletedKey: string = 'intro_lesson_0'
+  title: string = 'Morse Code Basics'
+  testTitle: string = 'Basics Test'
+  lessonCompletedKey: string = CourseId.INTRO_MORSE
 
   // 课程内容数据
   sections: Map<string, string[]> = new Map()
@@ -37,18 +37,15 @@ export class KnowledgeLessonViewModel {
     this.loadLessonData()
 
     // 检查课程完成状态
-    this.checkLessonCompleted()
+    void this.checkLessonCompleted()
 
     console.error(`[KnowledgeLessonViewModel] init completed: title=${this.title}`)
   }
 
   // 检查课程完成状态
-  private checkLessonCompleted(): void {
+  private async checkLessonCompleted(): Promise<void> {
     if (this.lessonCompletedKey) {
-      const lessonNumber = LessonConfig.getLessonNumber(this.lessonCompletedKey)
-      if (lessonNumber > 0) {
-        this.isLessonCompleted = progressStore.isLessonCompleted(lessonNumber)
-      }
+      this.isLessonCompleted = await learningRepositoryV2.isCourseCompleted(this.lessonCompletedKey)
     }
   }
 
@@ -153,18 +150,9 @@ export class KnowledgeLessonViewModel {
   async markLessonCompletedImmediately(): Promise<void> {
     if (this.lessonCompletedKey && !this.isLessonCompleted && this.context) {
       try {
-        // 使用LessonConfig获取正确的课程编号
-        const lessonNumber = LessonConfig.getLessonNumber(this.lessonCompletedKey)
-        console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Starting for lessonId=${this.lessonCompletedKey}, lessonNumber=${lessonNumber}`)
-
-        if (lessonNumber > 0) {
-          // 使用存储的context立即标记课程完成
-          await progressStore.saveLessonCompleted(lessonNumber, this.context)
-          this.isLessonCompleted = true
-          console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Completed for lessonNumber=${lessonNumber}`)
-        } else {
-          console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Invalid lessonId=${this.lessonCompletedKey}`)
-        }
+        await learningRepositoryV2.completeCourse(this.lessonCompletedKey)
+        this.isLessonCompleted = true
+        console.error(`[KnowledgeLessonViewModel] Completed courseId=${this.lessonCompletedKey}`)
       } catch (error) {
         console.error(`[KnowledgeLessonViewModel] markLessonCompletedImmediately: Error: ${error}`)
       }
@@ -175,6 +163,6 @@ export class KnowledgeLessonViewModel {
 
   // 刷新课程完成状态（用于在完成课程后更新显示）
   refreshCompletionStatus(): void {
-    this.checkLessonCompleted()
+    void this.checkLessonCompleted()
   }
 }

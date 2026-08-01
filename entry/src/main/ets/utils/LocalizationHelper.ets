@@ -29,33 +29,28 @@ export class LocalizationHelper {
       return LocalizationHelper.DEFAULT_LANGUAGE
     }
     const normalized = locale.replace(/_/g, '-')
-    if (normalized.startsWith('zh')) {
-      if (normalized.includes('Hant') ||
-        normalized.includes('HK') ||
-        normalized.includes('TW') ||
-        normalized.includes('MO')) {
+    const normalizedLowerCase = normalized.toLowerCase()
+    if (normalizedLowerCase.startsWith('zh')) {
+      if (normalizedLowerCase.includes('hant') ||
+        normalizedLowerCase.includes('hk') ||
+        normalizedLowerCase.includes('tw') ||
+        normalizedLowerCase.includes('mo')) {
         return 'zh-HK'
       }
       return 'zh-CN'
     }
-    if (normalized.startsWith('en')) {
+    if (normalizedLowerCase.startsWith('en')) {
       return 'en-US'
     }
     return LocalizationHelper.DEFAULT_LANGUAGE
   }
 
-  /**
-   * 根据应用偏好语言（若有）或系统语言检测应用语言。
-   */
+  /** 根据系统语言检测应用语言，不读取旧的应用内手动语言偏好。 */
   static detectPreferredLanguage(): AppLanguageCode {
     try {
-      const appPreferredLanguage = i18n.System.getAppPreferredLanguage()
       const systemLocale = i18n.System.getSystemLocale()
-      const languageToCheck = (appPreferredLanguage && appPreferredLanguage.length > 0)
-        ? appPreferredLanguage
-        : systemLocale
-      console.log(`[LocalizationHelper] appPreferred=${appPreferredLanguage}, system=${systemLocale}, check=${languageToCheck}`)
-      return LocalizationHelper.resolveLanguageFromLocale(languageToCheck)
+      console.log(`[LocalizationHelper] system=${systemLocale}`)
+      return LocalizationHelper.resolveLanguageFromLocale(systemLocale)
     } catch (error) {
       console.error('[LocalizationHelper] Failed to detect preferred language:', error)
       return LocalizationHelper.DEFAULT_LANGUAGE
@@ -92,7 +87,8 @@ export class LocalizationHelper {
   }
 
   /**
-   * 冷启动：按系统/偏好语言写入 AppStorage，并同步应用偏好语言。
+   * 冷启动：始终按系统语言重新设置应用语言。
+   * 这会覆盖旧版本中由应用内语言选择器留下的持久偏好。
    */
   static initializeAppLanguage(): AppLanguageCode {
     const languageCode = LocalizationHelper.detectPreferredLanguage()

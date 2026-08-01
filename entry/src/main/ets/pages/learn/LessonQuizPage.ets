@@ -1,6 +1,5 @@
 import { router } from '@kit.ArkUI'
 import { ExplanationTipsCard } from '../../widgets/ExplanationTipsCard'
-import { LearnViewModel } from '../../viewmodel/LearnViewModel'
 import { QuizViewModel } from '../../viewmodel/QuizViewModel'
 import { QuizNavParams } from '../../types/Types'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
@@ -10,7 +9,6 @@ import { SystemBarHelper } from '../../utils/SystemBarHelper'
 @Component
   struct LessonQuizPage {
   @State quizViewModel: QuizViewModel = new QuizViewModel()
-  @State learnViewModel: LearnViewModel = new LearnViewModel()
   @StorageLink('currentLanguage') @Watch('onLanguageChange') currentLanguage: string = LocalizationHelper.DEFAULT_LANGUAGE
 
   onLanguageChange(): void {
@@ -45,9 +43,6 @@ import { SystemBarHelper } from '../../utils/SystemBarHelper'
     // Initialize ViewModel and questions for selected test type
     const uiContext2 = this.getUIContext()
     const hostContext2 = uiContext2.getHostContext()
-    if (hostContext2) {
-      this.learnViewModel.init(hostContext2)
-    }
     console.error('[QUIZ] aboutToAppear: init ViewModel called')
     this.quizViewModel.initializeTestData(this.quizViewModel.pageTitle, hostContext2, this.currentLanguage)
   }
@@ -61,23 +56,6 @@ import { SystemBarHelper } from '../../utils/SystemBarHelper'
   showTestResult() {
     this.quizViewModel.showTestResult()
     // 课程已经在达到100分时立即标记了，这里不需要重复标记
-  }
-
-  async markLessonCompleted() {
-    try {
-      // 使用 ViewModel 来标记测试完成，这会自动解锁下一课
-      const uiContext = this.getUIContext()
-      const hostContext = uiContext.getHostContext()
-      if (hostContext) {
-        const lessonNumber = parseInt(this.quizViewModel.lessonCompletedKey) || 0
-
-
-        console.error(`[QUIZ] markLessonCompleted: Completed for lessonNumber=${lessonNumber}`)
-      }
-
-      this.quizViewModel.progressSaved = true
-    } catch (err) {
-    }
   }
 
   restartTest() {
@@ -346,7 +324,7 @@ import { SystemBarHelper } from '../../utils/SystemBarHelper'
           }
           .margin({ top: 16 })
         }
-      })
+      }, (option: string, index: number) => `${index}-${option}`)
     }
   }
 

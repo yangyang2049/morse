@@ -481,6 +481,10 @@
       "value": "Searching..."
     },
     {
+      "name": "search_placeholder",
+      "value": "Search Chinese character or telegraph code..."
+    },
+    {
       "name": "no_data",
       "value": "No Data"
     },
@@ -987,6 +991,54 @@
     {
       "name": "watch_guide_click_to_input_code",
       "value": "Tap to input code; tap eye icon to reveal when unsure"
-    }
+    },
+    { "name": "learning_repetition_count", "value": "Learning repetitions" },
+    { "name": "learning_repetition_count_desc", "value": "Correct answers required for each item (1–5)" },
+    { "name": "distributed_sync_permission_reason", "value": "Used to sync learning progress between your phone and watch" },
+    { "name": "course_intro_morse", "value": "Morse Code Basics" },
+    { "name": "course_intro_morse_desc", "value": "History, timing, and core principles" },
+    { "name": "course_intro_chinese", "value": "中文摩斯电码" },
+    { "name": "course_intro_chinese_desc", "value": "中文编码方法与电报码" },
+    { "name": "course_alphabet_abc", "value": "Lesson 1" },
+    { "name": "course_alphabet_def", "value": "Lesson 2" },
+    { "name": "course_alphabet_ghi", "value": "Lesson 3" },
+    { "name": "course_alphabet_jkl", "value": "Lesson 4" },
+    { "name": "course_alphabet_review_a_l", "value": "Review A–L" },
+    { "name": "course_alphabet_mno", "value": "Lesson 5" },
+    { "name": "course_alphabet_pqr", "value": "Lesson 6" },
+    { "name": "course_alphabet_stu", "value": "Lesson 7" },
+    { "name": "course_alphabet_vwx", "value": "Lesson 8" },
+    { "name": "course_alphabet_yz", "value": "Lesson 9" },
+    { "name": "course_alphabet_review_m_z", "value": "Review M–Z" },
+    { "name": "course_alphabet_abc_desc", "value": "ABC" },
+    { "name": "course_alphabet_def_desc", "value": "DEF" },
+    { "name": "course_alphabet_ghi_desc", "value": "GHI" },
+    { "name": "course_alphabet_jkl_desc", "value": "JKL" },
+    { "name": "course_alphabet_mno_desc", "value": "MNO" },
+    { "name": "course_alphabet_pqr_desc", "value": "PQR" },
+    { "name": "course_alphabet_stu_desc", "value": "STU" },
+    { "name": "course_alphabet_vwx_desc", "value": "VWX" },
+    { "name": "course_alphabet_yz_desc", "value": "YZ" },
+    { "name": "course_review_desc", "value": "One correct answer per item" },
+    { "name": "course_numbers_012", "value": "Lesson 1" },
+    { "name": "course_numbers_345", "value": "Lesson 2" },
+    { "name": "course_numbers_6789", "value": "Lesson 3" },
+    { "name": "course_numbers_review", "value": "Numbers Review" },
+    { "name": "course_numbers_012_desc", "value": "012" },
+    { "name": "course_numbers_345_desc", "value": "345" },
+    { "name": "course_numbers_6789_desc", "value": "6789" },
+    { "name": "course_punctuation_1", "value": "Lesson 1" },
+    { "name": "course_punctuation_2", "value": "Lesson 2" },
+    { "name": "course_punctuation_3", "value": "Lesson 3" },
+    { "name": "course_punctuation_review", "value": "Punctuation Review" },
+    { "name": "course_punctuation_1_desc", "value": ". , ? !" },
+    { "name": "course_punctuation_2_desc", "value": ": ; - /" },
+    { "name": "course_punctuation_3_desc", "value": "( )" },
+    { "name": "course_words_3", "value": "3-Letter Words" },
+    { "name": "course_words_4", "value": "4-Letter Words" },
+    { "name": "course_words_5", "value": "5-Letter Words" },
+    { "name": "course_words_3_desc", "value": "Common 3-letter words" },
+    { "name": "course_words_4_desc", "value": "Common 4-letter words" },
+    { "name": "course_words_5_desc", "value": "Common 5-letter words" }
   ]
 }

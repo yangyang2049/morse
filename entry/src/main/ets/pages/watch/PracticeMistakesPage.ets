@@ -9,6 +9,7 @@ import { Context } from '@kit.AbilityKit'
 import { promptAction, ArcButton, ArcButtonOptions, ArcButtonPosition, ArcButtonStyleMode, ColorMetrics } from '@kit.ArkUI'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
 import { FavoritesStore } from '../../store/FavoritesStore'
+import { learningRepositoryV2 } from '../../repository/LearningRepositoryV2'
 
 type PracticeMode = 'text_to_code' | 'code_to_text'
 
@@ -230,7 +231,11 @@ struct PracticeMistakesPage {
     this.selectCharTimers = []
     
     if (isCorrect) {
-      FavoritesStore.getInstance().tryRemoveFromMistakes(this.mistakeCode.character)
+      const character = this.mistakeCode.character
+      void learningRepositoryV2.recordPracticeAttempt(character, true)
+      const favoritesStore = FavoritesStore.getInstance()
+      void favoritesStore.incrementConsecutiveCorrect(character)
+        .then(() => favoritesStore.tryRemoveFromMistakes(character))
       this.isCorrectFeedback = true
       
       const t1 = setTimeout(() => {
@@ -253,7 +258,8 @@ struct PracticeMistakesPage {
       }, 300)
       this.selectCharTimers.push(t3)
     } else {
-      FavoritesStore.getInstance().addToMistakes(this.mistakeCode.character)
+      void learningRepositoryV2.recordPracticeAttempt(this.mistakeCode.character, false)
+      void FavoritesStore.getInstance().addToMistakes(this.mistakeCode.character)
       if (vibratorService.isVibrationEnabled()) {
         vibrator.vibrate(250, () => {})
       }
@@ -288,7 +294,11 @@ struct PracticeMistakesPage {
       }
       this.isCorrectFeedback = true
       
-      FavoritesStore.getInstance().tryRemoveFromMistakes(this.mistakeCode.character)
+      const character = this.mistakeCode.character
+      void learningRepositoryV2.recordPracticeAttempt(character, true)
+      const favoritesStore = FavoritesStore.getInstance()
+      void favoritesStore.incrementConsecutiveCorrect(character)
+        .then(() => favoritesStore.tryRemoveFromMistakes(character))
 
       const t1 = setTimeout(() => {
         if (vibratorService.isVibrationEnabled()) {
@@ -327,7 +337,8 @@ struct PracticeMistakesPage {
         console.error('[PracticeMistakesPage] Failed to show toast:', error)
       }
       
-      FavoritesStore.getInstance().addToMistakes(this.mistakeCode.character)
+      void learningRepositoryV2.recordPracticeAttempt(this.mistakeCode.character, false)
+      void FavoritesStore.getInstance().addToMistakes(this.mistakeCode.character)
 
       const t4 = setTimeout(() => {
         this.practiceAnswer = ''
@@ -601,7 +612,7 @@ struct PracticeMistakesPage {
                           }
                         })
                       }
-                    })
+                    }, (char: string) => char)
                   }
                   .columnsTemplate('1fr 1fr 1fr')
                   .rowsTemplate('1fr 1fr')

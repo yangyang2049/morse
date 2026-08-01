@@ -996,7 +996,7 @@ export struct PracticePage {
                   }
                 })
             }
-          })
+          }, (char: string) => char)
         }
       .columnsTemplate('1fr 1fr 1fr')
           .rowsTemplate('1fr 1fr')
@@ -1108,7 +1108,7 @@ export struct PracticePage {
                   }
                 })
             }
-          })
+          }, (char: string) => char)
         }
         .columnsTemplate('1fr 1fr 1fr')
           .rowsTemplate('1fr 1fr')
@@ -1135,7 +1135,7 @@ export struct PracticePage {
           .fontColor('#FFFFFF')
           .margin({ bottom: 4 })
 
-        Text('可在设置中更改此选项')
+        Text($r('app.string.can_change_in_settings'))
           .fontSize(12)
           .fontColor('#999999')
       }

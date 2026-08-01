@@ -9,6 +9,7 @@ import { Context } from '@kit.AbilityKit'
 import { promptAction, ArcButton, ArcButtonOptions, ArcButtonPosition, ArcButtonStyleMode, ColorMetrics } from '@kit.ArkUI'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
 import { FavoritesStore } from '../../store/FavoritesStore'
+import { learningRepositoryV2 } from '../../repository/LearningRepositoryV2'
 
 type PracticeMode = 'text_to_code' | 'code_to_text'
 
@@ -218,7 +219,7 @@ struct PracticeDetailPage {
   @Builder
   private GuideDialog() {
     Column() {
-      Text('提示')
+      Text(LocalizationHelper.getString('hint'))
         .fontSize(18)
         .fontWeight(FontWeight.Bold)
         .fontColor('#FFFFFF')
@@ -226,7 +227,7 @@ struct PracticeDetailPage {
         .width('100%')
         .margin({ bottom: 16 })
 
-      Text('点击输入电码，不确定时点击眼睛图标查看')
+      Text(LocalizationHelper.getString('watch_guide_click_to_input_code'))
         .fontSize(14)
         .fontColor('#CCCCCC')
         .textAlign(TextAlign.Center)
@@ -337,7 +338,10 @@ struct PracticeDetailPage {
     this.selectCharTimers = []
     
     if (isCorrect) {
-      FavoritesStore.getInstance().tryRemoveFromMistakes(this.practiceChar)
+      void learningRepositoryV2.recordPracticeAttempt(this.practiceChar, true)
+      const favoritesStore = FavoritesStore.getInstance()
+      void favoritesStore.incrementConsecutiveCorrect(this.practiceChar)
+        .then(() => favoritesStore.tryRemoveFromMistakes(this.practiceChar))
       this.isCorrectFeedback = true
       // 正确：成功振动
       const t1 = setTimeout(() => {
@@ -360,7 +364,8 @@ struct PracticeDetailPage {
       }, 300)
       this.selectCharTimers.push(t3)
     } else {
-      FavoritesStore.getInstance().addToMistakes(this.practiceChar)
+      void learningRepositoryV2.recordPracticeAttempt(this.practiceChar, false)
+      void FavoritesStore.getInstance().addToMistakes(this.practiceChar)
       const wrongTries = this.codeToTextWrongTries + 1
       this.codeToTextWrongTries = wrongTries
       // 第 3 次错误才在候选格中高亮正确答案
@@ -405,7 +410,10 @@ struct PracticeDetailPage {
       this.checkAnswerTimers = []
 
       if (isCorrect) {
-        FavoritesStore.getInstance().tryRemoveFromMistakes(this.practiceChar)
+        void learningRepositoryV2.recordPracticeAttempt(this.practiceChar, true)
+        const favoritesStore = FavoritesStore.getInstance()
+        void favoritesStore.incrementConsecutiveCorrect(this.practiceChar)
+          .then(() => favoritesStore.tryRemoveFromMistakes(this.practiceChar))
         // 正确：自动切换到下一题
         if (this.autoCheckTimer) {
           clearTimeout(this.autoCheckTimer)
@@ -433,7 +441,8 @@ struct PracticeDetailPage {
         }, 300)
         this.checkAnswerTimers.push(t3)
       } else {
-        FavoritesStore.getInstance().addToMistakes(this.practiceChar)
+        void learningRepositoryV2.recordPracticeAttempt(this.practiceChar, false)
+        void FavoritesStore.getInstance().addToMistakes(this.practiceChar)
         // 错误：显示toast，清除输入
         if (this.autoCheckTimer) {
           clearTimeout(this.autoCheckTimer)
@@ -699,7 +708,7 @@ struct PracticeDetailPage {
                         }
                       })
                     }
-                  })
+                  }, (char: string) => char)
                 }
                 .columnsTemplate('1fr 1fr 1fr')
                 .rowsTemplate('1fr 1fr')

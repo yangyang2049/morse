@@ -14,7 +14,7 @@ export struct CodeTablePage {
   @State selected: string = 'all'
   @State playingCode: string = '' // 跟踪当前播放的摩尔斯码
   @StorageLink('currentLanguage') @Watch('onLanguageChange') currentLanguage: string = LocalizationHelper.detectPreferredLanguage()
-  @State isEnglish: boolean = false
+  @State isChinese: boolean = false
   private categories: Category[] = []
 
   onLanguageChange(): void {
@@ -42,7 +42,7 @@ export struct CodeTablePage {
   }
 
   private checkLanguage() {
-    this.isEnglish = this.currentLanguage.startsWith('en')
+    this.isChinese = this.currentLanguage.startsWith('zh')
   }
 
   private getFiltered(): MorseCode[] {
@@ -67,7 +67,7 @@ export struct CodeTablePage {
   @Builder
   private TitleBar() {
     Row() {
-      // 左侧占位盒子 - 只在英文环境下显示，用于平衡布局
+      // 左侧固定占位盒子，用于平衡标题布局
 
       Column()
         .width(40)
@@ -81,8 +81,8 @@ export struct CodeTablePage {
         .layoutWeight(1)
         .textAlign(TextAlign.Center)
 
-      // 中按钮 - 只在中文环境下显示在右侧
-      if (!this.isEnglish) {
+      // 中文电码仅适用于中文环境，其他语言不显示入口
+      if (this.isChinese) {
         Button() {
           Text('中')
             .fontSize(18)
@@ -99,7 +99,7 @@ export struct CodeTablePage {
             })
           })
       } else {
-        // 英文环境下的右侧占位盒子
+        // 非中文环境下显示占位盒子，保持标题居中
         Column()
           .width(40)
           .height(40)
