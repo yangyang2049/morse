@@ -7,9 +7,13 @@ export class DistributedSyncPermissionHelper {
     try {
       const manager = abilityAccessCtrl.createAtManager()
       const result = await manager.requestPermissionsFromUser(context, [DISTRIBUTED_SYNC_PERMISSION])
-      return result.authResults.length > 0 && result.authResults[0] === 0
+      const granted = result.authResults.length > 0 && result.authResults[0] === 0
+      const dialogShownResults: boolean[] = result.dialogShownResults || []
+      console.info(`[LearningSyncV2] permission result, granted=${granted}, ` +
+        `authResults=[${result.authResults.join(',')}], dialogShown=[${dialogShownResults.join(',')}]`)
+      return granted
     } catch (error) {
-      console.warn('[DistributedSyncPermission] Permission unavailable or denied:', error)
+      console.error('[LearningSyncV2] permission request failed', error)
       return false
     }
   }

@@ -42,13 +42,13 @@
         "name": "release",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "/Users/yangyangshi/Documents/huawei_profile/douhua_release.cer",
-          "keyAlias": "deveco",
-          "keyPassword": "0000003804A75EB7DC3AEF956A2C59A3D1E8A73F48CE946B1F094B7483A19D9984328A288F35B6CFCBA5ACE94D88D94A96C26C2E53395730BCBC376E829B71208C7FBBB2942CF1A7",
-          "profile": "/Users/yangyangshi/Documents/huawei_profile/morseRelease.p7b",
+          "storeFile": "/Users/yangyang/Documents/huawei_profile/douhua_product.p12",
+          "storePassword": "00000038D98EBF1D503970DC99A1D696197254229F338DBAA9DD97051E44680D52E635A64F11D419872B3C4082B6447D7F87B792D67EA525835A7C213B30EAD8823E6F8BF23239FA",
+          "keyAlias": "douhua_pro",
+          "keyPassword": "00000038E8372EFE99787EEC017B79055F14DEC1AAFA476DF37A67DA9031D67513FD8F65C7745A4BC423DB36976C9EB5D738E587AF5CB10045935A1CBAC96B26F0187493B663D2A4",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "/Users/yangyangshi/Documents/huawei_profile/douhua.p12",
-          "storePassword": "00000038759453BFDBA140AE93D92D17FE131DD26031D8B086253353457679DDA870CDF5BC4889FD51952299E373C5E3F949BCAB06ACEF7CD66963BA85F5670E39B3831A6030683A"
+          "profile": "/Users/yangyang/Documents/huawei_profile/morsecodeRelease.p7b",
+          "certpath": "/Users/yangyang/Documents/huawei_profile/douhua_new.cer"
         }
       }
     ],

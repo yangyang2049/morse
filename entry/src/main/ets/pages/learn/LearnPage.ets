@@ -7,6 +7,7 @@ import { eventHub, Events } from '../../utils/EventHub'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
 import { SystemBarHelper } from '../../utils/SystemBarHelper'
 import { DistributedSyncPermissionHelper } from '../../utils/DistributedSyncPermissionHelper'
+import { RecommendAppsDismissHelper } from '../../helpers/recommendAppsDismissHelper'
 
 @Component
 export struct LearnPage {
@@ -14,6 +15,7 @@ export struct LearnPage {
   @State vm: LearnViewModel = new LearnViewModel()
   @State private isInitialized: boolean = false
   @State private isLanguageReady: boolean = false
+  @State private recommendAppsDismissed: boolean = false
   @StorageLink('currentLanguage') @Watch('onLanguageChange') currentLanguage: string = ''
   private lessonCompletedCallback: ((data?: Object) => void) | null = null
 
@@ -40,6 +42,13 @@ export struct LearnPage {
       const abilityContext = hostContext as common.UIAbilityContext
       const syncGranted = await DistributedSyncPermissionHelper.requestOnLearnEntry(abilityContext)
       await this.vm.init(abilityContext, syncGranted)
+
+      // 加载推荐应用入口隐藏状态
+      try {
+        this.recommendAppsDismissed = await RecommendAppsDismissHelper.isDismissed(abilityContext)
+      } catch (err) {
+        console.warn('[LearnPage] Failed to load recommend apps dismissed flag:', JSON.stringify(err))
+      }
 
       // Add 200ms delay for smooth rendering
       setTimeout(() => {
@@ -268,16 +277,49 @@ export struct LearnPage {
 
   @Builder
   private TitleBar() {
-    Row() {
-
+    Stack({ alignContent: Alignment.Center }) {
       Text($r('app.string.learn'))
         .fontSize(20)
         .fontWeight(FontWeight.Bold)
         .fontColor('#FFFFFF')
+
+      Row() {
+        Blank()
+
+        // 推荐应用入口：点过一次后永久隐藏（跨版本、跨重启持久化）
+        if (!this.recommendAppsDismissed) {
+          Row({ space: 6 }) {
+            Image($rawfile('ic_recommend_apps.svg'))
+              .width(16)
+              .height(16)
+            Text('推荐应用')
+              .fontSize(13)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(Color.Black)
+          }
+          .height(30)
+          .padding({ left: 12, right: 12 })
+          .backgroundColor('#FFD700')
+          .borderRadius(15)
+          .shadow({ radius: 8, color: 'rgba(255, 215, 0, 0.25)', offsetX: 0, offsetY: 2 })
+          .onClick(() => {
+            this.recommendAppsDismissed = true
+            const context = this.getUIContext().getHostContext() as common.UIAbilityContext
+            if (context) {
+              void RecommendAppsDismissHelper.markDismissed(context)
+            }
+            router.push({ url: 'pages/me/AppFamilyPage' })
+          })
+          .hoverEffect(HoverEffect.Scale)
+          .focusable(true)
+        }
+      }
+      .width('100%')
+        .height('100%')
+        .padding({ left: 16, right: 16 })
     }
     .height(56)
       .width('100%')
-      .justifyContent(FlexAlign.Center)
       .backgroundColor('#000000')
   }
 

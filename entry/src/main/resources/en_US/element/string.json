@@ -886,7 +886,7 @@
     },
     {
       "name": "watch_phone_version_richer",
-      "value": "Phone version has more features"
+      "value": "Explore more features on your phone"
     },
     {
       "name": "watch_company_name",
@@ -992,7 +992,7 @@
       "name": "watch_guide_click_to_input_code",
       "value": "Tap to input code; tap eye icon to reveal when unsure"
     },
-    { "name": "learning_repetition_count", "value": "Learning repetitions" },
+    { "name": "learning_repetition_count", "value": "Learning Repetitions" },
     { "name": "learning_repetition_count_desc", "value": "Correct answers required for each item (1–5)" },
     { "name": "distributed_sync_permission_reason", "value": "Used to sync learning progress between your phone and watch" },
     { "name": "course_intro_morse", "value": "Morse Code Basics" },

@@ -169,7 +169,7 @@ export struct CodeTablePage {
                 .textAlign(TextAlign.Center)
 
               Text(code.morse)
-                .fontSize(14)
+                .fontSize(24)
                 .fontColor('#FFFFFF')
                 .layoutWeight(1)
             }

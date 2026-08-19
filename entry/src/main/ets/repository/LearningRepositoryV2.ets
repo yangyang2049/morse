@@ -1,5 +1,6 @@
 import { distributedKVStore, preferences } from '@kit.ArkData'
 import { common } from '@kit.AbilityKit'
+import { distributedDeviceManager } from '@kit.DistributedServiceKit'
 import { CourseCatalogV2 } from '../data/CourseCatalogV2'
 
 export interface LearningCounter {
@@ -37,6 +38,11 @@ interface ToggleRecord {
   replicaId: string
 }
 
+interface DeviceStateEvent {
+  action: distributedDeviceManager.DeviceStateChange
+  device: distributedDeviceManager.DeviceBasicInfo
+}
+
 type SnapshotListener = (snapshot: LearningSnapshot) => void
 
 const BUNDLE_NAME = 'com.douhua.morsecode'
@@ -52,10 +58,14 @@ export class LearningRepositoryV2 {
   private static instance: LearningRepositoryV2 | null = null
   private manager: distributedKVStore.KVManager | null = null
   private store: distributedKVStore.SingleKVStore | null = null
+  private deviceManager: distributedDeviceManager.DeviceManager | null = null
   private context: common.UIAbilityContext | null = null
   private replicaId: string = ''
   private initialized: boolean = false
   private syncEnabled: boolean = false
+  private syncInFlight: boolean = false
+  private pendingSyncReason: string = ''
+  private syncWatchdogId: number = -1
   private listeners: SnapshotListener[] = []
   private counterWriteQueue: Promise<void> = Promise.resolve()
 
@@ -69,6 +79,7 @@ export class LearningRepositoryV2 {
   }
 
   async init(context: common.UIAbilityContext, enableDistributedSync: boolean): Promise<void> {
+    console.info(`[LearningSyncV2] init requested, initialized=${this.initialized}, permissionGranted=${enableDistributedSync}`)
     if (!this.initialized) {
       this.context = context
       this.replicaId = await this.loadOrCreateReplicaId(context)
@@ -78,29 +89,56 @@ export class LearningRepositoryV2 {
         createIfMissing: true,
         encrypt: false,
         backup: false,
-        autoSync: enableDistributedSync,
+        // Use one explicit PUSH_PULL coordinator. Mixing autoSync with manual sync can cause
+        // concurrent synchronization requests as soon as a trusted device becomes available.
+        autoSync: false,
         kvStoreType: distributedKVStore.KVStoreType.SINGLE_VERSION,
         securityLevel: distributedKVStore.SecurityLevel.S1
       }
       this.store = await this.manager.getKVStore(STORE_ID, options) as distributedKVStore.SingleKVStore
+      console.info(`[LearningSyncV2] store opened, storeId=${STORE_ID}, bundleName=${BUNDLE_NAME}, ` +
+        `replicaId=${this.replicaId}, autoSync=false`)
       this.store.on('dataChange', distributedKVStore.SubscribeType.SUBSCRIBE_TYPE_ALL,
-        (_change: distributedKVStore.ChangeNotification) => {
+        (change: distributedKVStore.ChangeNotification) => {
+          console.info(`[LearningSyncV2] dataChange, sourceDevice=${this.shortDeviceId(change.deviceId)}, ` +
+            `insert=${change.insertEntries.length}, update=${change.updateEntries.length}, ` +
+            `delete=${change.deleteEntries.length}`)
           void this.notifyListeners()
         })
+      this.store.on('syncComplete', (results: Array<[string, number]>) => {
+        this.clearSyncWatchdog()
+        this.syncInFlight = false
+        const summary = results.map((result: [string, number]) =>
+          `${this.shortDeviceId(result[0])}:${result[1]}`).join(',')
+        console.info(`[LearningSyncV2] syncComplete, results=[${summary}]`)
+        void this.notifyListeners()
+        this.runPendingSync()
+      })
       this.initialized = true
     }
     await this.setSyncEnabled(enableDistributedSync)
+    if (this.syncEnabled) {
+      await this.syncNow('init')
+    }
     await this.notifyListeners()
   }
 
   async setSyncEnabled(enabled: boolean): Promise<void> {
-    this.syncEnabled = enabled
-    if (this.store) {
-      try {
-        await this.store.enableSync(enabled)
-      } catch (error) {
-        console.warn('[LearningRepositoryV2] Failed to update sync state:', error)
+    if (!this.store) {
+      this.syncEnabled = false
+      console.warn('[LearningSyncV2] setSyncEnabled skipped because store is unavailable')
+      return
+    }
+    try {
+      await this.store.enableSync(enabled)
+      this.syncEnabled = enabled
+      console.info(`[LearningSyncV2] enableSync succeeded, enabled=${enabled}`)
+      if (enabled) {
+        this.ensureDeviceManager()
       }
+    } catch (error) {
+      this.syncEnabled = false
+      console.error(`[LearningSyncV2] enableSync failed, requested=${enabled}`, error)
     }
   }
 
@@ -167,10 +205,13 @@ export class LearningRepositoryV2 {
 
   async completeCourse(courseId: string): Promise<void> {
     if (!CourseCatalogV2.isCourseId(courseId) || !this.store) {
+      console.warn(`[LearningSyncV2] completeCourse skipped, courseId=${courseId}, storeReady=${this.store !== null}`)
       return
     }
     await this.store.put(`${KEY_COMPLETED_PREFIX}${courseId}`, true)
+    console.info(`[LearningSyncV2] course completion stored locally, courseId=${courseId}, replicaId=${this.replicaId}`)
     await this.notifyListeners()
+    await this.syncNow(`completeCourse:${courseId}`)
   }
 
   async isCourseCompleted(courseId: string): Promise<boolean> {
@@ -302,6 +343,107 @@ export class LearningRepositoryV2 {
     await this.notifyListeners()
   }
 
+  private ensureDeviceManager(): void {
+    if (this.deviceManager) {
+      return
+    }
+    try {
+      this.deviceManager = distributedDeviceManager.createDeviceManager(BUNDLE_NAME)
+      console.info('[LearningSyncV2] DeviceManager created')
+      this.deviceManager.on('deviceStateChange', (event: DeviceStateEvent) => {
+        console.info(`[LearningSyncV2] deviceStateChange, action=${event.action}, ` +
+          `deviceId=${this.shortDeviceId(event.device.deviceId)}, type=${event.device.deviceType}, ` +
+          `name=${event.device.deviceName}`)
+        if (event.action === distributedDeviceManager.DeviceStateChange.AVAILABLE) {
+          void this.syncNow('deviceAvailable')
+        }
+      })
+    } catch (error) {
+      this.deviceManager = null
+      console.error('[LearningSyncV2] Failed to create DeviceManager', error)
+    }
+  }
+
+  private async syncNow(reason: string): Promise<void> {
+    if (!this.syncEnabled || !this.store) {
+      console.warn(`[LearningSyncV2] sync skipped, reason=${reason}, enabled=${this.syncEnabled}, ` +
+        `storeReady=${this.store !== null}`)
+      return
+    }
+    this.ensureDeviceManager()
+    if (!this.deviceManager) {
+      console.warn(`[LearningSyncV2] sync skipped, reason=${reason}, DeviceManager unavailable`)
+      return
+    }
+    if (this.syncInFlight) {
+      this.pendingSyncReason = reason
+      console.info(`[LearningSyncV2] sync queued because another request is active, reason=${reason}`)
+      return
+    }
+    this.syncInFlight = true
+    try {
+      const devices = await this.deviceManager.getAvailableDeviceList()
+      const deviceIds = devices.map((device: distributedDeviceManager.DeviceBasicInfo) => {
+        const networkId = device.networkId || ''
+        return networkId.length > 0 ? networkId : device.deviceId
+      })
+      const deviceSummary = devices.map((device: distributedDeviceManager.DeviceBasicInfo) =>
+        `${device.deviceName}/${device.deviceType}/network=${this.shortDeviceId(device.networkId || '')}/` +
+          `device=${this.shortDeviceId(device.deviceId)}`).join(',')
+      console.info(`[LearningSyncV2] available devices, reason=${reason}, count=${devices.length}, ` +
+        `devices=[${deviceSummary}]`)
+      if (deviceIds.length === 0) {
+        this.syncInFlight = false
+        console.warn(`[LearningSyncV2] sync not started because no authorized and connectable remote device was found, ` +
+          `reason=${reason}`)
+        return
+      }
+      this.store.sync(deviceIds, distributedKVStore.SyncMode.PUSH_PULL, 0)
+      this.startSyncWatchdog(reason)
+      console.info(`[LearningSyncV2] PUSH_PULL submitted, reason=${reason}, targets=${deviceIds.length}`)
+    } catch (error) {
+      this.syncInFlight = false
+      console.error(`[LearningSyncV2] PUSH_PULL failed to submit, reason=${reason}, ` +
+        `error=${JSON.stringify(error)}, text=${error}`)
+      this.runPendingSync()
+    }
+  }
+
+  private startSyncWatchdog(reason: string): void {
+    this.clearSyncWatchdog()
+    this.syncWatchdogId = setTimeout(() => {
+      if (!this.syncInFlight) {
+        return
+      }
+      this.syncInFlight = false
+      console.warn(`[LearningSyncV2] syncComplete timeout, reason=${reason}`)
+      this.runPendingSync()
+    }, 15000)
+  }
+
+  private clearSyncWatchdog(): void {
+    if (this.syncWatchdogId >= 0) {
+      clearTimeout(this.syncWatchdogId)
+      this.syncWatchdogId = -1
+    }
+  }
+
+  private runPendingSync(): void {
+    if (this.pendingSyncReason.length === 0) {
+      return
+    }
+    const reason = this.pendingSyncReason
+    this.pendingSyncReason = ''
+    void this.syncNow(`pending:${reason}`)
+  }
+
+  private shortDeviceId(deviceId: string): string {
+    if (deviceId.length <= 12) {
+      return deviceId
+    }
+    return `${deviceId.substring(0, 6)}...${deviceId.substring(deviceId.length - 6)}`
+  }
+
   private mergeToggle(target: Map<string, ToggleRecord>, encodedKey: string, value: string): void {
     try {
       const separator = encodedKey.lastIndexOf('/')
@@ -331,6 +473,9 @@ export class LearningRepositoryV2 {
       return
     }
     const snapshot = await this.getSnapshot()
+    console.info(`[LearningSyncV2] notifying snapshot, completed=[${snapshot.completedCourseIds.join(',')}], ` +
+      `counters=${snapshot.counters.length}, favorites=${snapshot.favoriteItemIds.length}, ` +
+      `mistakes=${snapshot.mistakeItemIds.length}`)
     for (const listener of this.listeners) {
       listener(snapshot)
     }

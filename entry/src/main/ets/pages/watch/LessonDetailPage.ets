@@ -24,6 +24,8 @@ struct LessonDetailPage {
   @State vibrationEnabled: boolean = true
   @State requiredPracticeCount: number = 3
   @State practiceCounts: Map<string, number> = new Map()
+  @State showProgressToast: boolean = false
+  @State progressToastText: string = ''
   
   private practiceSettingsStore: preferences.Preferences | null = null
   private pressStartTime: number = 0
@@ -32,6 +34,7 @@ struct LessonDetailPage {
   private nextCharTimer: number | null = null
   private clearInputTimer: number | null = null
   private guideTimer: number | null = null
+  private progressToastTimer: number | null = null
   private isChecking: boolean = false
   private isPageActive: boolean = false
   private course: CourseDefinition | null = null
@@ -90,6 +93,11 @@ struct LessonDetailPage {
       clearTimeout(this.guideTimer)
       this.guideTimer = null
     }
+    if (this.progressToastTimer) {
+      clearTimeout(this.progressToastTimer)
+      this.progressToastTimer = null
+    }
+    this.showProgressToast = false
     
   }
 
@@ -125,6 +133,20 @@ struct LessonDetailPage {
 
   private isWordCourse(): boolean {
     return this.course?.unitId === 'words'
+  }
+
+  private getPreviousVisibleItems(): string[] {
+    const visibleCount = this.isWordCourse() ? 1 : 2
+    const startIndex = Math.max(0, this.lessonCharIndex - visibleCount)
+    return this.currentLessonGroup.slice(startIndex, this.lessonCharIndex)
+  }
+
+  private getNextVisibleItems(): string[] {
+    const visibleCount = this.isWordCourse() ? 1 : 2
+    return this.currentLessonGroup.slice(
+      this.lessonCharIndex + 1,
+      this.lessonCharIndex + 1 + visibleCount
+    )
   }
 
   // 获取当前课程字符的摩斯码
@@ -180,12 +202,14 @@ struct LessonDetailPage {
         const nextCounts = new Map(this.practiceCounts)
         nextCounts.set(currentChar, currentCount + 1)
         this.practiceCounts = nextCounts
+        this.showPracticeProgressToast(currentCount + 1)
         const itemCompleted = currentCount + 1 >= this.requiredPracticeCount
         this.isCurrentCharCorrect = itemCompleted
         this.nextCharTimer = setTimeout(() => {
           if (!this.isPageActive) {
             return
           }
+          this.hidePracticeProgressToast()
           if (itemCompleted) {
             this.nextLessonChar()
           } else {
@@ -223,6 +247,32 @@ struct LessonDetailPage {
     } else {
       this.isChecking = false
     }
+  }
+
+  private showPracticeProgressToast(completedCount: number): void {
+    if (this.requiredPracticeCount <= 1 || !this.isPageActive) {
+      return
+    }
+    if (this.progressToastTimer) {
+      clearTimeout(this.progressToastTimer)
+    }
+    const progress = Math.min(completedCount, this.requiredPracticeCount)
+    this.progressToastText = `${progress}/${this.requiredPracticeCount}`
+    this.showProgressToast = true
+    this.progressToastTimer = setTimeout(() => {
+      if (this.isPageActive) {
+        this.showProgressToast = false
+      }
+      this.progressToastTimer = null
+    }, 800)
+  }
+
+  private hidePracticeProgressToast(): void {
+    if (this.progressToastTimer) {
+      clearTimeout(this.progressToastTimer)
+      this.progressToastTimer = null
+    }
+    this.showProgressToast = false
   }
 
   // 单键模式：按下
@@ -412,6 +462,50 @@ struct LessonDetailPage {
     }
   }
 
+  @Builder
+  private CourseFocusRail() {
+    Row() {
+      Row() {
+        ForEach(this.getPreviousVisibleItems(), (item: string, index: number) => {
+          Text(item)
+            .fontSize(14)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#4CAF50')
+            .opacity(index === this.getPreviousVisibleItems().length - 1 ? 0.85 : 0.5)
+            .maxLines(1)
+            .margin({ right: this.isWordCourse() ? 3 : 5 })
+        }, (item: string, index: number) => `previous-${this.lessonCharIndex}-${index}-${item}`)
+      }
+      .width(this.isWordCourse() ? '22%' : '28%')
+      .justifyContent(FlexAlign.End)
+
+      Text(this.getCurrentLessonChar())
+        .width(this.isWordCourse() ? '56%' : '44%')
+        .fontSize(this.isWordCourse() ? 28 : 60)
+        .fontColor(this.isCurrentCharCorrect ? '#4CAF50' : '#FFD700')
+        .fontWeight(FontWeight.Bold)
+        .textAlign(TextAlign.Center)
+        .maxLines(1)
+
+      Row() {
+        ForEach(this.getNextVisibleItems(), (item: string, index: number) => {
+          Text(item)
+            .fontSize(14)
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#FFFFFF')
+            .opacity(index === 0 ? 0.75 : 0.45)
+            .maxLines(1)
+            .margin({ left: this.isWordCourse() ? 3 : 5 })
+        }, (item: string, index: number) => `next-${this.lessonCharIndex}-${index}-${item}`)
+      }
+      .width(this.isWordCourse() ? '22%' : '28%')
+      .justifyContent(FlexAlign.Start)
+    }
+    .width('100%')
+    .height(this.isWordCourse() ? 56 : 72)
+    .alignItems(VerticalAlign.Center)
+  }
+
   // 引导对话框 Builder
   @Builder
   private GuideDialog() {
@@ -458,32 +552,7 @@ struct LessonDetailPage {
           // 学习单个字符（收紧垂直间距，使 ArcButton 贴底且完全可见）
           Column() {
             Column() {
-              // 显示所有字母，高亮当前字母
-              Scroll() {
-                Row() {
-                  ForEach(this.currentLessonGroup, (char: string, index: number) => {
-                    Text(char)
-                      .fontSize(14)
-                      .fontWeight(FontWeight.Bold)
-                      .fontColor(
-                        index < this.lessonCharIndex ? '#4CAF50' :  // Completed characters in green
-                        index === this.lessonCharIndex ? '#FFD700' : '#FFFFFF'  // Current in gold, future in white
-                      )
-                      .margin({ right: 6 })
-                  }, (char: string, index: number) => `${index}-${char}`)
-                }
-                .justifyContent(FlexAlign.Center)
-              }
-              .width('100%')
-              .scrollable(ScrollDirection.Horizontal)
-              .scrollBar(BarState.Off)
-              .margin({ bottom: 4 })
-
-              Text(this.getCurrentLessonChar())
-                .fontSize(this.isWordCourse() ? 20 : 56)
-                .fontColor(this.isCurrentCharCorrect ? '#4CAF50' : '#FFD700')
-                .fontWeight(FontWeight.Bold)
-                .margin({ bottom: 0 })
+              this.CourseFocusRail()
 
               if (this.getCurrentLessonCharCode()) {
                 Text(this.getCurrentLessonCharCode()!.morse.replace(/\./g, '·'))
@@ -499,7 +568,7 @@ struct LessonDetailPage {
                   .fontColor('#FFFFFF')
                   .textAlign(TextAlign.Center)
               }
-              .width('80%')
+              .width(this.isWordCourse() ? '90%' : '80%')
               .height(28)
               .scrollable(ScrollDirection.Horizontal)
               .scrollBar(BarState.Off)
@@ -511,6 +580,7 @@ struct LessonDetailPage {
             .width('100%')
             .layoutWeight(1)
             .justifyContent(FlexAlign.Center)
+            .translate({ y: this.isWordCourse() ? 8 : 0 })
 
             // 手表端仅单键 ArcButton
             ArcButton({
@@ -531,11 +601,11 @@ struct LessonDetailPage {
             })
             .margin({ top: 4, bottom: 0 })
           }
-          .width('80%')
+          .width(this.isWordCourse() ? '96%' : '80%')
           .layoutWeight(1)
           .height('100%')
         } else {
-          // 课程完成：上方居中，两按钮紧凑贴底
+          // 课程完成：完成信息居中，返回 ArcButton 贴合底边
           Column() {
             Column() {
               Text(LocalizationHelper.getString('watch_completed'))
@@ -552,15 +622,20 @@ struct LessonDetailPage {
             .layoutWeight(1)
             .justifyContent(FlexAlign.Center)
 
-            Button(LocalizationHelper.getString('watch_back'))
-              .width('80%')
-              .height(44)
-              .backgroundColor('#222222')
-              .fontColor('#FFFFFF')
-              .margin({ bottom: 8 })
-              .onClick(() => {
-                router.back()
+            ArcButton({
+              options: new ArcButtonOptions({
+                label: LocalizationHelper.getString('watch_back'),
+                position: ArcButtonPosition.BOTTOM_EDGE,
+                styleMode: ArcButtonStyleMode.CUSTOM,
+                backgroundColor: ColorMetrics.resourceColor('#222222'),
+                fontColor: ColorMetrics.resourceColor('#FFFFFF'),
+                onClick: () => {
+                  console.info('[LessonDetailPage] Completion ArcButton back clicked')
+                  router.back()
+                }
               })
+            })
+              .margin({ top: 4, bottom: 0 })
           }
           .width('80%')
           .layoutWeight(1)
@@ -575,6 +650,21 @@ struct LessonDetailPage {
       .backgroundColor('#000000')
       .focusable(true)
       .defaultFocus(true)
+
+      if (this.showProgressToast && !this.showGuideDialog) {
+        Row() {
+          Text(this.progressToastText)
+            .fontSize(16)
+            .fontWeight(FontWeight.Medium)
+            .fontColor('#FFFFFF')
+            .padding({ left: 16, right: 16, top: 7, bottom: 7 })
+            .backgroundColor('rgba(64, 64, 64, 0.78)')
+            .borderRadius(18)
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Center)
+        .position({ x: 0, y: 52 })
+      }
 
       // 引导对话框
       if (this.showGuideDialog) {

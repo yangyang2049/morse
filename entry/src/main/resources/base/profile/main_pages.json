@@ -5,6 +5,7 @@
     "pages/learn/LessonQuizPage",
     "pages/learn/KnowledgeLessonPage",
     "pages/practice/PracticePage",
+    "pages/me/AppFamilyPage",
     "pages/codetable/ChineseTelegraphCodePage",
     "pages/watch/Index",
     "pages/watch/KnowledgeLessonPage",

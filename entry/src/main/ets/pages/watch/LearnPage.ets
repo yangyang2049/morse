@@ -39,6 +39,7 @@ export struct LearnPage {
   }
 
   private applySnapshot(snapshot: LearningSnapshot): void {
+    console.info(`[LearningSyncV2] watch snapshot applied, completed=[${snapshot.completedCourseIds.join(',')}]`)
     this.completedCourseIds = [...snapshot.completedCourseIds]
   }
 
@@ -95,6 +96,7 @@ export struct LearnPage {
                   .width('100%')
                   .maxLines(1)
                   .textOverflow({ overflow: TextOverflow.Ellipsis })
+                  .margin({ top: 4 })
               }
               .layoutWeight(1)
                 .alignItems(HorizontalAlign.Start)

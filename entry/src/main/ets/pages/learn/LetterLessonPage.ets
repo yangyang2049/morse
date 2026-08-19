@@ -191,13 +191,16 @@ export struct LetterLessonPage {
         Blank().width(20)
 
         Button() {
-          Image($rawfile('ic_settings.svg'))
-            .width(22).height(22)
+          Image($rawfile(this.viewModel.soundEnabled ? 'ic_sound_on.svg' : 'ic_sound_off.svg'))
+            .width(24)
+            .height(24)
         }
-        .backgroundColor(Color.Transparent)
+        .width(48)
+          .height(48)
+          .backgroundColor(Color.Transparent)
           .borderRadius(24)
           .onClick(() => {
-            this.viewModel.showSettingsDialog = true
+            this.viewModel.soundEnabled = !this.viewModel.soundEnabled
           })
           .hoverEffect(HoverEffect.Scale)
           .focusable(true)
@@ -585,67 +588,6 @@ export struct LetterLessonPage {
   }
 
   @Builder
-  private SettingsDialog() {
-
-    Column() {
-      Blank().layoutWeight(1)
-
-      Column() {
-        Text($r('app.string.settings'))
-          .fontSize(20)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#FFFFFF')
-          .textAlign(TextAlign.Center)
-
-        Blank().height(16)
-
-        // 声音
-        Row() {
-          Text($r('app.string.sound'))
-            .fontSize(16)
-            .fontColor('#FFFFFF')
-          Blank().layoutWeight(1)
-          Toggle({ type: ToggleType.Switch, isOn: this.viewModel.soundEnabled })
-            .selectedColor('#FFD700')
-            .onChange((isOn: boolean) => {
-              this.viewModel.soundEnabled = isOn
-            })
-        }
-        .height(44)
-          .padding({ left: 4, right: 4 })
-
-        Blank().height(20)
-
-        Button() {
-          Text($r('app.string.close'))
-            .fontSize(16)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(Color.Black)
-        }
-        .height(44)
-          .width('100%')
-          .backgroundColor('#FFD700')
-          .borderRadius(8)
-          .onClick(() => { this.viewModel.showSettingsDialog = false })
-          .hoverEffect(HoverEffect.Scale)
-          .focusable(true)
-      }
-      .width(320)
-        .padding(20)
-        .backgroundColor('#000000')
-        .border({ width: 1, color: '#333333' })
-        .borderRadius(12)
-        .shadow({ radius: 24, color: 'rgba(0,0,0,0.4)', offsetX: 0, offsetY: 12 })
-
-      Blank().layoutWeight(1)
-    }
-    .width('100%')
-      .height('100%')
-      .justifyContent(FlexAlign.Center)
-      .alignItems(HorizontalAlign.Center)
-  }
-
-  @Builder
   private OverlayCover() {
     Stack() {
       // 半透明遮罩，阻止穿透点击
@@ -656,8 +598,6 @@ export struct LetterLessonPage {
 
       if (this.viewModel.showCompletionDialog) {
         this.CompletionDialog()
-      } else if (this.viewModel.showSettingsDialog) {
-        this.SettingsDialog()
       }
     }
     .width('100%')
@@ -695,7 +635,7 @@ export struct LetterLessonPage {
       .width('100%')
         .height('100%')
 
-      if (this.viewModel.showCompletionDialog || this.viewModel.showSettingsDialog) {
+      if (this.viewModel.showCompletionDialog) {
         this.OverlayCover()
       }
     }

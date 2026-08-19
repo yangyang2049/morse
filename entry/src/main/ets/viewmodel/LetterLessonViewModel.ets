@@ -32,8 +32,6 @@ export class LetterLessonViewModel {
 
   // 对话框状态
   @Track showCompletionDialog: boolean = false
-  @Track showSettingsDialog: boolean = false
-  @Track showSettingsTooltip: boolean = false
   isLessonCompleted: boolean = false
 
   // 复习模式状态

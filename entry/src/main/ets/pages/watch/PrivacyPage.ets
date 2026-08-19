@@ -10,9 +10,9 @@ import { ArcButton, ArcButtonOptions, ArcButtonPosition, ArcButtonStyleMode, Col
 @Component
 struct PrivacyPage {
   private context = getContext(this) as common.UIAbilityContext
+  private privacyLink = 'https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1776276266387804160'
   @State qrCode: image.PixelMap | null = null
   @State qrCodeGenerating: boolean = false
-  private privacyLink = 'https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=1776276266387804160'
 
   aboutToAppear(): void {
     void this.generateQRCode()

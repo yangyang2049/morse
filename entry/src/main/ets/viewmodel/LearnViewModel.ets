@@ -40,6 +40,7 @@ export class LearnViewModel {
   }
 
   private applySnapshot(snapshot: LearningSnapshot): void {
+    console.info(`[LearningSyncV2] phone snapshot applied, completed=[${snapshot.completedCourseIds.join(',')}]`)
     this.completedCourseIds = new Set(snapshot.completedCourseIds)
     this.rebuildLessons()
   }

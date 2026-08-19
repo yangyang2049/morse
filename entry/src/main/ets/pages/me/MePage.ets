@@ -1,4 +1,5 @@
 import { promptAction } from '@kit.ArkUI'
+import { router } from '@kit.ArkUI'
 import { common, Context, Want } from '@kit.AbilityKit'
 import pasteboard from '@ohos.pasteboard'
 import { resourceManager } from '@kit.LocalizationKit'
@@ -26,6 +27,8 @@ export struct MePage {
   @State keySettingsSliderValue: number = 300
   @State vibrationEnabled: boolean = true // 振动反馈开关
   @State repetitionCount: number = 3
+  @State pendingRepetitionCount: number = 3
+  @State showRepetitionDialog: boolean = false
   // 资源管理器
   private resourceMgr: resourceManager.ResourceManager | null = null
   private preferencesStore: preferences.Preferences | null = null
@@ -169,10 +172,13 @@ export struct MePage {
     }
   }
 
-  private async changeRepetitionCount(delta: number): Promise<void> {
+  private async saveRepetitionCount(): Promise<void> {
     try {
-      const next = LocalLearningSettings.clampRepetitionCount(this.repetitionCount + delta)
-      this.repetitionCount = await LocalLearningSettings.setRepetitionCount(getContext(this) as Context, next)
+      this.repetitionCount = await LocalLearningSettings.setRepetitionCount(
+        getContext(this) as Context,
+        this.pendingRepetitionCount
+      )
+      this.showRepetitionDialog = false
     } catch (error) {
       console.error('[MePage] Failed to save repetition count:', error)
     }
@@ -378,6 +384,39 @@ export struct MePage {
       .padding({ left: 16, right: 16 })
       .onClick(() => {
         this.shareApp()
+      })
+      .hoverEffect(HoverEffect.Scale)
+      .focusable(true)
+  }
+
+  // 豆花全家桶入口：点击跳转推荐应用页
+  @Builder FamilyBucketItem() {
+    Row({ space: 12 }) {
+      Image($rawfile('ic_family_bucket.svg'))
+        .width(40)
+        .height(40)
+
+      Column({ space: 2 }) {
+        Text('豆花全家桶')
+          .fontSize(14)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#FFFFFF')
+        Text('豆花科技出品的更多应用')
+          .fontSize(11)
+          .fontColor('#999999')
+      }
+      .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
+
+      Image($rawfile('ic_arrow_right.svg'))
+        .width(16)
+        .height(16)
+        .fillColor('#666666')
+    }
+    .width('100%')
+      .padding({ left: 16, right: 16, top: 12, bottom: 12 })
+      .onClick(() => {
+        router.push({ url: 'pages/me/AppFamilyPage' })
       })
       .hoverEffect(HoverEffect.Scale)
       .focusable(true)
@@ -611,44 +650,109 @@ export struct MePage {
 
   @Builder RepetitionSettingsItem() {
     Row() {
-      Column() {
+      Text($r('app.string.learning_repetition_count'))
+        .fontSize(16)
+        .fontWeight(FontWeight.Medium)
+        .fontColor('#FFFFFF')
+        .maxLines(1)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .layoutWeight(1)
+
+      Text(`${this.repetitionCount}`)
+        .fontSize(16)
+        .fontColor('#999999')
+        .margin({ right: 8 })
+
+      Image($rawfile('ic_arrow_right.svg'))
+        .width(16)
+        .height(16)
+        .fillColor('#666666')
+    }
+    .width('100%')
+      .height(56)
+      .padding({ left: 16, right: 16 })
+      .onClick(() => {
+        this.pendingRepetitionCount = this.repetitionCount
+        this.showRepetitionDialog = true
+      })
+      .hoverEffect(HoverEffect.Scale)
+      .focusable(true)
+  }
+
+  @Builder RepetitionSettingsDialog() {
+    Column() {
+      Row() {
+        Text($r('app.string.learning_repetition_count'))
+          .fontSize(18)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#FFFFFF')
+        Blank()
+        Button() {
+          Image($rawfile('ic_close.svg'))
+            .width(20)
+            .height(20)
+        }
+        .width(32)
+          .height(32)
+          .backgroundColor('rgba(128, 128, 128, 0.2)')
+          .borderRadius(16)
+          .onClick(() => {
+            this.showRepetitionDialog = false
+          })
+      }
+      .width('100%')
+        .margin({ bottom: 16 })
+
+      Row() {
         Text($r('app.string.learning_repetition_count'))
           .fontSize(16)
           .fontWeight(FontWeight.Medium)
           .fontColor('#FFFFFF')
-          .width('100%')
-        Text($r('app.string.learning_repetition_count_desc'))
-          .fontSize(12)
-          .fontColor('#999999')
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .width('100%')
+        Blank()
+        Text(`${this.pendingRepetitionCount}`)
+          .fontSize(16)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#FFD700')
       }
-      .layoutWeight(1)
-        .alignItems(HorizontalAlign.Start)
+      .width('100%')
+        .padding(16)
+        .backgroundColor('#111111')
+        .borderRadius(8)
+        .margin({ bottom: 8 })
 
-      Button('-')
-        .width(36)
-        .height(36)
-        .enabled(this.repetitionCount > 1)
-        .backgroundColor('#333333')
-        .onClick(() => { void this.changeRepetitionCount(-1) })
-      Text(`${this.repetitionCount}`)
-        .width(36)
-        .fontSize(18)
+      Slider({
+        value: this.pendingRepetitionCount,
+        min: 1,
+        max: 5,
+        step: 1,
+        style: SliderStyle.OutSet
+      })
+        .blockColor('#FFD700')
+        .trackColor('#333333')
+        .selectedColor('#FFD700')
+        .trackThickness(6)
+        .blockSize({ width: 20, height: 20 })
+        .onChange((value: number) => {
+          this.pendingRepetitionCount = value
+        })
+        .margin({ bottom: 20 })
+
+      Button($r('app.string.confirm'))
+        .width('100%')
+        .height(48)
+        .backgroundColor('#FFD700')
+        .borderRadius(8)
+        .fontColor(Color.Black)
         .fontWeight(FontWeight.Bold)
-        .fontColor('#FFD700')
-        .textAlign(TextAlign.Center)
-      Button('+')
-        .width(36)
-        .height(36)
-        .enabled(this.repetitionCount < 5)
-        .backgroundColor('#333333')
-        .onClick(() => { void this.changeRepetitionCount(1) })
+        .onClick(() => {
+          void this.saveRepetitionCount()
+        })
     }
-    .width('100%')
-      .height(68)
-      .padding({ left: 16, right: 16 })
+    .padding(20)
+      .backgroundColor('#2A2A2A')
+      .borderRadius(12)
+      .width('90%')
+      .constraintSize({ maxWidth: 400 })
   }
 
   // 手电筒测试UI已移除（功能已移至翻译页面）
@@ -718,6 +822,16 @@ export struct MePage {
                 .borderRadius(12)
                 .padding({ top: 4, bottom: 4 })
                 .constraintSize({ maxWidth: 400 })
+
+              // 豆花全家桶 - 推荐豆花科技旗下应用
+              Column() {
+                this.FamilyBucketItem()
+              }
+              .width('100%')
+                .backgroundColor('#111111')
+                .borderRadius(12)
+                .padding({ top: 4, bottom: 4 })
+                .constraintSize({ maxWidth: 400 })
             }
             .width('100%')
               .padding({ left: 20, right: 20 })
@@ -762,6 +876,27 @@ export struct MePage {
               })
             Column() {
               this.KeySettingsDialog()
+            }
+            .width('100%')
+              .height('100%')
+              .justifyContent(FlexAlign.Center)
+              .alignItems(HorizontalAlign.Center)
+          }
+          .width('100%')
+            .height('100%')
+        }
+
+        if (this.showRepetitionDialog) {
+          Stack() {
+            Column()
+              .width('100%')
+              .height('100%')
+              .backgroundColor('rgba(0, 0, 0, 0.5)')
+              .onClick(() => {
+                this.showRepetitionDialog = false
+              })
+            Column() {
+              this.RepetitionSettingsDialog()
             }
             .width('100%')
               .height('100%')

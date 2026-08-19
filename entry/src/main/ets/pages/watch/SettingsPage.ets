@@ -11,6 +11,8 @@ export struct SettingsPage {
   @State vibrationEnabled: boolean = true
   @State longPressThreshold: number = 300
   @State repetitionCount: number = 3
+  @State pendingRepetitionCount: number = 3
+  @State showRepetitionDialog: boolean = false
   
   private practiceSettingsStore: preferences.Preferences | null = null
 
@@ -92,20 +94,73 @@ export struct SettingsPage {
     }
   }
 
-  private async changeRepetitionCount(delta: number): Promise<void> {
+  private async saveRepetitionCount(): Promise<void> {
     try {
       const context = this.getUIContext()?.getHostContext() as Context
       if (context) {
-        const next = LocalLearningSettings.clampRepetitionCount(this.repetitionCount + delta)
-        this.repetitionCount = await LocalLearningSettings.setRepetitionCount(context, next)
+        this.repetitionCount = await LocalLearningSettings.setRepetitionCount(context, this.pendingRepetitionCount)
+        this.showRepetitionDialog = false
       }
     } catch (error) {
       console.error('[SettingsPage] Failed to save repetition count:', error)
     }
   }
 
-  build() {
+  @Builder
+  private RepetitionSettingsDialog() {
     Column() {
+      Text(LocalizationHelper.getString('learning_repetition_count'))
+        .width('100%')
+        .fontSize(15)
+        .fontWeight(FontWeight.Bold)
+        .fontColor('#FFFFFF')
+        .textAlign(TextAlign.Center)
+        .maxLines(2)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+
+      Text(`${this.pendingRepetitionCount}`)
+        .width('100%')
+        .fontSize(22)
+        .fontWeight(FontWeight.Bold)
+        .fontColor('#FFD700')
+        .textAlign(TextAlign.Center)
+        .margin({ top: 4, bottom: 4 })
+
+      Slider({
+        value: this.pendingRepetitionCount,
+        min: 1,
+        max: 5,
+        step: 1,
+        style: SliderStyle.OutSet
+      })
+        .blockColor('#FFD700')
+        .trackColor('#333333')
+        .selectedColor('#FFD700')
+        .trackThickness(5)
+        .blockSize({ width: 18, height: 18 })
+        .onChange((value: number) => {
+          this.pendingRepetitionCount = value
+        })
+        .margin({ bottom: 14 })
+
+      Button(LocalizationHelper.getString('confirm'))
+        .width('100%')
+        .height(36)
+        .backgroundColor('#FFD700')
+        .fontColor('#000000')
+        .onClick(() => {
+          void this.saveRepetitionCount()
+        })
+    }
+    .width('76%')
+      .padding(14)
+      .backgroundColor('#2A2A2A')
+      .borderRadius(12)
+  }
+
+  build() {
+    Stack() {
+      Column() {
       // 标题栏
       Text(LocalizationHelper.getString('watch_settings'))
         .fontSize(14)
@@ -167,33 +222,28 @@ export struct SettingsPage {
               .fontSize(15)
               .fontColor('#FFFFFF')
               .layoutWeight(1)
-              .maxLines(1)
+              .textAlign(TextAlign.Start)
+              .maxLines(2)
               .textOverflow({ overflow: TextOverflow.Ellipsis })
-            Button('-')
-              .width(32)
-              .height(32)
-              .enabled(this.repetitionCount > 1)
-              .backgroundColor('#333333')
-              .onClick(() => { void this.changeRepetitionCount(-1) })
             Text(`${this.repetitionCount}`)
-              .width(28)
-              .fontSize(16)
-              .fontWeight(FontWeight.Bold)
-              .fontColor('#FFD700')
-              .textAlign(TextAlign.Center)
-            Button('+')
-              .width(32)
-              .height(32)
-              .enabled(this.repetitionCount < 5)
-              .backgroundColor('#333333')
-              .onClick(() => { void this.changeRepetitionCount(1) })
+              .fontSize(14)
+              .fontColor('#AAAAAA')
+              .margin({ right: 6 })
+            Image($rawfile('ic_arrow_right.svg'))
+              .width(12)
+              .height(12)
+              .fillColor('#666666')
           }
           .width('100%')
-          .height(48)
+          .height(56)
           .padding({ left: 12, right: 12, top: 8, bottom: 8 })
           .backgroundColor('rgba(255, 255, 255, 0.1)')
           .borderRadius(8)
           .margin({ top: 6, bottom: 6 })
+          .onClick(() => {
+            this.pendingRepetitionCount = this.repetitionCount
+            this.showRepetitionDialog = true
+          })
 
           // 长按时间阈值设置
           Column() {
@@ -255,9 +305,33 @@ export struct SettingsPage {
       .scrollBar(BarState.Off)
       .focusable(true)
       .defaultFocus(true)
+      }
+      .width('100%')
+      .height('100%')
+      .backgroundColor('#000000')
+
+      if (this.showRepetitionDialog) {
+        Stack() {
+          Column()
+            .width('100%')
+            .height('100%')
+            .backgroundColor('rgba(0, 0, 0, 0.65)')
+            .onClick(() => {
+              this.showRepetitionDialog = false
+            })
+          Column() {
+            this.RepetitionSettingsDialog()
+          }
+          .width('100%')
+            .height('100%')
+            .justifyContent(FlexAlign.Center)
+            .alignItems(HorizontalAlign.Center)
+        }
+        .width('100%')
+          .height('100%')
+      }
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#000000')
   }
 }
