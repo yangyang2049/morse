@@ -2,16 +2,15 @@
  * 加群找同好 - 手表端
  * 极简展示群二维码，供用户直接扫码加入群聊
  */
-import { router } from '@kit.ArkUI';
-import { SystemBarHelper } from '../../utils/SystemBarHelper';
+import router from '@ohos.router'
 
-const GROUP_QR_RAWFILE_NAME: string = 'ic_group_qrcode.jpg';
+const GROUP_QR_RAWFILE_NAME: string = 'ic_group_qrcode.jpg'
 
 @Entry
 @Component
-export struct JoinGroupPage {
+struct JoinGroupPage {
   aboutToAppear(): void {
-    SystemBarHelper.applyDarkFromUIContext(this.getUIContext());
+    console.info('[JoinGroupPage] aboutToAppear called')
   }
 
   build() {
@@ -83,6 +82,5 @@ export struct JoinGroupPage {
     .width('100%')
       .height('100%')
       .backgroundColor('#000000')
-      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }

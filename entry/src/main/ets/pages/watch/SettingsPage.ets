@@ -1,6 +1,6 @@
 import preferences from '@ohos.data.preferences'
 import { Context } from '@kit.AbilityKit'
-import { router } from '@kit.ArkUI'
+import router from '@ohos.router'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
 import { audioService } from '../../services/AudioService'
 import { vibratorService } from '../../services/VibratorService'
@@ -300,7 +300,14 @@ export struct SettingsPage {
             .borderRadius(8)
             .margin({ top: 6, bottom: 6 })
             .onClick(() => {
-              router.pushUrl({ url: 'pages/watch/JoinGroupPage' })
+              console.info('[SettingsPage] JoinGroup entry clicked')
+              try {
+                router.pushUrl({ url: 'pages/watch/JoinGroupPage' }).catch((err: Error) => {
+                  console.error('[SettingsPage] pushUrl JoinGroupPage failed:', JSON.stringify(err))
+                })
+              } catch (e) {
+                console.error('[SettingsPage] pushUrl JoinGroupPage exception:', JSON.stringify(e))
+              }
             })
 
           // 底部文本
