@@ -138,10 +138,10 @@ export struct AppFamilyPage {
         .borderRadius(12)
         .objectFit(ImageFit.Contain)
 
-      Column({ space: 3 }) {
+      Column({ space: 8 }) {
         Row({ space: 6 }) {
           Text(app.name)
-            .fontSize(16)
+            .fontSize(18)
             .fontWeight(FontWeight.Medium)
             .fontColor('#FFFFFF')
             .maxLines(1)
