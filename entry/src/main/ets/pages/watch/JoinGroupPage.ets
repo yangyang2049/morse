@@ -1,9 +1,8 @@
 /**
  * 加群找同好 - 手表端
- * 极简展示群二维码，供用户直接扫码加入群聊
+ * 极简展示群二维码，供用户直接扫码加入群聊。
+ * 无返回按钮与标题栏：返回由系统返回手势 / 侧键处理。
  */
-import router from '@ohos.router'
-
 const GROUP_QR_RAWFILE_NAME: string = 'ic_group_qrcode.jpg'
 
 @Entry
@@ -15,34 +14,6 @@ struct JoinGroupPage {
 
   build() {
     Column() {
-      Row() {
-        Button() {
-          Image($rawfile('ic_back.svg'))
-            .width(16)
-            .height(16)
-            .fillColor(Color.White)
-        }
-        .width(36)
-          .height(36)
-          .backgroundColor(Color.Transparent)
-          .borderRadius(18)
-          .onClick(() => {
-            router.back();
-          })
-
-        Text('加群找同好')
-          .fontSize(14)
-          .fontWeight(FontWeight.Medium)
-          .fontColor('#FFFFFF')
-          .layoutWeight(1)
-          .textAlign(TextAlign.Center)
-          .margin({ right: 36 })
-      }
-      .width('100%')
-        .height(40)
-        .padding({ left: 4, right: 8 })
-        .backgroundColor('#000000')
-
       Scroll() {
         Column({ space: 10 }) {
           Text('摩斯电码交流群')
