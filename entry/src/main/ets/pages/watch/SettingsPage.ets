@@ -246,29 +246,6 @@ export struct SettingsPage {
             this.showRepetitionDialog = true
           })
 
-          // 加群找同好 - 摩斯电码交流群
-          Row() {
-            Text('加群找同好')
-              .fontSize(16)
-              .fontColor('#FFFFFF')
-            Row() {}.layoutWeight(1)
-            Image($rawfile('ic_arrow_right.svg'))
-              .width(12)
-              .height(12)
-              .fillColor('#666666')
-          }
-          .width('100%')
-            .height(48)
-            .padding({ left: 12, right: 12, top: 8, bottom: 8 })
-            .backgroundColor('rgba(255, 255, 255, 0.1)')
-            .borderRadius(8)
-            .margin({ top: 6, bottom: 6 })
-            .clickEffect({ level: ClickEffectLevel.LIGHT })
-            .onClick(() => {
-              console.info('[SettingsPage] JoinGroup entry clicked')
-              router.pushUrl({ url: 'pages/watch/JoinGroupPage' })
-            })
-
           // 长按时间阈值设置
           Column() {
             Row() {
@@ -304,6 +281,29 @@ export struct SettingsPage {
           .backgroundColor('rgba(255, 255, 255, 0.1)')
           .borderRadius(8)
           .margin({ top: 6, bottom: 6 })
+
+          // 加群找同好 - 摩斯电码交流群
+          Row() {
+            Text('加群找同好')
+              .fontSize(16)
+              .fontColor('#FFFFFF')
+            Row() {}.layoutWeight(1)
+            Image($rawfile('ic_arrow_right.svg'))
+              .width(12)
+              .height(12)
+              .fillColor('#666666')
+          }
+          .width('100%')
+            .height(48)
+            .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+            .backgroundColor('rgba(255, 255, 255, 0.1)')
+            .borderRadius(8)
+            .margin({ top: 6, bottom: 6 })
+            .clickEffect({ level: ClickEffectLevel.LIGHT })
+            .onClick(() => {
+              console.info('[SettingsPage] JoinGroup entry clicked')
+              router.pushUrl({ url: 'pages/watch/JoinGroupPage' })
+            })
 
           // 底部文本
           Column() {
