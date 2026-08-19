@@ -422,6 +422,37 @@ export struct MePage {
       .focusable(true)
   }
 
+  // 加群找同好入口：点击进入群二维码页
+  @Builder JoinGroupItem() {
+    Row() {
+      Column() {
+        Text('加群找同好')
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#FFFFFF')
+          .textAlign(TextAlign.Start)
+          .width('100%')
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
+
+      Image($rawfile('ic_arrow_right.svg'))
+        .width(16)
+        .height(16)
+        .fillColor('#666666')
+    }
+    .width('100%')
+      .height(56)
+      .padding({ left: 16, right: 16 })
+      .onClick(() => {
+        router.push({ url: 'pages/me/JoinGroupPage' })
+      })
+      .hoverEffect(HoverEffect.Scale)
+      .focusable(true)
+  }
+
   @Builder KeySettingsSettingsItem() {
     Row() {
       Column() {
@@ -816,6 +847,16 @@ export struct MePage {
                 this.RatingSettingsItem()
                 Divider().strokeWidth(1).color('#222222')
                 this.ShareSettingsItem()
+              }
+              .width('100%')
+                .backgroundColor('#111111')
+                .borderRadius(12)
+                .padding({ top: 4, bottom: 4 })
+                .constraintSize({ maxWidth: 400 })
+
+              // 加群找同好 - 摩斯电码交流群
+              Column() {
+                this.JoinGroupItem()
               }
               .width('100%')
                 .backgroundColor('#111111')

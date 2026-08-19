@@ -5,6 +5,7 @@
     "pages/watch/KnowledgeLessonPage",
     "pages/watch/LessonDetailPage",
     "pages/watch/PracticeDetailPage",
-    "pages/watch/PracticeMistakesPage"
+    "pages/watch/PracticeMistakesPage",
+    "pages/watch/JoinGroupPage"
   ]
 }

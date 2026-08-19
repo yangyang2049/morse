@@ -1,5 +1,6 @@
 import preferences from '@ohos.data.preferences'
 import { Context } from '@kit.AbilityKit'
+import { router } from '@kit.ArkUI'
 import { LocalizationHelper } from '../../utils/LocalizationHelper'
 import { audioService } from '../../services/AudioService'
 import { vibratorService } from '../../services/VibratorService'
@@ -280,6 +281,27 @@ export struct SettingsPage {
           .backgroundColor('rgba(255, 255, 255, 0.1)')
           .borderRadius(8)
           .margin({ top: 6, bottom: 6 })
+
+          // 加群找同好 - 摩斯电码交流群
+          Row() {
+            Text('加群找同好')
+              .fontSize(16)
+              .fontColor('#FFFFFF')
+            Row() {}.layoutWeight(1)
+            Image($rawfile('ic_arrow_right.svg'))
+              .width(12)
+              .height(12)
+              .fillColor('#666666')
+          }
+          .width('100%')
+            .height(48)
+            .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+            .backgroundColor('rgba(255, 255, 255, 0.1)')
+            .borderRadius(8)
+            .margin({ top: 6, bottom: 6 })
+            .onClick(() => {
+              router.push({ url: 'pages/watch/JoinGroupPage' })
+            })
 
           // 底部文本
           Column() {
