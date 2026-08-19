@@ -20,7 +20,7 @@ const MORSE_APP_REVIEW_LINK = `${MORSE_APP_DETAIL_URL}&action=write-review`
 
 @Component
 export struct MePage {
-  @State appVersion: string = '3.0.0'
+  @State appVersion: string = '3.1'
   @State useSingleButton: boolean = false // 是否使用单按钮模式
   @State showKeySettingsDialog: boolean = false // 按键设置（单双键 + 长按阈值）对话框
   @State keySettingsSingleButton: boolean = false // 对话框内选择的单键与否，默认双键
@@ -72,7 +72,7 @@ export struct MePage {
   }
 
   private loadAppInfo() {
-    this.appVersion = '3.0.0'
+    this.appVersion = '3.1'
   }
 
   // 初始化偏好设置存储
