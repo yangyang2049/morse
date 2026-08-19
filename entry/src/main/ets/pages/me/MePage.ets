@@ -396,9 +396,9 @@ export struct MePage {
         .width(40)
         .height(40)
 
-      Column({ space: 2 }) {
+      Column({ space: 6 }) {
         Text('豆花全家桶')
-          .fontSize(14)
+          .fontSize(16)
           .fontWeight(FontWeight.Medium)
           .fontColor('#FFFFFF')
         Text('豆花科技出品的更多应用')
