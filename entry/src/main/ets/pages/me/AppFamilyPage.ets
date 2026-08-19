@@ -33,8 +33,8 @@ export struct AppFamilyPage {
       bundleId: 'com.douhua.counter'
     },
     {
-      name: '象棋计时器',
-      desc: '棋类对局计时，专注每一手',
+      name: '棋钟App',
+      desc: '多棋类对局计时，落子按钟',
       icon: $r('app.media.ic_family_gotimer'),
       bundleId: 'com.douhua.gotimer'
     },
