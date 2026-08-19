@@ -157,6 +157,8 @@ export struct JoinGroupPage {
           })
             .width('70%')
               .height(48)
+              .backgroundColor('#FFD700')
+              .fontColor(Color.Black)
               .onClick((event: ClickEvent, result: number) => {
                 void this.handleSaveToGallery(event, result);
               })
