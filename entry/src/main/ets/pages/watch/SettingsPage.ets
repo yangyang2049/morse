@@ -300,7 +300,7 @@ export struct SettingsPage {
             .borderRadius(8)
             .margin({ top: 6, bottom: 6 })
             .onClick(() => {
-              router.push({ url: 'pages/watch/JoinGroupPage' })
+              router.pushUrl({ url: 'pages/watch/JoinGroupPage' })
             })
 
           // 底部文本
