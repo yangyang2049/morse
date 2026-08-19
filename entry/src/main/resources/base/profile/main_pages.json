@@ -13,6 +13,7 @@
     "pages/watch/LessonDetailPage",
     "pages/watch/PracticeDetailPage",
     "pages/watch/PracticeMistakesPage",
-    "pages/watch/PrivacyPage"
+    "pages/watch/PrivacyPage",
+    "pages/watch/JoinGroupPage"
   ]
 }
